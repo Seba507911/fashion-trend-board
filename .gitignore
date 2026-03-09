@@ -34,3 +34,4 @@ scripts/inspect_*.py
 
 # Claude
 *.jsonl
+.vercel
