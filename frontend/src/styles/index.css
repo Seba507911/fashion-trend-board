@@ -1,0 +1,24 @@
+@import "tailwindcss";
+
+:root {
+  --color-primary: #0066CC;
+  --color-bg: #FFFFFF;
+  --color-sidebar: #FAF9F7;
+  --color-border: #E5E5E5;
+  --color-text: #111111;
+  --color-text-muted: #999999;
+  --color-text-secondary: #555555;
+  --color-card: #FFFFFF;
+  --color-badge-hot: #C41E3A;
+  --color-badge-rising: #0066CC;
+  --color-badge-moderate: #F59E0B;
+  --color-badge-low: #1A8754;
+  --color-badge-cold: #999999;
+}
+
+body {
+  margin: 0;
+  font-family: "Inter", sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text);
+}
