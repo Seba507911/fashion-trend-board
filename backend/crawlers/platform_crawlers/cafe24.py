@@ -130,13 +130,13 @@ class Cafe24Crawler(BaseCrawler):
             category_id = self._url_to_category(page.url)
             sizes = card_data.get("sizes", [])
 
-            # 상품명에서 컬러 추출
-            colors = self._extract_color_from_name(product_name)
+            # 상품명에서 컬러 추출 + base name 분리
+            base_name, colors = self._extract_and_strip_color(product_name)
 
             return {
                 "id": self.make_product_id(product_no),
-                "product_name": product_name,
-                "product_name_kr": product_name,
+                "product_name": base_name,
+                "product_name_kr": base_name,
                 "price": price,
                 "sale_price": sale_price,
                 "currency": self.currency,
@@ -235,16 +235,65 @@ class Cafe24Crawler(BaseCrawler):
 
         return detail
 
-    @staticmethod
-    def _extract_color_from_name(product_name: str) -> list[str]:
-        """상품명 끝에서 컬러 키워드 추출."""
-        color_keywords = {
-            "white", "black", "gray", "grey", "navy", "blue", "red",
-            "pink", "green", "yellow", "beige", "brown", "cream",
-            "olive", "charcoal", "mint", "ivory", "khaki", "orange",
-            "purple", "lavender", "violet", "sand", "camel", "ecru",
-        }
-        parts = product_name.rsplit(" ", 1)
-        if len(parts) == 2 and parts[1].lower() in color_keywords:
-            return [parts[1]]
-        return []
+    # 영문 컬러 키워드 (긴 것부터 매칭)
+    _EN_COLORS = sorted([
+        "light heather gray", "light heather grey", "heather gray", "heather grey",
+        "deep navy", "dark navy", "light grey", "light gray", "dark gray", "dark grey",
+        "melange gray", "melange grey", "sky blue", "dusty pink", "off white",
+        "black chocolate", "midnight brown",
+        "black", "white", "navy", "gray", "grey", "cream", "beige", "brown", "blue",
+        "red", "green", "pink", "yellow", "orange", "purple", "khaki", "ivory",
+        "charcoal", "olive", "mint", "lavender", "sand", "camel", "oatmeal",
+        "burgundy", "wine", "coral", "peach", "sage", "taupe", "mocha", "espresso",
+        "denim", "indigo", "mauve", "rose", "ecru", "natural", "teal", "cobalt",
+        "lime", "stone",
+    ], key=len, reverse=True)
+
+    # 한글 컬러 키워드
+    _KR_COLORS = sorted([
+        "프렌치블루", "딥블루그레이", "블루그레이", "다크브라운", "딥네이비",
+        "다크그레이", "라이트그레이", "라이트베이지", "웜베이지", "올리브카키",
+        "베이지", "블랙", "네이비", "브라운", "그레이", "화이트", "아이보리",
+        "카키", "올리브", "차콜", "크림", "와인", "버건디", "핑크", "레드",
+        "블루", "그린", "옐로우", "오렌지", "퍼플", "민트", "라벤더",
+        "카멜", "모카", "샌드", "오트밀", "인디고", "데님", "코발트",
+    ], key=len, reverse=True)
+
+    def _extract_and_strip_color(self, product_name: str) -> tuple[str, list[str]]:
+        """상품명에서 컬러를 추출하고 제거한 base name 반환.
+
+        Returns:
+            (base_name, [color]) — 컬러가 없으면 (원래 이름, [])
+        """
+        lower = product_name.lower().strip()
+
+        # 1. 영문 suffix: "CLASSIC LOGO TEE black"
+        for cw in self._EN_COLORS:
+            if lower.endswith(" " + cw):
+                base = product_name[: len(product_name) - len(cw)].strip()
+                color = product_name[len(base):].strip()
+                return base, [color]
+
+        # 2. 한글 괄호: "팬츠 (프렌치블루)"
+        m = re.search(r"\s*\(([^)]+)\)\s*$", product_name)
+        if m:
+            candidate = m.group(1).strip()
+            for kc in self._KR_COLORS:
+                if kc in candidate:
+                    base = product_name[: m.start()].strip()
+                    return base, [candidate]
+
+        # 3. 언더스코어: "JACKET_BLACK"
+        if "_" in product_name:
+            base, color_part = product_name.rsplit("_", 1)
+            color_lower = color_part.strip().lower()
+            cat_words = {"pants", "shirt", "skirt", "bag", "belt", "coat",
+                         "jacket", "blouson", "knit", "top", "neck", "scarf",
+                         "sleeveless", "flare", "jumper", "vest"}
+            first_word = color_lower.split()[0] if color_part.split() else ""
+            if first_word not in cat_words:
+                for ec in self._EN_COLORS:
+                    if ec in color_lower:
+                        return base.strip(), [color_part.strip()]
+
+        return product_name, []
