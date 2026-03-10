@@ -143,7 +143,9 @@ INSERT OR IGNORE INTO brands (id, name, name_kr, brand_type, website_url) VALUES
 ('blankroom', 'Blankroom', '블랭크룸', 'competitor', 'https://blankroom.co.kr/'),
 ('youth', 'Youth', '유스', 'competitor', 'https://youth-lab.kr/'),
 ('northface', 'The North Face Korea', '노스페이스코리아', 'competitor', 'https://www.thenorthfacekorea.co.kr/'),
-('descente', 'Descente Korea', '데상트코리아', 'competitor', 'https://dk-on.com/DESCENTE');
+('descente', 'Descente Korea', '데상트코리아', 'competitor', 'https://dk-on.com/DESCENTE'),
+('nike', 'Nike', '나이키', 'competitor', 'https://www.nike.com/kr'),
+('kolonsport', 'Kolon Sport', '코오롱스포츠', 'competitor', 'https://www.kolonsport.com');
 
 INSERT OR IGNORE INTO brands (id, name, name_kr, brand_type, website_url) VALUES
 ('prada', 'Prada', '프라다', 'reference', 'https://www.prada.com/'),
