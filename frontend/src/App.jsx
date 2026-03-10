@@ -5,6 +5,7 @@ import ProductBoard from "./components/ProductBoard";
 import TrendAnalysis from "./pages/TrendAnalysis";
 import GraphView from "./pages/GraphView";
 import Runway from "./pages/Runway";
+import TrendFlow from "./pages/TrendFlow";
 
 export default function App() {
   const [selectedBrand, setSelectedBrand] = useState(null);
@@ -18,6 +19,7 @@ export default function App() {
           <Route path="/trend" element={<TrendAnalysis />} />
           <Route path="/graph" element={<GraphView />} />
           <Route path="/runway" element={<Runway />} />
+          <Route path="/flow" element={<TrendFlow />} />
         </Routes>
       </div>
     </BrowserRouter>

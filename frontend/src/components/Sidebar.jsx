@@ -8,6 +8,7 @@ export default function Sidebar({ selectedBrand, onBrandSelect }) {
 
   const navItems = [
     { id: "runway", label: "Runway", path: "/runway" },
+    { id: "trend-flow", label: "Trend Flow", path: "/flow" },
     { id: "market-brand-board", label: "Market Brand Board", path: "/" },
     { id: "trend-analysis", label: "Trend Analysis", path: "/trend" },
     { id: "graph-view", label: "Graph View", path: "/graph" },
