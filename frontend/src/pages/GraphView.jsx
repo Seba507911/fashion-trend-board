@@ -12,30 +12,17 @@ function useGraphData() {
   });
 }
 
-const TYPE_SHAPES = {
-  brand: "circle",
-  material: "diamond",
-  color: "circle",
-  category: "square",
-};
-
 const LEGEND = [
-  { type: "brand", label: "Brand", color: "#A08B7A", shape: "circle" },
-  { type: "category", label: "Category", color: "#9E8DBE", shape: "square" },
-  { type: "material", label: "Material", color: "#7B97AA", shape: "diamond" },
-  { type: "color", label: "Color", color: "#90A0A8", shape: "circle" },
+  { type: "brand", label: "Brand", color: "#A08B7A" },
+  { type: "category", label: "Category", color: "#9E8DBE" },
+  { type: "material", label: "Material", color: "#7B97AA" },
+  { type: "color", label: "Color", color: "#90A0A8" },
 ];
 
-function LegendItem({ label, color, shape }) {
+function LegendItem({ label, color }) {
   return (
     <div className="flex items-center gap-2 text-xs">
-      {shape === "square" ? (
-        <div className="w-3 h-3 rounded-[2px]" style={{ backgroundColor: color }} />
-      ) : shape === "diamond" ? (
-        <div className="w-3 h-3 rotate-45 rounded-[1px]" style={{ backgroundColor: color }} />
-      ) : (
-        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: color }} />
-      )}
+      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: color }} />
       <span className="text-[var(--color-text-secondary)]">{label}</span>
     </div>
   );
@@ -94,18 +81,7 @@ export default function GraphView() {
     const r = size / 2;
 
     ctx.beginPath();
-    if (node.type === "square" || node.type === "category") {
-      ctx.rect(node.x - r, node.y - r, size, size);
-    } else if (node.type === "material") {
-      ctx.moveTo(node.x, node.y - r);
-      ctx.lineTo(node.x + r, node.y);
-      ctx.lineTo(node.x, node.y + r);
-      ctx.lineTo(node.x - r, node.y);
-      ctx.closePath();
-    } else {
-      ctx.arc(node.x, node.y, r, 0, 2 * Math.PI);
-    }
-
+    ctx.arc(node.x, node.y, r, 0, 2 * Math.PI);
     ctx.fillStyle = node.color || "#999";
     ctx.fill();
 

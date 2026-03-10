@@ -65,14 +65,14 @@ export default function Sidebar({ selectedBrand, onBrandSelect }) {
                   <button
                     key={brand.id}
                     onClick={() => onBrandSelect(brand.id)}
-                    className={`pl-8 pr-2.5 py-1.5 text-xs flex items-center gap-2.5 rounded-sm ${
+                    className={`pl-8 pr-2.5 py-1.5 text-xs flex items-center gap-2.5 rounded-sm overflow-hidden ${
                       selectedBrand === brand.id
                         ? "bg-[var(--color-primary)]/5 text-[var(--color-primary)] font-medium"
                         : "text-[var(--color-text-secondary)] hover:bg-black/3"
                     }`}
                   >
-                    <span className={`w-2 h-2 rounded-full ${selectedBrand === brand.id ? "bg-[var(--color-primary)]" : "bg-[var(--color-text-muted)]"}`} />
-                    {brand.name}
+                    <span className={`w-2 h-2 rounded-full shrink-0 ${selectedBrand === brand.id ? "bg-[var(--color-primary)]" : "bg-[var(--color-text-muted)]"}`} />
+                    <span className="truncate">{brand.name}</span>
                   </button>
                 ))}
               </div>
