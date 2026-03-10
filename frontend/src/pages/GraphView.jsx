@@ -20,10 +20,10 @@ const TYPE_SHAPES = {
 };
 
 const LEGEND = [
-  { type: "brand", label: "Brand", color: "#4ECDC4", shape: "circle" },
-  { type: "category", label: "Category", color: "#8E44AD", shape: "square" },
-  { type: "material", label: "Material", color: "#2C3E50", shape: "diamond" },
-  { type: "color", label: "Color", color: "#78909C", shape: "circle" },
+  { type: "brand", label: "Brand", color: "#A08B7A", shape: "circle" },
+  { type: "category", label: "Category", color: "#9E8DBE", shape: "square" },
+  { type: "material", label: "Material", color: "#7B97AA", shape: "diamond" },
+  { type: "color", label: "Color", color: "#90A0A8", shape: "circle" },
 ];
 
 function LegendItem({ label, color, shape }) {
@@ -89,7 +89,7 @@ export default function GraphView() {
   }, []);
 
   const paintNode = useCallback((node, ctx, globalScale) => {
-    const size = node.size || 6;
+    const size = node.size || 4;
     const isSelected = selected?.id === node.id;
     const r = size / 2;
 
@@ -110,20 +110,20 @@ export default function GraphView() {
     ctx.fill();
 
     if (isSelected) {
-      ctx.strokeStyle = "#FF6B6B";
-      ctx.lineWidth = 2;
+      ctx.strokeStyle = "#E07070";
+      ctx.lineWidth = 1.5;
       ctx.stroke();
     }
 
-    // Label
-    if (globalScale > 1.2 || node.type === "brand") {
+    // Label — larger font, visible earlier
+    if (globalScale > 0.8 || node.type === "brand") {
       const label = node.label || "";
-      const fontSize = Math.max(10 / globalScale, 2);
-      ctx.font = `${node.type === "brand" ? "bold " : ""}${fontSize}px sans-serif`;
+      const fontSize = Math.max(12 / globalScale, 3);
+      ctx.font = `${node.type === "brand" ? "600 " : ""}${fontSize}px sans-serif`;
       ctx.textAlign = "center";
       ctx.textBaseline = "top";
-      ctx.fillStyle = "var(--color-text, #333)";
-      ctx.fillText(label, node.x, node.y + r + 2);
+      ctx.fillStyle = "#444";
+      ctx.fillText(label, node.x, node.y + r + 1.5);
     }
   }, [selected]);
 

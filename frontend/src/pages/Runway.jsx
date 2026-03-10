@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 
 const api = axios.create({ baseURL: "/api" });
@@ -97,6 +97,14 @@ export default function Runway() {
   const [selectedSeason, setSelectedSeason] = useState(null);
   const [selectedLook, setSelectedLook] = useState(null);
 
+  // Auto-select first designer (alphabetically) on initial load
+  useEffect(() => {
+    if (designers.length > 0 && selectedDesigner === null) {
+      const sorted = [...designers].sort((a, b) => a.designer.localeCompare(b.designer));
+      setSelectedDesigner(sorted[0].designer_slug);
+    }
+  }, [designers, selectedDesigner]);
+
   const { data: looks = [], isLoading } = useRunwayLooks({
     designer: selectedDesigner,
     season: selectedSeason,
@@ -143,8 +151,8 @@ export default function Runway() {
             onChange={(e) => setSelectedDesigner(e.target.value || null)}
             className="text-xs px-3 py-2 border border-[var(--color-border)] rounded-md bg-white text-[var(--color-text)]"
           >
-            <option value="">All Designers</option>
-            {designers.map((d) => (
+            <option value="" disabled>— Select Designer —</option>
+            {[...designers].sort((a, b) => a.designer.localeCompare(b.designer)).map((d) => (
               <option key={d.designer_slug} value={d.designer_slug}>
                 {d.designer} ({d.look_count} looks)
               </option>

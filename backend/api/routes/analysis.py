@@ -155,10 +155,11 @@ async def get_graph_data(db: aiosqlite.Connection = Depends(get_db)):
     nodes = {}
     edges = defaultdict(int)
 
+    # Muted warm earth tones for brands — harmonious within the layer
     brand_colors = {
-        "alo": "#4ECDC4", "newbalance": "#E74C3C", "marithe": "#3498DB", "asics": "#F39C12",
-        "coor": "#5B7553", "blankroom": "#2C2C2C", "youth": "#E67E22",
-        "lemaire": "#8D6E63", "northface": "#D32F2F", "descente": "#1565C0",
+        "alo": "#7BA596", "newbalance": "#B07D6A", "marithe": "#6E8CA0", "asics": "#C4A46C",
+        "coor": "#8A9E82", "blankroom": "#7A7A7A", "youth": "#C09566",
+        "lemaire": "#A08B7A", "northface": "#B5736A", "descente": "#6B8DAA",
     }
 
     # 브랜드 노드 수집
@@ -171,7 +172,7 @@ async def get_graph_data(db: aiosqlite.Connection = Depends(get_db)):
             "id": f"brand:{brand}",
             "label": brand,
             "type": "brand",
-            "size": min(8 + count // 5, 20),
+            "size": min(5 + count // 8, 12),
             "color": brand_colors.get(brand, "#999"),
         }
 
@@ -209,8 +210,8 @@ async def get_graph_data(db: aiosqlite.Connection = Depends(get_db)):
             "id": f"mat:{mat}",
             "label": mat,
             "type": "material",
-            "size": min(4 + cnt // 3, 14),
-            "color": "#2C3E50",
+            "size": min(3 + cnt // 5, 9),
+            "color": "#7B97AA",
         }
 
     for col, cnt in color_counter.most_common(15):
@@ -218,8 +219,8 @@ async def get_graph_data(db: aiosqlite.Connection = Depends(get_db)):
             "id": f"color:{col}",
             "label": col,
             "type": "color",
-            "size": min(4 + cnt // 3, 12),
-            "color": _css_color(col),
+            "size": min(3 + cnt // 5, 8),
+            "color": _css_color_muted(col),
         }
 
     for cat, cnt in category_counter.items():
@@ -227,8 +228,8 @@ async def get_graph_data(db: aiosqlite.Connection = Depends(get_db)):
             "id": f"cat:{cat}",
             "label": cat,
             "type": "category",
-            "size": min(6 + cnt // 4, 16),
-            "color": "#8E44AD",
+            "size": min(4 + cnt // 6, 10),
+            "color": "#9E8DBE",
         }
 
     # 엣지 — 양쪽 노드가 모두 존재하는 것만
@@ -256,3 +257,18 @@ def _css_color(name: str) -> str:
         "sand": "#C2B280", "camel": "#C19A6B",
     }
     return mapping.get(name, "#78909C")
+
+
+def _css_color_muted(name: str) -> str:
+    """컬러 이름을 차분한(muted) CSS 색상으로 매핑 — 그래프 노드용."""
+    mapping = {
+        "black": "#5A5A5A", "white": "#C8C8C8", "gray": "#9E9E9E",
+        "grey": "#9E9E9E", "navy": "#607088", "blue": "#7BA3C4",
+        "red": "#C08080", "pink": "#C89AAA", "green": "#7AAA88",
+        "yellow": "#C8B870", "beige": "#C4B89A", "brown": "#967860",
+        "cream": "#D4CDB0", "olive": "#8A9060", "charcoal": "#6A7078",
+        "mint": "#8AC0A0", "ivory": "#D0CCBA", "khaki": "#B0A480",
+        "orange": "#C89870", "purple": "#9A88B0", "lavender": "#A098C0",
+        "sand": "#B8AA88", "camel": "#B09478",
+    }
+    return mapping.get(name, "#90A0A8")
