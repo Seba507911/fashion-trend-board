@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  ScatterChart, Scatter, Cell,
+  Cell, PieChart, Pie, Legend,
 } from "recharts";
 
 const api = axios.create({ baseURL: "/api" });
@@ -16,6 +16,9 @@ function useColors() {
 function useMaterials() {
   return useQuery({ queryKey: ["analysis", "materials"], queryFn: () => api.get("/analysis/materials").then(r => r.data) });
 }
+function useCategories() {
+  return useQuery({ queryKey: ["analysis", "categories"], queryFn: () => api.get("/analysis/categories").then(r => r.data) });
+}
 
 const COLOR_MAP = {
   black: "#1a1a1a", white: "#bbb", gray: "#888", navy: "#1a237e",
@@ -24,6 +27,14 @@ const COLOR_MAP = {
   olive: "#808000", charcoal: "#36454F", mint: "#98FF98", ivory: "#f5f5e0",
   khaki: "#C3B091", orange: "#FF9800", purple: "#9C27B0",
 };
+
+const BRAND_COLORS = {
+  alo: "#4ECDC4", newbalance: "#E74C3C", marithe: "#3498DB", asics: "#F39C12",
+  coor: "#5B7553", blankroom: "#2C2C2C", youth: "#E67E22",
+  lemaire: "#8D6E63", northface: "#D32F2F", descente: "#1565C0",
+};
+
+const CAT_COLORS = ["#3498DB", "#E74C3C", "#2ECC71", "#F39C12", "#9B59B6", "#1ABC9C", "#E67E22", "#34495E", "#E91E63", "#00BCD4"];
 
 function KpiCard({ label, value, sub }) {
   return (
@@ -104,10 +115,67 @@ function MaterialMatrix({ data }) {
   );
 }
 
+function CategoryChart({ data }) {
+  if (!data || Object.keys(data).length === 0) return <p className="text-sm text-[var(--color-text-muted)]">No category data</p>;
+
+  // 브랜드별 카테고리 분포 → 스택 바 차트용 데이터로 변환
+  const allCategories = new Set();
+  Object.values(data).forEach(cats => Object.keys(cats).forEach(c => allCategories.add(c)));
+  const categories = [...allCategories].sort();
+
+  const chartData = Object.entries(data).map(([brand, cats]) => {
+    const row = { brand };
+    categories.forEach(c => { row[c] = cats[c] || 0; });
+    return row;
+  }).sort((a, b) => {
+    const totalA = categories.reduce((s, c) => s + (a[c] || 0), 0);
+    const totalB = categories.reduce((s, c) => s + (b[c] || 0), 0);
+    return totalB - totalA;
+  });
+
+  return (
+    <ResponsiveContainer width="100%" height={Math.max(300, chartData.length * 36)}>
+      <BarChart data={chartData} layout="vertical" margin={{ left: 10, right: 20 }}>
+        <XAxis type="number" tick={{ fontSize: 11 }} />
+        <YAxis type="category" dataKey="brand" width={80} tick={{ fontSize: 11 }} />
+        <Tooltip />
+        <Legend wrapperStyle={{ fontSize: 11 }} />
+        {categories.map((cat, i) => (
+          <Bar key={cat} dataKey={cat} stackId="a" fill={CAT_COLORS[i % CAT_COLORS.length]} radius={i === categories.length - 1 ? [0, 4, 4, 0] : [0, 0, 0, 0]} />
+        ))}
+      </BarChart>
+    </ResponsiveContainer>
+  );
+}
+
+function BrandProductCount({ data }) {
+  if (!data || Object.keys(data).length === 0) return null;
+  const chartData = Object.entries(data).map(([brand, cats]) => ({
+    brand,
+    total: Object.values(cats).reduce((s, v) => s + v, 0),
+  })).sort((a, b) => b.total - a.total);
+
+  return (
+    <ResponsiveContainer width="100%" height={Math.max(200, chartData.length * 32)}>
+      <BarChart data={chartData} layout="vertical" margin={{ left: 10, right: 20 }}>
+        <XAxis type="number" tick={{ fontSize: 11 }} />
+        <YAxis type="category" dataKey="brand" width={80} tick={{ fontSize: 11 }} />
+        <Tooltip />
+        <Bar dataKey="total" radius={[0, 4, 4, 0]}>
+          {chartData.map((entry, i) => (
+            <Cell key={i} fill={BRAND_COLORS[entry.brand] || "#78909C"} />
+          ))}
+        </Bar>
+      </BarChart>
+    </ResponsiveContainer>
+  );
+}
+
 export default function TrendAnalysis() {
   const { data: kpi, isLoading: kpiLoading } = useKpi();
   const { data: colors } = useColors();
   const { data: materials } = useMaterials();
+  const { data: categories } = useCategories();
 
   return (
     <main className="flex-1 p-8 overflow-y-auto bg-[var(--color-bg)]">
@@ -137,17 +205,20 @@ export default function TrendAnalysis() {
         {colors?.by_brand && (
           <section className="bg-white border border-[var(--color-border)] rounded-md p-6 mb-6">
             <h2 className="font-['Lora'] text-base font-semibold mb-4">Colors by Brand</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {Object.entries(colors.by_brand).map(([brand, brandColors]) => (
                 <div key={brand}>
-                  <h3 className="text-sm font-medium mb-2 capitalize">{brand}</h3>
-                  <ResponsiveContainer width="100%" height={160}>
-                    <BarChart data={brandColors.slice(0, 8)} layout="vertical">
+                  <h3 className="text-sm font-medium mb-2 capitalize flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: BRAND_COLORS[brand] || "#78909C" }} />
+                    {brand}
+                  </h3>
+                  <ResponsiveContainer width="100%" height={140}>
+                    <BarChart data={brandColors.slice(0, 6)} layout="vertical">
                       <XAxis type="number" hide />
-                      <YAxis type="category" dataKey="color" width={60} tick={{ fontSize: 11 }} />
+                      <YAxis type="category" dataKey="color" width={55} tick={{ fontSize: 10 }} />
                       <Tooltip />
                       <Bar dataKey="count" radius={[0, 4, 4, 0]}>
-                        {brandColors.slice(0, 8).map((entry, i) => (
+                        {brandColors.slice(0, 6).map((entry, i) => (
                           <Cell key={i} fill={COLOR_MAP[entry.color] || "#78909C"} />
                         ))}
                       </Bar>
@@ -158,6 +229,18 @@ export default function TrendAnalysis() {
             </div>
           </section>
         )}
+
+        {/* Brand Product Count + Category Distribution */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          <section className="bg-white border border-[var(--color-border)] rounded-md p-6">
+            <h2 className="font-['Lora'] text-base font-semibold mb-4">Products by Brand</h2>
+            <BrandProductCount data={categories} />
+          </section>
+          <section className="bg-white border border-[var(--color-border)] rounded-md p-6">
+            <h2 className="font-['Lora'] text-base font-semibold mb-4">Category Distribution</h2>
+            <CategoryChart data={categories} />
+          </section>
+        </div>
 
         {/* Material Matrix */}
         <section className="bg-white border border-[var(--color-border)] rounded-md p-6 mb-6">

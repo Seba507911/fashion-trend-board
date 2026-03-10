@@ -155,7 +155,11 @@ async def get_graph_data(db: aiosqlite.Connection = Depends(get_db)):
     nodes = {}
     edges = defaultdict(int)
 
-    brand_colors = {"alo": "#4ECDC4", "newbalance": "#E74C3C", "marithe": "#3498DB", "asics": "#F39C12"}
+    brand_colors = {
+        "alo": "#4ECDC4", "newbalance": "#E74C3C", "marithe": "#3498DB", "asics": "#F39C12",
+        "coor": "#5B7553", "blankroom": "#2C2C2C", "youth": "#E67E22",
+        "lemaire": "#8D6E63", "northface": "#D32F2F", "descente": "#1565C0",
+    }
 
     # 브랜드 노드 수집
     brand_counts = Counter()
