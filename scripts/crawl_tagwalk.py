@@ -27,6 +27,7 @@ BASE_URL = "https://www.tag-walk.com"
 
 # 크롤링 대상 디자이너
 DESIGNERS = {
+    # ── 기존 (13개) ──
     "prada": {"name": "Prada", "slug": "prada"},
     "gucci": {"name": "Gucci", "slug": "gucci"},
     "lemaire": {"name": "Lemaire", "slug": "lemaire"},
@@ -40,6 +41,34 @@ DESIGNERS = {
     "valentino": {"name": "Valentino", "slug": "valentino"},
     "chanel": {"name": "Chanel", "slug": "chanel"},
     "hermes": {"name": "Hermes", "slug": "hermes"},
+    # ── Tier 1: 메이저 럭셔리 (10개) ──
+    "louis-vuitton": {"name": "Louis Vuitton", "slug": "louis-vuitton"},
+    "fendi": {"name": "Fendi", "slug": "fendi"},
+    "dolce-gabbana": {"name": "Dolce & Gabbana", "slug": "dolce-gabbana"},
+    "givenchy": {"name": "Givenchy", "slug": "givenchy"},
+    "burberry": {"name": "Burberry", "slug": "burberry"},
+    "alexander-mcqueen": {"name": "Alexander McQueen", "slug": "alexander-mcqueen"},
+    "versace": {"name": "Versace", "slug": "versace"},
+    "balmain": {"name": "Balmain", "slug": "balmain"},
+    "schiaparelli": {"name": "Schiaparelli", "slug": "schiaparelli"},
+    "chloe": {"name": "Chloe", "slug": "chloe"},
+    # ── Tier 2: 하이엔드 컨템포러리 (10개) ──
+    "max-mara": {"name": "Max Mara", "slug": "max-mara"},
+    "jil-sander": {"name": "Jil Sander", "slug": "jil-sander"},
+    "acne-studios": {"name": "Acne Studios", "slug": "acne-studios"},
+    "maison-margiela": {"name": "Maison Margiela", "slug": "maison-margiela"},
+    "stella-mccartney": {"name": "Stella McCartney", "slug": "stella-mccartney"},
+    "sacai": {"name": "Sacai", "slug": "sacai"},
+    "rick-owens": {"name": "Rick Owens", "slug": "rick-owens"},
+    "isabel-marant": {"name": "Isabel Marant", "slug": "isabel-marant"},
+    "ferragamo": {"name": "Ferragamo", "slug": "ferragamo"},
+    "marni": {"name": "Marni", "slug": "marni"},
+    # ── Tier 3: 일본/한국 관심 (5개) ──
+    "comme-des-garcons": {"name": "Comme des Garcons", "slug": "comme-des-garcons"},
+    "issey-miyake": {"name": "Issey Miyake", "slug": "issey-miyake"},
+    "junya-watanabe": {"name": "Junya Watanabe", "slug": "junya-watanabe"},
+    "mame-kurogouchi": {"name": "Mame Kurogouchi", "slug": "mame-kurogouchi"},
+    "thom-browne": {"name": "Thom Browne", "slug": "thom-browne"},
 }
 
 # 시즌 목록 (최신 순)
