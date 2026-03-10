@@ -138,7 +138,12 @@ INSERT OR IGNORE INTO brands (id, name, name_kr, brand_type, website_url) VALUES
 ('asics', 'ASICS', '아식스', 'competitor', 'https://www.asics.com/kr/ko-kr/'),
 ('newbalance', 'New Balance', '뉴발란스', 'competitor', 'https://www.newbalance.co.kr/'),
 ('marithe', 'Marithe Francois Girbaud', '마리떼 프랑소와 저버', 'competitor', 'https://www.marithe.com/'),
-('alo', 'ALO Yoga', '알로 요가', 'competitor', 'https://www.aloyoga.co.kr/');
+('alo', 'ALO Yoga', '알로 요가', 'competitor', 'https://www.aloyoga.co.kr/'),
+('coor', 'Coor', '쿠어', 'competitor', 'https://coor.kr/'),
+('blankroom', 'Blankroom', '블랭크룸', 'competitor', 'https://blankroom.co.kr/'),
+('youth', 'Youth', '유스', 'competitor', 'https://youth-lab.kr/'),
+('northface', 'The North Face Korea', '노스페이스코리아', 'competitor', 'https://www.thenorthfacekorea.co.kr/'),
+('descente', 'Descente Korea', '데상트코리아', 'competitor', 'https://dk-on.com/DESCENTE');
 
 INSERT OR IGNORE INTO brands (id, name, name_kr, brand_type, website_url) VALUES
 ('prada', 'Prada', '프라다', 'reference', 'https://www.prada.com/'),

@@ -1,4 +1,13 @@
-"""크롤링 실행 스크립트."""
+"""크롤링 실행 스크립트.
+
+플랫폼 기반 크롤러를 사용하여 브랜드 상품을 크롤링한다.
+브랜드 추가는 backend/crawlers/brand_configs.py에서 설정.
+
+Usage:
+    python scripts/run_crawl.py --brand marithe --details
+    python scripts/run_crawl.py --brand alo --dry-run
+    python scripts/run_crawl.py --list
+"""
 import argparse
 import asyncio
 import json
@@ -8,20 +17,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from backend.crawlers.brand_crawlers.asics import AsicsCrawler
-from backend.crawlers.brand_crawlers.newbalance import NewBalanceCrawler
-from backend.crawlers.brand_crawlers.marithe import MaritheCrawler
-from backend.crawlers.brand_crawlers.alo import AloCrawler
+from backend.crawlers.brand_configs import get_crawler, list_brands
 from backend.db.database import DB_PATH
 
 logging.basicConfig(level=logging.INFO, format="%(name)s | %(levelname)s | %(message)s")
-
-CRAWLERS = {
-    "asics": AsicsCrawler,
-    "newbalance": NewBalanceCrawler,
-    "marithe": MaritheCrawler,
-    "alo": AloCrawler,
-}
 
 
 async def save_products(products: list[dict]):
@@ -54,18 +53,36 @@ async def save_products(products: list[dict]):
 
 async def main():
     parser = argparse.ArgumentParser(description="FTIB Crawler")
-    parser.add_argument("--brand", required=True, choices=list(CRAWLERS.keys()) + ["all"])
+    parser.add_argument("--brand", help="Brand ID to crawl")
     parser.add_argument("--season", default=None)
-    parser.add_argument("--max-pages", type=int, default=3)
+    parser.add_argument("--max-pages", type=int, default=10)
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--limit", type=int, default=None, help="상품 수 제한 (테스트용)")
     parser.add_argument("--details", action="store_true", help="상세 페이지 크롤링 포함")
+    parser.add_argument("--list", action="store_true", help="등록된 브랜드 목록 표시")
     args = parser.parse_args()
 
-    brands = list(CRAWLERS.keys()) if args.brand == "all" else [args.brand]
+    if args.list:
+        brands = list_brands()
+        print(f"\n{'Brand':20s} {'Platform':10s}")
+        print("-" * 32)
+        for brand_id, platform in sorted(brands.items()):
+            print(f"{brand_id:20s} {platform:10s}")
+        print(f"\nTotal: {len(brands)} brands")
+        return
+
+    if not args.brand:
+        parser.error("--brand is required (or use --list)")
+
+    brands = list(list_brands().keys()) if args.brand == "all" else [args.brand]
 
     for brand_id in brands:
-        crawler = CRAWLERS[brand_id]()
+        try:
+            crawler = get_crawler(brand_id)
+        except ValueError as e:
+            logging.error(str(e))
+            continue
+
         logging.info(f"=== Starting crawl: {brand_id} ===")
         products = await crawler.crawl(
             season=args.season,

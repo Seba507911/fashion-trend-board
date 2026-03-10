@@ -1,0 +1,250 @@
+"""Cafe24 플랫폼 크롤러.
+
+Cafe24 기반 쇼핑몰의 공통 크롤링 로직.
+브랜드별로 config만 전달하면 동작한다.
+
+지원 브랜드 예시: 마리떼, 마르디메크르디, 르블랑, 라이프워크 등
+
+Config 형태:
+    {
+        "brand_id": "marithe",
+        "base_url": "https://www.marithe-official.com",
+        "categories": {
+            "outer": ["815", "820"],    # cate_no 목록
+            "top": ["816", "821"],
+        },
+        "style_tags": ["french", "casual"],
+        "season_id": "2026SS",
+        "currency": "KRW",
+    }
+"""
+from __future__ import annotations
+
+import asyncio
+import re
+from typing import Optional
+
+from playwright.async_api import Page
+
+from backend.crawlers.base_crawler import BaseCrawler
+
+
+class Cafe24Crawler(BaseCrawler):
+    """Cafe24 플랫폼 공통 크롤러."""
+
+    def __init__(self, config: dict):
+        super().__init__(config["brand_id"])
+        self.config = config
+        self.base_url = config["base_url"].rstrip("/")
+        self.categories = config.get("categories", {})
+        self.style_tags = config.get("style_tags", [])
+        self.season_id = config.get("season_id", "2026SS")
+        self.currency = config.get("currency", "KRW")
+        self._card_selector = config.get("card_selector", "ul.prdList > li.xans-record-")
+
+        # cate_no → category 역매핑
+        self._cate_map: dict[str, str] = {}
+        for cat_id, cate_nos in self.categories.items():
+            for cn in cate_nos:
+                self._cate_map[str(cn)] = cat_id
+
+    async def get_product_list_urls(self, season: Optional[str] = None) -> list[str]:
+        urls = []
+        for cate_nos in self.categories.values():
+            for cn in cate_nos:
+                urls.append(f"{self.base_url}/product/list.html?cate_no={cn}")
+        return urls
+
+    def get_card_selector(self) -> str:
+        return self._card_selector
+
+    def _url_to_category(self, page_url: str) -> Optional[str]:
+        m = re.search(r"cate_no=(\d+)", page_url)
+        if m:
+            return self._cate_map.get(m.group(1))
+        return None
+
+    async def parse_product_card(self, page: Page, element) -> Optional[dict]:
+        try:
+            card_data = await element.evaluate("""(li) => {
+                const result = {};
+                result.productNo = (li.id || '').replace('anchorBoxId_', '');
+
+                const img = li.querySelector('.swiper-slide-active img, .swiper-slide:first-child img, .thumb img, .prdImg img, img.ThumbImage, .thumbnail img');
+                result.imgSrc = img ? (img.getAttribute('src') || img.getAttribute('data-src') || '') : '';
+
+                const imgs = li.querySelectorAll('.swiper-slide img, .thumb img, img.ThumbImage, .thumbnail img');
+                result.imageUrls = [];
+                imgs.forEach(i => {
+                    const src = i.getAttribute('src') || i.getAttribute('data-src') || '';
+                    if (src && !result.imageUrls.includes(src)) result.imageUrls.push(src);
+                });
+
+                const nameEl = li.querySelector('.description .name a, .name a, .prd_name a, p.name a, .thumbnail-info .name a');
+                result.href = nameEl ? nameEl.getAttribute('href') : '';
+                result.name = nameEl ? nameEl.innerText.trim() : '';
+                // productNo fallback: href에서 product_no 추출
+                if (!result.productNo && result.href) {
+                    const m = result.href.match(/product_no=(\\d+)/) || result.href.match(/\\/(\\d+)\\//);
+                    if (m) result.productNo = m[1];
+                }
+
+                const descEl = li.querySelector('.description[ec-data-price], [ec-data-price]');
+                result.price = descEl ? descEl.getAttribute('ec-data-price') : '';
+
+                const textContent = li.innerText || '';
+                const priceMatches = textContent.match(/([\\d,]+)원/g);
+                result.priceTexts = priceMatches || [];
+
+                const sizeEls = li.querySelectorAll('.option_layer li span');
+                result.sizes = [];
+                sizeEls.forEach(el => {
+                    const text = el.innerText.trim();
+                    if (text) result.sizes.push(text);
+                });
+
+                return result;
+            }""")
+
+            if not card_data.get("name") or not card_data.get("productNo"):
+                return None
+
+            product_no = card_data["productNo"]
+            product_name = card_data["name"]
+            price = int(card_data["price"]) if card_data.get("price") else 0
+
+            sale_price = None
+            price_texts = card_data.get("priceTexts", [])
+            if len(price_texts) >= 2:
+                first = int(re.sub(r"[^\d]", "", price_texts[0]) or 0)
+                second = int(re.sub(r"[^\d]", "", price_texts[1]) or 0)
+                if second < first:
+                    sale_price = second
+
+            img_url = card_data.get("imgSrc", "")
+            image_urls = card_data.get("imageUrls", [])
+
+            href = card_data.get("href", "")
+            product_url = href if href.startswith("http") else self.base_url + href
+
+            category_id = self._url_to_category(page.url)
+            sizes = card_data.get("sizes", [])
+
+            # 상품명에서 컬러 추출
+            colors = self._extract_color_from_name(product_name)
+
+            return {
+                "id": self.make_product_id(product_no),
+                "product_name": product_name,
+                "product_name_kr": product_name,
+                "price": price,
+                "sale_price": sale_price,
+                "currency": self.currency,
+                "category_id": category_id,
+                "season_id": self.season_id,
+                "colors": colors,
+                "sizes": sizes,
+                "thumbnail_url": img_url,
+                "image_urls": image_urls[:5],
+                "product_url": product_url,
+                "style_tags": self.style_tags,
+            }
+        except Exception as e:
+            self.logger.warning(f"Cafe24 card parse error: {e}")
+            return None
+
+    async def parse_product_detail(self, page: Page, url: str) -> dict:
+        detail = {}
+        try:
+            await page.goto(url, wait_until="domcontentloaded", timeout=30000)
+            await asyncio.sleep(4)
+
+            info = await page.evaluate("""() => {
+                const result = {};
+
+                // 사이즈 (select option)
+                const sizeOpts = document.querySelectorAll('select[name="option1"] option');
+                result.sizes = [];
+                sizeOpts.forEach(o => {
+                    const text = o.innerText.trim();
+                    if (text && text !== 'empty' && !text.includes('선택') &&
+                        !text.includes('필수') && text !== '---') {
+                        const clean = text.replace(/\\s*\\[.*\\]/, '').trim();
+                        if (clean) result.sizes.push(clean);
+                    }
+                });
+
+                // 상세 설명
+                const contEl = document.querySelector('.cont, .product_detail, .detail_cont');
+                const contText = contEl ? contEl.innerText.trim() : '';
+                result.description = '';
+                result.materials = [];
+                result.fitInfo = '';
+
+                if (contText) {
+                    const matLines = contText.match(/[가-힣A-Za-z]+\\s*\\d+%/g);
+                    if (matLines) result.materials = [...new Set(matLines)];
+                    const matLines2 = contText.match(/\\d+%\\s*[가-힣A-Za-z]+/g);
+                    if (matLines2) {
+                        matLines2.forEach(m => {
+                            if (!result.materials.includes(m)) result.materials.push(m);
+                        });
+                    }
+
+                    const sizeIdx = contText.indexOf('SIZE GUIDE');
+                    if (sizeIdx > 0) {
+                        result.description = contText.substring(0, sizeIdx).trim();
+                        result.fitInfo = contText.substring(sizeIdx).trim().substring(0, 500);
+                    } else {
+                        result.description = contText.substring(0, 500);
+                    }
+                }
+
+                // 컬러 — 관련 상품에서 추출
+                result.colors = [];
+                const relatedEls = document.querySelectorAll(
+                    '.xans-product-relation .name a, .relation_prd .name a'
+                );
+                relatedEls.forEach(el => {
+                    const text = el.innerText.trim();
+                    if (text) {
+                        const parts = text.split(' ');
+                        if (parts.length > 1) result.colors.push(parts[parts.length - 1]);
+                    }
+                });
+
+                return result;
+            }""")
+
+            if info.get("sizes"):
+                detail["sizes"] = info["sizes"]
+            if info.get("materials"):
+                detail["materials"] = [
+                    m for m in info["materials"]
+                    if "쿠폰" not in m and "적립" not in m and "할인" not in m
+                ]
+            if info.get("description"):
+                detail["description"] = info["description"]
+            if info.get("fitInfo"):
+                detail["fit_info"] = info["fitInfo"]
+            if info.get("colors"):
+                detail["colors"] = list(set(info["colors"]))
+
+        except Exception as e:
+            self.logger.warning(f"Cafe24 detail parse failed ({url}): {e}")
+
+        return detail
+
+    @staticmethod
+    def _extract_color_from_name(product_name: str) -> list[str]:
+        """상품명 끝에서 컬러 키워드 추출."""
+        color_keywords = {
+            "white", "black", "gray", "grey", "navy", "blue", "red",
+            "pink", "green", "yellow", "beige", "brown", "cream",
+            "olive", "charcoal", "mint", "ivory", "khaki", "orange",
+            "purple", "lavender", "violet", "sand", "camel", "ecru",
+        }
+        parts = product_name.rsplit(" ", 1)
+        if len(parts) == 2 and parts[1].lower() in color_keywords:
+            return [parts[1]]
+        return []
