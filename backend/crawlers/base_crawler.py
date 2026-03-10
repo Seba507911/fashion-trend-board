@@ -130,6 +130,8 @@ class BaseCrawler(ABC):
                                 product["fit_info"] = detail["fit_info"]
                             if detail.get("description"):
                                 product["description"] = detail["description"]
+                            if detail.get("image_urls"):
+                                product["image_urls"] = json.dumps(detail["image_urls"], ensure_ascii=False)
                             self.logger.info(f"  [{i+1}/{len(products)}] {product['product_name']} - sizes:{len(detail.get('sizes', []))} colors:{len(detail.get('colors', []))}")
                             await asyncio.sleep(2)
                         except Exception as e:

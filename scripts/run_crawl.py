@@ -23,9 +23,49 @@ from backend.db.database import DB_PATH
 logging.basicConfig(level=logging.INFO, format="%(name)s | %(levelname)s | %(message)s")
 
 
+def _merge_json(a: str, b: str) -> str:
+    """두 JSON 배열 문자열을 병합 (중복 제거, 순서 유지)."""
+    try:
+        la = json.loads(a) if a else []
+    except (json.JSONDecodeError, TypeError):
+        la = []
+    try:
+        lb = json.loads(b) if b else []
+    except (json.JSONDecodeError, TypeError):
+        lb = []
+    if not isinstance(la, list):
+        la = []
+    if not isinstance(lb, list):
+        lb = []
+    return json.dumps(list(dict.fromkeys(la + lb)), ensure_ascii=False)
+
+
+def _dedupe_products(products: list[dict]) -> list[dict]:
+    """크롤링 결과에서 같은 (brand_id, name, price) 상품을 병합."""
+    groups: dict[str, dict] = {}
+    for p in products:
+        key = f"{p['brand_id']}|{p['product_name']}|{p.get('price', 0)}"
+        if key not in groups:
+            groups[key] = dict(p)
+        else:
+            canon = groups[key]
+            canon["colors"] = _merge_json(canon.get("colors", "[]"), p.get("colors", "[]"))
+            canon["image_urls"] = _merge_json(canon.get("image_urls", "[]"), p.get("image_urls", "[]"))
+            canon["sizes"] = _merge_json(canon.get("sizes", "[]"), p.get("sizes", "[]"))
+            # 빈 필드가 있으면 보충
+            if not canon.get("thumbnail_url") and p.get("thumbnail_url"):
+                canon["thumbnail_url"] = p["thumbnail_url"]
+            if not canon.get("materials") or canon["materials"] == "[]":
+                if p.get("materials") and p["materials"] != "[]":
+                    canon["materials"] = p["materials"]
+    return list(groups.values())
+
+
 async def save_products(products: list[dict]):
-    """크롤링 결과를 DB에 저장."""
+    """크롤링 결과를 DB에 저장 (컬러 중복 자동 병합)."""
     import aiosqlite
+
+    products = _dedupe_products(products)
 
     async with aiosqlite.connect(str(DB_PATH)) as db:
         for p in products:
@@ -48,7 +88,7 @@ async def save_products(products: list[dict]):
                 ),
             )
         await db.commit()
-        logging.info(f"Saved {len(products)} products to DB")
+        logging.info(f"Saved {len(products)} products to DB (after dedup)")
 
 
 async def main():

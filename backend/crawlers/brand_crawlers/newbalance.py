@@ -80,8 +80,10 @@ class NewBalanceCrawler(BaseCrawler):
 
             category_id = self._url_to_category(page.url)
 
+            # ID: style_code만 사용 (컬러는 colors 배열에 저장)
+            # NB는 컬러별로 style_code가 다를 수 있으므로 name+price 기반 dedup은 save_products에서 처리
             return {
-                "id": self.make_product_id(f"{style_code}_{color_code}"),
+                "id": self.make_product_id(style_code),
                 "product_name": product_name,
                 "product_name_kr": product_name,
                 "price": nor_price if nor_price > 0 else price,
@@ -89,7 +91,7 @@ class NewBalanceCrawler(BaseCrawler):
                 "currency": "KRW",
                 "category_id": category_id,
                 "season_id": "2026SS",
-                "colors": [],
+                "colors": [color_code] if color_code else [],
                 "thumbnail_url": img_url,
                 "image_urls": [img_url] if img_url else [],
                 "product_url": product_url,
@@ -106,54 +108,73 @@ class NewBalanceCrawler(BaseCrawler):
             await page.goto(url, wait_until="domcontentloaded", timeout=30000)
             await asyncio.sleep(4)
 
-            # 사이즈
-            sizes = await page.evaluate("""() => {
-                const sizeEls = document.querySelectorAll('.size_list li a, .sizeList li a, [class*="size"] li a, .opt_size li a');
-                const sizes = [];
-                sizeEls.forEach(el => {
-                    const text = el.innerText.trim();
-                    if (text && text !== '사이즈' && !text.includes('선택')) sizes.push(text);
-                });
-                return sizes;
-            }""")
-            if sizes:
-                detail["sizes"] = sizes
-
-            # 컬러
-            colors = await page.evaluate("""() => {
-                const colors = [];
-                const imgs = document.querySelectorAll('.color_list img, .colorChip img, [class*="color"] img');
-                imgs.forEach(img => {
-                    const alt = img.getAttribute('alt') || '';
-                    if (alt && !colors.includes(alt)) colors.push(alt);
-                });
-                if (colors.length === 0) {
-                    const colorEls = document.querySelectorAll('.color_list li a, [class*="color"] li a');
-                    colorEls.forEach(el => {
-                        const title = el.getAttribute('title') || el.getAttribute('data-color-name') || el.innerText.trim();
-                        if (title && !colors.includes(title)) colors.push(title);
-                    });
-                }
-                return colors;
-            }""")
-            if colors:
-                detail["colors"] = colors
-
-            # 상세 정보 (소재, 설명)
             info = await page.evaluate("""() => {
-                const result = {description: '', materials: [], fit_info: ''};
-                const descEl = document.querySelector('.prd_detail_info, .detail_info, .product_info');
-                if (descEl) result.description = descEl.innerText.trim().substring(0, 500);
-                // 소재: 전체 텍스트에서 "% 소재" 패턴 추출
-                const allText = document.body.innerText;
-                const matMatches = allText.match(/\\d+%\\s*[가-힣A-Za-z]+/g);
-                if (matMatches) {
-                    result.materials = [...new Set(matMatches)].slice(0, 5);
+                const result = {sizes: [], colors: [], materials: [], description: '', imageUrls: []};
+
+                // 사이즈: .size .items li input[name="pr_size"]
+                const sizeInputs = document.querySelectorAll('.size .items li input[name="pr_size"], .size .items li input[type="radio"]');
+                sizeInputs.forEach(inp => {
+                    const info = inp.getAttribute('data-info') || inp.value || '';
+                    if (info && !result.sizes.includes(info)) {
+                        result.sizes.push(info);
+                    }
+                });
+
+                // 컬러: .color .items li input[name="pr_color"]
+                const colorInputs = document.querySelectorAll('.color .items li input[name="pr_color"], .color .items li input[type="radio"]');
+                colorInputs.forEach(inp => {
+                    const colorName = inp.getAttribute('data-info') || '';
+                    if (colorName && !result.colors.includes(colorName)) {
+                        result.colors.push(colorName);
+                    }
+                });
+
+                // 설명: .detail__descContent
+                const descEl = document.querySelector('.detail__descContent');
+                if (descEl) {
+                    const text = descEl.innerText.trim();
+                    if (text.length > 10) result.description = text.substring(0, 500);
                 }
+
+                // 갤러리 이미지: swiper-slide img
+                const galleryImgs = document.querySelectorAll('.swiper-slide img');
+                const seenUrls = new Set();
+                galleryImgs.forEach(img => {
+                    const src = img.getAttribute('src') || '';
+                    if (src && src.includes('NBRB_Product') && !seenUrls.has(src)) {
+                        seenUrls.add(src);
+                        result.imageUrls.push(src);
+                    }
+                });
+
+                // 소재: AJAX 로딩이라 초기 HTML에 없을 수 있음
+                // detail__listItem에서 시도
+                const infoItems = document.querySelectorAll('.detail__listItem');
+                infoItems.forEach(item => {
+                    const label = item.querySelector('.detail__listTit');
+                    const value = item.querySelector('.detail__listTxt');
+                    if (label && value) {
+                        const labelText = label.innerText.trim();
+                        if (labelText.includes('소재') || labelText.includes('Material')) {
+                            const matText = value.innerText.trim();
+                            if (matText && matText.length > 2) {
+                                result.materials.push(matText);
+                            }
+                        }
+                    }
+                });
+
                 return result;
             }""")
+
+            if info.get("sizes"):
+                detail["sizes"] = info["sizes"]
+            if info.get("colors"):
+                detail["colors"] = info["colors"]
             if info.get("description"):
                 detail["description"] = info["description"]
+            if info.get("imageUrls"):
+                detail["image_urls"] = info["imageUrls"]
             if info.get("materials"):
                 detail["materials"] = info["materials"]
 

@@ -4,6 +4,7 @@
 카테고리: /category/n/{gender}/{category}/{subcategory}
 상품 카드: 서버 렌더링 HTML + 무한 스크롤 (Playwright 필요)
 상세 URL: /product/{PRODUCT_CODE}
+코드 구조: 7자리 base + 1자리 color suffix (예: NJ2HS06 + D)
 """
 from __future__ import annotations
 
@@ -60,7 +61,7 @@ class NorthFaceCrawler(BaseCrawler):
         return urls
 
     def get_card_selector(self) -> str:
-        return "a[href^='/product/']"
+        return "li.plp-grid-item"
 
     def _url_to_category(self, page_url: str) -> Optional[str]:
         for cat_id, cat_urls in CATEGORY_URLS.items():
@@ -70,12 +71,19 @@ class NorthFaceCrawler(BaseCrawler):
                     return cat_id
         return None
 
+    @staticmethod
+    def _base_code(code: str) -> str:
+        """상품코드에서 컬러 접미사(마지막 1자) 제거 → 스타일 기본코드."""
+        if len(code) >= 8 and code[-1].isalpha():
+            return code[:-1]
+        return code
+
     async def _scroll_to_load_all(self, page: Page, max_scrolls: int = 15):
         """무한 스크롤로 모든 상품 로드."""
         prev_count = 0
         for _ in range(max_scrolls):
             count = await page.evaluate(
-                "document.querySelectorAll(\"a[href^='/product/']\").length"
+                "document.querySelectorAll(\"li.plp-grid-item\").length"
             )
             if count == prev_count:
                 break
@@ -116,23 +124,25 @@ class NorthFaceCrawler(BaseCrawler):
 
                         items = await page.evaluate("""() => {
                             const results = [];
-                            const links = document.querySelectorAll("a[href^='/product/']");
-                            links.forEach(a => {
-                                const href = a.getAttribute('href') || '';
-                                const codeMatch = href.match(/\\/product\\/([A-Z0-9]+)/);
-                                if (!codeMatch) return;
-
-                                const card = a.closest('[class*="product"]') || a.parentElement;
-                                if (!card) return;
-
+                            const cards = document.querySelectorAll('li.plp-grid-item');
+                            cards.forEach(card => {
+                                // 이미지
                                 const img = card.querySelector('img');
                                 const imgSrc = img ? (img.getAttribute('src') || img.getAttribute('data-src') || '') : '';
 
-                                const text = card.innerText || '';
-                                const lines = text.split('\\n').map(l => l.trim()).filter(l => l);
+                                // 상품명
+                                const nameEl = card.querySelector('p.name a');
+                                const name = nameEl ? nameEl.innerText.trim() : '';
 
-                                // 가격 추출
-                                const priceMatches = text.match(/([\\d,]+)원/g) || [];
+                                // 상품 링크
+                                const linkEl = card.querySelector("a[href^='/product/']");
+                                const href = linkEl ? linkEl.getAttribute('href') : '';
+                                const codeMatch = href.match(/\\/product\\/([A-Z0-9]+)/);
+                                if (!codeMatch || !name) return;
+
+                                // 가격: "269,000 원" 또는 "269,000" 형태
+                                const text = card.innerText || '';
+                                const priceMatches = text.match(/([\\d,]+)\\s*원/g) || [];
                                 let price = 0;
                                 let salePrice = null;
                                 if (priceMatches.length >= 2) {
@@ -141,13 +151,17 @@ class NorthFaceCrawler(BaseCrawler):
                                 } else if (priceMatches.length === 1) {
                                     price = parseInt(priceMatches[0].replace(/[^\\d]/g, '')) || 0;
                                 }
-
-                                // 상품명: 가격이 아닌 첫 번째 텍스트 라인
-                                let name = '';
-                                for (const line of lines) {
-                                    if (!line.match(/[\\d,]+원/) && !line.match(/^\\d+%$/) && line.length > 2) {
-                                        name = line;
-                                        break;
+                                // fallback: data-price 속성
+                                if (price === 0) {
+                                    const priceEl = card.querySelector('[data-price]');
+                                    if (priceEl) price = parseInt(priceEl.getAttribute('data-price')) || 0;
+                                }
+                                // fallback: span.price strong
+                                if (price === 0) {
+                                    const priceStrong = card.querySelector('.price strong, span.price');
+                                    if (priceStrong) {
+                                        const pText = priceStrong.innerText.replace(/[^\\d]/g, '');
+                                        price = parseInt(pText) || 0;
                                     }
                                 }
 
@@ -165,10 +179,16 @@ class NorthFaceCrawler(BaseCrawler):
 
                         for item in items:
                             code = item.get("code", "")
-                            pid = self.make_product_id(code)
+                            # 컬러 접미사 제거한 base code로 ID 생성
+                            base = self._base_code(code)
+                            pid = self.make_product_id(base)
                             if pid in seen_ids or not item.get("name"):
                                 continue
                             seen_ids.add(pid)
+
+                            img_url = item.get("imgSrc", "")
+                            if img_url and not img_url.startswith("http"):
+                                img_url = "https:" + img_url if img_url.startswith("//") else f"https://www.thenorthfacekorea.co.kr{img_url}"
 
                             raw = {
                                 "id": pid,
@@ -180,8 +200,8 @@ class NorthFaceCrawler(BaseCrawler):
                                 "category_id": category_id,
                                 "season_id": "2026SS",
                                 "colors": [],
-                                "thumbnail_url": item.get("imgSrc", ""),
-                                "image_urls": [item["imgSrc"]] if item.get("imgSrc") else [],
+                                "thumbnail_url": img_url,
+                                "image_urls": [img_url] if img_url else [],
                                 "product_url": f"{BASE_URL}{item['href']}" if not item["href"].startswith("http") else item["href"],
                                 "style_tags": ["outdoor", "sportswear"],
                             }
@@ -214,6 +234,8 @@ class NorthFaceCrawler(BaseCrawler):
                                 product["materials"] = json.dumps(detail["materials"], ensure_ascii=False)
                             if detail.get("description"):
                                 product["description"] = detail["description"]
+                            if detail.get("image_urls"):
+                                product["image_urls"] = json.dumps(detail["image_urls"], ensure_ascii=False)
                             self.logger.info(
                                 f"  [{i+1}/{len(products)}] {product['product_name']}"
                             )
@@ -238,48 +260,80 @@ class NorthFaceCrawler(BaseCrawler):
             await asyncio.sleep(4)
 
             info = await page.evaluate("""() => {
-                const result = {sizes: [], colors: [], materials: [], description: ''};
+                const result = {sizes: [], colors: [], materials: [], description: '', imageUrls: []};
 
-                // 사이즈
-                const sizeEls = document.querySelectorAll('[class*="size"] button, [class*="size"] a, [class*="size"] span');
-                sizeEls.forEach(el => {
+                // 사이즈: label.variation-size > span.variation-anchor
+                const sizeLabels = document.querySelectorAll('label.variation-size span.variation-anchor');
+                sizeLabels.forEach(el => {
                     const text = el.innerText.trim();
-                    if (text && text.match(/^\\d{2,3}/) && !text.includes('가이드')) {
+                    if (text && !result.sizes.includes(text)) {
                         result.sizes.push(text);
                     }
                 });
 
-                // 컬러 (다른 컬러 링크)
-                const colorLinks = document.querySelectorAll('a[href*="/product/"]');
-                colorLinks.forEach(a => {
-                    const title = a.getAttribute('title') || a.getAttribute('aria-label') || '';
-                    if (title && title !== '' && !result.colors.includes(title)) {
+                // 컬러: span.value 에서 현재 컬러명
+                const colorVal = document.querySelector('.product-information span.label + span.value');
+                if (colorVal) {
+                    const colorText = colorVal.innerText.trim();
+                    if (colorText && colorText !== '') {
+                        result.colors.push(colorText);
+                    }
+                }
+                // 다른 컬러 변형 링크
+                const swatchLinks = document.querySelectorAll('.swatch-list-color a[href*="/product/"]');
+                swatchLinks.forEach(a => {
+                    const title = a.getAttribute('title') || '';
+                    if (title && !result.colors.includes(title)) {
                         result.colors.push(title);
                     }
                 });
 
-                // 소재
-                const allText = document.body.innerText || '';
-                const matMatches = allText.match(/[가-힣A-Za-z]+\\s*\\d+%/g) || [];
-                const matMatches2 = allText.match(/\\d+%\\s*[가-힣A-Za-z]+/g) || [];
-                const mats = [...new Set([...matMatches, ...matMatches2])];
-                result.materials = mats.filter(m => !m.includes('할인') && !m.includes('적립')).slice(0, 5);
+                // 소재: dt.tag-key "제품 소재" → dd.tag-value
+                const dtEls = document.querySelectorAll('dt.tag-key');
+                dtEls.forEach(dt => {
+                    const label = dt.innerText.trim();
+                    if (label.includes('소재') || label.includes('재질')) {
+                        const dd = dt.nextElementSibling;
+                        if (dd && dd.tagName === 'DD') {
+                            const matText = dd.innerText.trim();
+                            if (matText && matText.length > 2) {
+                                // "겉감 : 폴리에스터 100%  주머니감 : 폴리에스터 100%" 형태
+                                result.materials.push(matText);
+                            }
+                        }
+                    }
+                });
 
-                // 설명
-                const descEl = document.querySelector('[class*="detail"], [class*="description"], [class*="info"]');
-                if (descEl) result.description = descEl.innerText.trim().substring(0, 500);
+                // 설명: pdp-details-content
+                const descEl = document.querySelector('.pdp-details-content');
+                if (descEl) {
+                    const text = descEl.innerText.trim();
+                    if (text.length > 10) result.description = text.substring(0, 500);
+                }
+
+                // 갤러리 이미지
+                const galleryImgs = document.querySelectorAll('.product-gallery-slide img, .slide.product-gallery-slide img');
+                galleryImgs.forEach(img => {
+                    const src = img.getAttribute('src') || '';
+                    if (src && src.includes('thenorthface') && !result.imageUrls.includes(src)) {
+                        result.imageUrls.push(src);
+                    }
+                });
 
                 return result;
             }""")
 
             if info.get("sizes"):
-                detail["sizes"] = info["sizes"]
+                # 중복 제거
+                detail["sizes"] = list(dict.fromkeys(info["sizes"]))
             if info.get("colors"):
                 detail["colors"] = info["colors"]
             if info.get("materials"):
                 detail["materials"] = info["materials"]
             if info.get("description"):
                 detail["description"] = info["description"]
+            if info.get("imageUrls"):
+                detail["image_urls"] = info["imageUrls"]
 
         except Exception as e:
             self.logger.warning(f"NF detail parse failed ({url}): {e}")

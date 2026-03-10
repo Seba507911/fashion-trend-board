@@ -151,6 +151,8 @@ class DescenteCrawler(BaseCrawler):
                                 product["materials"] = json.dumps(detail["materials"], ensure_ascii=False)
                             if detail.get("description"):
                                 product["description"] = detail["description"]
+                            if detail.get("image_urls"):
+                                product["image_urls"] = json.dumps(detail["image_urls"], ensure_ascii=False)
                             self.logger.info(
                                 f"  [{i+1}/{len(products)}] {product['product_name']}"
                             )
@@ -200,7 +202,8 @@ class DescenteCrawler(BaseCrawler):
 
             prod_code = match.group(1)
             color_code = match.group(2)
-            pid = self.make_product_id(f"{prod_code}_{color_code}")
+            # ID는 prod_code만 사용 (컬러 중복 방지)
+            pid = self.make_product_id(prod_code)
 
             orig_price = int(data.get("origPrice") or 0)
             sale_price_val = int(data.get("salePrice") or 0)
@@ -222,7 +225,7 @@ class DescenteCrawler(BaseCrawler):
                 "currency": "KRW",
                 "category_id": category_id,
                 "season_id": "2026SS",
-                "colors": [],
+                "colors": [color_code],
                 "thumbnail_url": img_url,
                 "image_urls": [img_url] if img_url else [],
                 "product_url": product_url,
@@ -243,38 +246,62 @@ class DescenteCrawler(BaseCrawler):
             await asyncio.sleep(4)
 
             info = await page.evaluate("""() => {
-                const result = {sizes: [], colors: [], materials: [], description: ''};
+                const result = {sizes: [], colors: [], materials: [], description: '', imageUrls: []};
 
-                // 사이즈
-                const sizeInputs = document.querySelectorAll('input[name="goods_size"]');
+                // 사이즈: prod-size-list input의 data-size-cd
+                const sizeInputs = document.querySelectorAll('ul.prod-size-list input[type="radio"]');
                 sizeInputs.forEach(inp => {
-                    const sizeCd = inp.getAttribute('data-size-cd') || '';
-                    if (sizeCd && !result.sizes.includes(sizeCd)) {
-                        result.sizes.push(sizeCd);
+                    const cd = inp.getAttribute('data-size-cd') || '';
+                    if (cd && !result.sizes.includes(cd)) result.sizes.push(cd);
+                });
+
+                // 컬러: rdoProdColor1 input의 value
+                const colorInputs = document.querySelectorAll('.opt-color input[name="rdoProdColor1"]');
+                colorInputs.forEach(inp => {
+                    const code = inp.value || '';
+                    if (code && !result.colors.includes(code)) result.colors.push(code);
+                });
+
+                // 소재: 상품정보제공고시 테이블에서 '소재' 행 찾기
+                const specRows = document.querySelectorAll('.fold-item .fold-content table.tbl-info tr');
+                specRows.forEach(row => {
+                    const th = row.querySelector('th');
+                    const td = row.querySelector('td');
+                    if (th && td) {
+                        const label = th.innerText.trim();
+                        if (label.includes('소재') || label.includes('재질') || label.includes('혼용')) {
+                            const matText = td.innerText.trim();
+                            if (matText && matText.length > 2) {
+                                // 파싱: "[BLK0]겉감1:나일론(72)폴리우레탄(28)" 형태
+                                const parts = matText.split(',').map(s => s.trim()).filter(s => s.length > 2);
+                                // 컬러 코드 제거하고 소재만 추출
+                                parts.forEach(part => {
+                                    const cleaned = part.replace(/\\[[^\\]]+\\]/g, '').trim();
+                                    if (cleaned && !result.materials.includes(cleaned)) {
+                                        result.materials.push(cleaned);
+                                    }
+                                });
+                            }
+                        }
                     }
                 });
 
-                // 컬러
-                const colorEls = document.querySelectorAll('.color-chip a, [class*="color"] a[href*="/product/"]');
-                colorEls.forEach(a => {
-                    const title = a.getAttribute('title') || a.getAttribute('aria-label') || '';
-                    if (title && !result.colors.includes(title)) {
-                        result.colors.push(title);
+                // 설명: og:description
+                const ogDesc = document.querySelector('meta[property="og:description"]');
+                if (ogDesc) {
+                    const content = ogDesc.getAttribute('content') || '';
+                    if (content.length > 10) result.description = content;
+                }
+
+                // 갤러리 이미지
+                const galleryImgs = document.querySelectorAll('.prod-img-wrap .swiper-slide img');
+                galleryImgs.forEach(img => {
+                    let src = img.getAttribute('src') || '';
+                    if (src.startsWith('//')) src = 'https:' + src;
+                    if (src && src.includes('dk-on.com') && !result.imageUrls.includes(src)) {
+                        result.imageUrls.push(src);
                     }
                 });
-
-                // 소재
-                const allText = document.body.innerText || '';
-                const matMatches = allText.match(/[가-힣A-Za-z]+\\s*\\d+%/g) || [];
-                const matMatches2 = allText.match(/\\d+%\\s*[가-힣A-Za-z]+/g) || [];
-                const mats = [...new Set([...matMatches, ...matMatches2])];
-                result.materials = mats.filter(m =>
-                    !m.includes('할인') && !m.includes('적립') && !m.includes('쿠폰')
-                ).slice(0, 5);
-
-                // 설명
-                const descEl = document.querySelector('.detail-info, .prod-detail, [class*="description"]');
-                if (descEl) result.description = descEl.innerText.trim().substring(0, 500);
 
                 return result;
             }""")
@@ -287,6 +314,8 @@ class DescenteCrawler(BaseCrawler):
                 detail["materials"] = info["materials"]
             if info.get("description"):
                 detail["description"] = info["description"]
+            if info.get("imageUrls"):
+                detail["image_urls"] = info["imageUrls"]
 
         except Exception as e:
             self.logger.warning(f"Descente detail parse failed ({url}): {e}")
