@@ -136,50 +136,53 @@ export default function Runway() {
   const isEmpty = !isLoading && looks.length === 0;
 
   return (
-    <main className="flex-1 p-8 overflow-y-auto bg-[var(--color-bg)]">
-      <div className="max-w-[1200px] mx-auto">
-        <h1 className="font-['Lora'] text-xl font-semibold tracking-wide mb-1">Runway</h1>
-        <p className="text-sm text-[var(--color-text-secondary)] mb-6">
-          Collection looks from major fashion weeks &middot; Source: TagWalk
-        </p>
+    <main className="flex-1 flex flex-col overflow-hidden bg-[var(--color-bg)]">
+      {/* Sticky Header + Filters */}
+      <div className="shrink-0 bg-[var(--color-bg)] border-b border-[var(--color-border)] px-8 pt-6 pb-4">
+        <div className="max-w-[1200px] mx-auto">
+          <h1 className="font-['Lora'] text-xl font-semibold tracking-wide mb-1">Runway</h1>
+          <p className="text-sm text-[var(--color-text-secondary)] mb-4">
+            Collection looks from major fashion weeks &middot; Source: TagWalk
+          </p>
 
-        {/* Filters */}
-        <div className="flex gap-3 mb-6 flex-wrap">
-          {/* Designer filter */}
-          <select
-            value={selectedDesigner || ""}
-            onChange={(e) => setSelectedDesigner(e.target.value || null)}
-            className="text-xs px-3 py-2 border border-[var(--color-border)] rounded-md bg-white text-[var(--color-text)]"
-          >
-            <option value="" disabled>— Select Designer —</option>
-            {[...designers].sort((a, b) => a.designer.localeCompare(b.designer)).map((d) => (
-              <option key={d.designer_slug} value={d.designer_slug}>
-                {d.designer} ({d.look_count} looks)
-              </option>
-            ))}
-          </select>
+          <div className="flex gap-3 flex-wrap">
+            <select
+              value={selectedDesigner || ""}
+              onChange={(e) => setSelectedDesigner(e.target.value || null)}
+              className="text-xs px-3 py-2 border border-[var(--color-border)] rounded-md bg-white text-[var(--color-text)]"
+            >
+              <option value="" disabled>— Select Designer —</option>
+              {[...designers].sort((a, b) => a.designer.localeCompare(b.designer)).map((d) => (
+                <option key={d.designer_slug} value={d.designer_slug}>
+                  {d.designer} ({d.look_count} looks)
+                </option>
+              ))}
+            </select>
 
-          {/* Season filter */}
-          <select
-            value={selectedSeason || ""}
-            onChange={(e) => setSelectedSeason(e.target.value || null)}
-            className="text-xs px-3 py-2 border border-[var(--color-border)] rounded-md bg-white text-[var(--color-text)]"
-          >
-            <option value="">All Seasons</option>
-            {seasons.map((s) => (
-              <option key={s.season} value={s.season}>
-                {s.season_label || s.season}
-              </option>
-            ))}
-          </select>
+            <select
+              value={selectedSeason || ""}
+              onChange={(e) => setSelectedSeason(e.target.value || null)}
+              className="text-xs px-3 py-2 border border-[var(--color-border)] rounded-md bg-white text-[var(--color-text)]"
+            >
+              <option value="">All Seasons</option>
+              {seasons.map((s) => (
+                <option key={s.season} value={s.season}>
+                  {s.season_label || s.season}
+                </option>
+              ))}
+            </select>
 
-          {/* Stats */}
-          <div className="ml-auto text-xs text-[var(--color-text-muted)] self-center">
-            {looks.length} looks
-            {designers.length > 0 && ` · ${designers.length} designers`}
+            <div className="ml-auto text-xs text-[var(--color-text-muted)] self-center">
+              {looks.length} looks
+              {designers.length > 0 && ` · ${designers.length} designers`}
+            </div>
           </div>
         </div>
+      </div>
 
+      {/* Scrollable Content */}
+      <div className="flex-1 overflow-y-auto px-8 py-6">
+      <div className="max-w-[1200px] mx-auto">
         {/* Content */}
         {isLoading ? (
           <div className="text-sm text-[var(--color-text-muted)] py-20 text-center">Loading runway looks...</div>
@@ -218,6 +221,7 @@ export default function Runway() {
             ))}
           </div>
         )}
+      </div>
       </div>
 
       <LookModal look={selectedLook} onClose={() => setSelectedLook(null)} />

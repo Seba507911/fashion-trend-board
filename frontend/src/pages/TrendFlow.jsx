@@ -380,32 +380,38 @@ export default function TrendFlow() {
   ];
 
   return (
-    <main className="flex-1 overflow-y-auto bg-[var(--color-bg)]">
-      <div className="max-w-[1100px] mx-auto px-8 py-6">
-        <h1 className="font-['Lora'] text-xl font-semibold tracking-wide mb-1">
-          Trend Origin Flow Framework
-        </h1>
-        <p className="text-sm text-[var(--color-text-secondary)] mb-6">
-          트렌드가 어디에서 시작되어 어떤 경로로 전파되는지 분석하는 프레임워크
-        </p>
+    <main className="flex-1 flex flex-col overflow-hidden bg-[var(--color-bg)]">
+      {/* Sticky Header + Tabs */}
+      <div className="shrink-0 bg-[var(--color-bg)] border-b border-[var(--color-border)] px-8 pt-6">
+        <div className="max-w-[1100px] mx-auto">
+          <h1 className="font-['Lora'] text-xl font-semibold tracking-wide mb-1">
+            Trend Origin Flow Framework
+          </h1>
+          <p className="text-sm text-[var(--color-text-secondary)] mb-4">
+            트렌드가 어디에서 시작되어 어떤 경로로 전파되는지 분석하는 프레임워크
+          </p>
 
-        {/* Tabs */}
-        <div className="flex gap-0 border-b border-[var(--color-border)] mb-6">
-          {tabs.map((label, i) => (
-            <button
-              key={i}
-              onClick={() => setActiveTab(i)}
-              className={`px-5 py-2.5 text-[13px] font-medium border-b-2 transition-all bg-transparent ${
-                activeTab === i
-                  ? "text-[var(--color-primary)] border-[var(--color-primary)]"
-                  : "text-[var(--color-text-secondary)] border-transparent hover:text-[var(--color-text-secondary)]"
-              }`}
-            >
-              {label}
-            </button>
-          ))}
+          <div className="flex gap-0">
+            {tabs.map((label, i) => (
+              <button
+                key={i}
+                onClick={() => setActiveTab(i)}
+                className={`px-5 py-2.5 text-[13px] font-medium border-b-2 transition-all bg-transparent ${
+                  activeTab === i
+                    ? "text-[var(--color-primary)] border-[var(--color-primary)]"
+                    : "text-[var(--color-text-secondary)] border-transparent hover:text-[var(--color-text-secondary)]"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
         </div>
+      </div>
 
+      {/* Scrollable Content */}
+      <div className="flex-1 overflow-y-auto px-8 py-6">
+      <div className="max-w-[1100px] mx-auto">
         {/* Tab 0: Origin Flow Patterns */}
         {activeTab === 0 && (
           <div>
@@ -519,6 +525,7 @@ export default function TrendFlow() {
         )}
 
         <div className="h-8" />
+      </div>
       </div>
     </main>
   );

@@ -386,10 +386,10 @@ export default function TrendAnalysis() {
   const [mode, setMode] = useState("runway"); // "runway" | "market"
 
   return (
-    <main className="flex-1 p-8 overflow-y-auto bg-[var(--color-bg)]">
-      <div className="max-w-[1100px] mx-auto">
-        {/* Header + Toggle */}
-        <div className="flex items-center gap-4 mb-6">
+    <main className="flex-1 flex flex-col overflow-hidden bg-[var(--color-bg)]">
+      {/* Sticky Header + Toggle */}
+      <div className="shrink-0 bg-[var(--color-bg)] border-b border-[var(--color-border)] px-8 pt-6 pb-4">
+        <div className="max-w-[1100px] mx-auto flex items-center gap-4">
           <div>
             <h1 className="font-['Lora'] text-xl font-semibold tracking-wide mb-1">Trend Analysis</h1>
             <p className="text-sm text-[var(--color-text-secondary)]">
@@ -421,8 +421,13 @@ export default function TrendAnalysis() {
             </button>
           </div>
         </div>
+      </div>
 
-        {mode === "runway" ? <RunwayAnalysis /> : <MarketAnalysis />}
+      {/* Scrollable Content */}
+      <div className="flex-1 overflow-y-auto px-8 py-6">
+        <div className="max-w-[1100px] mx-auto">
+          {mode === "runway" ? <RunwayAnalysis /> : <MarketAnalysis />}
+        </div>
       </div>
     </main>
   );

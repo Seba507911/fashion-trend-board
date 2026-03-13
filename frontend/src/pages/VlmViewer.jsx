@@ -270,17 +270,17 @@ export default function VlmViewer() {
   if (!data?.length) return <div className="flex-1 flex items-center justify-center text-[var(--color-text-muted)]">No VLM labels yet</div>;
 
   return (
-    <main className="flex-1 p-6 overflow-y-auto">
-      <div className="mb-4">
-        <h1 className="font-['Lora'] text-xl font-bold tracking-wide">VLM Label Viewer</h1>
-        <p className="text-xs text-[var(--color-text-muted)] mt-1">
-          {filtered.length}{hasActiveFilter ? ` / ${data.length}` : ""} looks labeled &middot; Claude Vision analysis results
-        </p>
-      </div>
+    <main className="flex-1 flex flex-col overflow-hidden">
+      {/* Sticky Header + Filters */}
+      <div className="shrink-0 bg-[var(--color-bg)] border-b border-[var(--color-border)] px-6 pt-6 pb-4">
+        <div className="mb-3">
+          <h1 className="font-['Lora'] text-xl font-bold tracking-wide">VLM Label Viewer</h1>
+          <p className="text-xs text-[var(--color-text-muted)] mt-1">
+            {filtered.length}{hasActiveFilter ? ` / ${data.length}` : ""} looks labeled &middot; Claude Vision analysis results
+          </p>
+        </div>
 
-      {/* Filters */}
-      {filterOptions && (
-        <div className="bg-white border border-[var(--color-border)] rounded-md p-4 mb-5">
+        {filterOptions && (
           <div className="flex items-end gap-3 flex-wrap">
             <FilterSelect label="Designer" value={fDesigner} onChange={setFDesigner} options={filterOptions.designers} />
             <FilterSelect label="Season" value={fSeason} onChange={setFSeason} options={filterOptions.seasons} />
@@ -297,9 +297,11 @@ export default function VlmViewer() {
               </button>
             )}
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
+      {/* Scrollable Content */}
+      <div className="flex-1 overflow-y-auto p-6">
       {filtered.length === 0 ? (
         <div className="text-center py-16 text-sm text-[var(--color-text-muted)]">
           No looks match the current filters.
@@ -311,6 +313,8 @@ export default function VlmViewer() {
           ))}
         </div>
       )}
+
+      </div>
 
       <DetailModal look={selected} onClose={() => setSelected(null)} />
     </main>
