@@ -1,229 +1,421 @@
----
-name: fashion-trend-board
-description: FTIB 프로젝트 스킬 — 런웨이→마켓 트렌드 전파 추적 대시보드. 크롤링, 분석, 시각화 전체를 다루는 스킬.
----
+# FTIB Project — Claude Code Skill
 
-# FTIB — Claude Code Skill
+> Claude Code가 FTIB 프로젝트 작업 시 참조하는 프로젝트 컨텍스트.
 
-## 프로젝트 컨텍스트
+## 프로젝트 개요
 
-패션 런웨이→셀럽→마켓 흐름을 추적하는 트렌드 인텔리전스 대시보드.
-사용자: F&F AX팀 소속, Snowflake/Python/SQL 능숙.
-전체 기획은 `PROJECT.md` 참조.
-
-## 핵심 원칙
-
-1. **MVP 우선**: 동작하는 것이 먼저. SQLite로 시작.
-2. **데이터 정규화**: 컬러/소재/카테고리 일관된 형태로 JSON 저장.
-3. **크롤러 안정성**: 에러 시 skip, 전체 중단하지 않음, 로깅 필수.
-4. **crawl-delay 준수**: robots.txt의 crawl-delay 반드시 준수.
-5. **UI 디자인**: Style B (Light Editorial), Lora 폰트, 미니멀.
-
----
+Fashion Trend Intelligence Board — 패션 트렌드 전파를 데이터 기반으로 추적하는 대시보드.
+**핵심**: 트렌드가 어디에서 시작(Origin)되어 어떤 경로로 전파되는지를 정량적으로 추적.
 
 ## 기술 스택
 
-### Python 백엔드
-- **Python 3.9** (venv: `./venv/bin/python`)
-- **FastAPI** + **aiosqlite** — `backend/api/`
-- **Playwright** (async) — 공식몰 크롤링
-- **requests + BeautifulSoup** — TagWalk 등 SSR 사이트
-- `from __future__ import annotations` 필수 (3.9 호환)
+- **Backend**: FastAPI (Python)
+- **Frontend**: React + Vite + Tailwind CSS
+- **Database**: SQLite (Vercel 서버리스 호환)
+- **배포**: GitHub + Vercel 자동 배포
+- **크롤링**: Playwright (기본) + Hyperbrowser (WAF 우회, API키: `HYPERBROWSER_API_KEY`)
+- **VLM**: Claude Vision Sonnet (1순위), Gemini Flash (대량 처리 대안)
 
-### React 프론트엔드
-- **React 18** + **Vite** + **Tailwind CSS**
-- **react-router-dom v7** — SPA 라우팅
-- **TanStack Query** — API 상태 관리
-- **Recharts** — 차트, **react-force-graph-2d** — 그래프
+## 핵심 개념
 
-### 서버 실행
-```bash
-./venv/bin/python -m uvicorn backend.api.main:app --reload --port 8000
-cd frontend && npm run dev  # :5173 또는 :5174
-```
-
-### 배포
-```bash
-git add ... && git commit && git push origin main
-npx vercel --prod --yes
-```
-- Vercel: `@vercel/static-build` (frontend) + `@vercel/python` (FastAPI serverless)
-- SQLite는 read-only (로컬에서 크롤링 후 DB 파일 포함 배포)
-
----
-
-## 크롤러 아키텍처 (플랫폼 기반)
-
-### 구조
-```
-backend/crawlers/
-├── base_crawler.py              # BaseCrawler ABC
-├── brand_configs.py             # 브랜드 레지스트리 (핵심 파일)
-├── platform_crawlers/
-│   ├── cafe24.py                # Cafe24 공통 크롤러
-│   └── shopify.py               # Shopify 공통 크롤러
-└── brand_crawlers/
-    ├── newbalance.py            # 커스텀 크롤러
-    ├── northface.py             # 커스텀 (무한스크롤)
-    └── descente.py              # 커스텀 (AJAX 페이지네이션)
-```
-
-### 새 브랜드 추가 방법
-
-**Cafe24 브랜드** — config만 추가:
-```python
-# brand_configs.py → CAFE24_BRANDS
-"brand_id": {
-    "brand_id": "xxx",
-    "base_url": "https://xxx.com",
-    "card_selector": "ul.prdList > li.xans-record-",  # 또는 "ul.thumbnail > li"
-    "categories": {"outer": ["카테고리번호"], "top": ["번호"]},
-    "style_tags": ["minimal"],
-    "season_id": "2026SS",
-    "currency": "KRW",
-}
-```
-
-**Shopify 브랜드** — config만 추가:
-```python
-# brand_configs.py → SHOPIFY_BRANDS
-"brand_id": {
-    "brand_id": "xxx",
-    "base_url": "https://xxx.com",
-    "card_selector": "#product-grid > li",  # Dawn 테마
-    "selectors": {"name": ".card__heading a", "price": ".price-item--regular", ...},
-    "collections": {"slug": "category_id"},
-    "currency": "EUR",
-}
-```
-
-**커스텀 브랜드** — 크롤러 클래스 작성:
-```python
-# brand_crawlers/xxx.py → XxxCrawler(BaseCrawler)
-# brand_configs.py → CUSTOM_BRANDS에 추가 + get_crawler()에 분기 추가
-```
-
-**DB 등록 필수:**
-```sql
-INSERT OR IGNORE INTO brands (id, name, name_kr, brand_type, website_url) VALUES (...)
-```
-
-### 크롤링 실행
-```bash
-python scripts/run_crawl.py --list                      # 등록 브랜드 목록
-python scripts/run_crawl.py --brand xxx --dry-run        # 테스트
-python scripts/run_crawl.py --brand xxx --details        # 실제 크롤링
-python scripts/run_crawl.py --brand all --max-pages 10   # 전체 브랜드
-```
-
-### 등록된 브랜드 (10개)
-| 브랜드 | 플랫폼 | 상품 수 | 특이사항 |
-|--------|--------|---------|----------|
-| marithe | Cafe24 | ~298 | 표준 Cafe24 구조 |
-| coor | Cafe24 | ~201 | 표준 Cafe24 구조 |
-| blankroom | Cafe24 | ~259 | `ul.thumbnail > li` 변형 셀렉터 |
-| youth | Cafe24 | ~844 | 표준 Cafe24 구조 |
-| alo | Shopify | ~183 | `.PlpTile` 카드 셀렉터 |
-| lemaire | Shopify | ~308 | Dawn 테마, EUR 가격 (`2.900€`) |
-| newbalance | Custom | ~163 | `data-*` 속성 기반 |
-| northface | Custom | ~299 | 무한스크롤, Playwright 필수 |
-| descente | Custom | ~988 | AJAX 페이지네이션, `.grid-item.thumb-prod` |
-| asics | Custom | 0 | Akamai WAF 차단 — 보류 |
-
-### TagWalk 런웨이 크롤러
-```bash
-python scripts/crawl_tagwalk.py --designers prada gucci lemaire --seasons fall-winter-2026
-```
-- 13 디자이너: Prada, Gucci, Lemaire, Dior, Saint Laurent, Balenciaga, Loewe, Celine, Miu Miu, Bottega Veneta, Valentino, Chanel, Hermes
-- crawl-delay 2.5초, `cdn.tag-walk.com` 이미지
-
----
-
-## API 엔드포인트
+### Origin 4타입 — 각각이 다른 파이프라인
 
 ```
-GET /api/brands                          # 브랜드 목록
-GET /api/products?brand=xx&category=xx   # 상품 목록
-GET /api/products/{id}                   # 상품 상세
-
-GET /api/analysis/kpi                    # KPI (총 상품, 탑 컬러/소재/핏)
-GET /api/analysis/colors                 # 컬러 분포 (전체 + 브랜드별)
-GET /api/analysis/materials              # 브랜드×소재 매트릭스
-GET /api/analysis/categories             # 브랜드×카테고리 분포
-GET /api/analysis/graph                  # 그래프 뷰 노드/엣지
-
-GET /api/runway?designer=xx&season=xx    # 런웨이 룩
-GET /api/runway/designers                # 디자이너 목록
-GET /api/runway/seasons                  # 시즌 목록
-
-GET /api/trendflow/keywords              # 추적 키워드
-GET /api/trendflow/runway-signals        # 런웨이 시그널
-GET /api/trendflow/market-validation     # 마켓 검증
-GET /api/trendflow/celeb-mock            # 셀럽 목업
-GET /api/trendflow/expert-mock           # 전문가 리포트 목업
-GET /api/trendflow/forecast-mock         # 예측 목업
+Runway-led:     런웨이 → 전문가 → 셀럽 → 검색 → 마켓   (순차적, 6~12M)
+Capital-driven: 브랜드투자 → 캠페인 → 검색폭발 → 마켓   (런웨이/전문가 건너뜀)
+Viral/Meme:     소셜밈 → 틱톡확산 → 검색급등 → 마켓소진  (모든 전통채널 우회)
+Market-organic: 소비자수요 → 마켓점진확대 → 검색완만상승  (선행시그널 없음)
 ```
 
-## 프론트엔드 라우팅
+**Origin 자동 분류 = "어떤 시그널이 먼저 나타났는가"로 판별.**
 
-| 경로 | 컴포넌트 | 설명 |
-|------|----------|------|
-| `/runway` | `Runway.jsx` | 런웨이 룩 갤러리 |
-| `/flow` | `TrendFlow.jsx` | 트렌드 전파 파이프라인 (5단계) |
-| `/` | `ProductBoard.jsx` | Market Brand Board |
-| `/trend` | `TrendAnalysis.jsx` | 크로스 브랜드 트렌드 분석 |
-| `/graph` | `GraphView.jsx` | Zettelkasten 그래프 뷰 |
+### 패션 조닝별 Origin 지배 구조
 
-### 새 페이지 추가 패턴
-1. `frontend/src/pages/XxxPage.jsx` 생성
-2. `App.jsx`에 `<Route path="/xxx" element={<XxxPage />} />` 추가
-3. `Sidebar.jsx`의 `navItems`에 항목 추가
-4. API 필요 시 `backend/api/routes/xxx.py` 생성 → `main.py`에 라우터 등록
+| 조닝 | 지배 Origin | F&F 브랜드 | 딜레이 |
+|------|-----------|-----------|--------|
+| 럭셔리/하이엔드 | Runway-led 60% | Lemaire | 같은 시즌 |
+| 스포츠/아웃도어 | Market-organic 40% | Nike, Descente, NorthFace | 1~2시즌 |
+| 캐주얼/스트리트 | Viral 35% + Capital 30% | MLB, Youth, Marithe | 2~4개월 |
+| SPA/매스 | 전체 팔로우 | Zara, 무신사 | 2~4개월 |
 
----
+### 키워드 풀 A/B
+- **풀 A**: 런웨이 Top 30 ∩ 전문가 리포트 (합의된 시그널)
+- **풀 B**: 전문가 리포트 − 런웨이 (독립 예측)
+
+### Confidence 지표
+키워드별 4개 시그널(런웨이, 전문가, 검색량, 마켓) 종합 점수 (0~100%)
 
 ## DB 스키마
 
-| 테이블 | 역할 |
-|--------|------|
-| `brands` | 브랜드 마스터 (brand_type: own/competitor/reference) |
-| `products` | 마켓 상품 3,209개 (9개 브랜드) |
-| `runway_looks` | 런웨이 룩 1,345개 (13 디자이너) |
-| `signals` | 시그널 시계열 |
-| `scores` | 종합 스코어 |
-| `predictions` | 예측 로그 |
+### 기존 테이블
 
-### JSON 컬럼 처리
-```python
-# 저장
-colors = json.dumps(["Black", "Navy"], ensure_ascii=False)
-# 읽기 (None 체크 필수)
-colors_list = json.loads(row["colors"]) if row["colors"] else []
+```sql
+runway_looks(
+  id, designer, season, look_number,
+  image_url, tags,  -- JSON array
+  created_at
+)
+
+market_products(
+  id, brand, name, price, category,
+  color, material, size_info,
+  image_url, product_url,
+  crawled_at
+)
 ```
 
----
+### 신규 테이블
 
-## UI 디자인 규칙 (Style B — Light Editorial)
+```sql
+-- 전문가 리포트
+expert_reports(
+  id INTEGER PRIMARY KEY,
+  source TEXT NOT NULL,       -- 'wgsn','tagwalk','edited','pantone','pv','vogue','bof','highsnobiety','fashion_snoops'
+  report_type TEXT,           -- 'seasonal_forecast','color_report','material_report','market_intelligence','editorial_review'
+  season TEXT,                -- '24SS','24FW','25SS','25FW','26SS','26FW'
+  publish_date TEXT,
+  file_path TEXT,
+  processed BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+)
 
-- 폰트: `Lora` (헤딩), 시스템 산세리프 (본문)
-- 카드: `aspect-[2/3]` 세로형, `object-top` 크롭
-- 색상: CSS 변수 (`--color-primary`, `--color-border`, etc.)
-- 레이블: `text-[10px] font-semibold tracking-[1.5px] uppercase`
-- 사이드바: 220px 고정
-- 브랜드 색상: alo=#4ECDC4, newbalance=#E74C3C, marithe=#3498DB, coor=#5B7553, blankroom=#2C2C2C, youth=#E67E22, lemaire=#8D6E63, northface=#D32F2F, descente=#1565C0
+-- 전문가 키워드
+expert_keywords(
+  id INTEGER PRIMARY KEY,
+  report_id INTEGER REFERENCES expert_reports(id),
+  keyword TEXT NOT NULL,
+  category TEXT,              -- 'color','material','silhouette','style','item'
+  confidence TEXT DEFAULT 'medium',
+  is_runway_match BOOLEAN,   -- 자동 계산
+  pool TEXT,                  -- 'A'/'B' 자동 분류
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+)
 
----
+-- 셀럽 검색량
+celeb_search_volume(
+  id INTEGER PRIMARY KEY,
+  person_name TEXT NOT NULL,
+  tier TEXT,                  -- 'T1','T2','T3','T4'
+  keyword TEXT NOT NULL,
+  volume INTEGER,
+  volume_change_pct REAL,
+  is_spike BOOLEAN DEFAULT FALSE,
+  measured_date TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+)
 
-## 자주 발생하는 이슈
+-- 셀럽 착용 기록
+celeb_sightings(
+  id INTEGER PRIMARY KEY,
+  person_name TEXT NOT NULL,
+  tier TEXT,
+  keyword TEXT NOT NULL,
+  image_url TEXT,
+  source_url TEXT,
+  sighting_date TEXT,
+  manual_verified BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+)
 
-| 이슈 | 해결 |
-|------|------|
-| `str \| None` 문법 에러 | `from __future__ import annotations` 추가 |
-| uvicorn import 에러 | `./venv/bin/python -m uvicorn` 사용 |
-| NB 컬러 `(19)BLACK` | `_clean_color()` 정규식으로 정제 |
-| Cafe24 동적 로딩 | `domcontentloaded` + `sleep(5)` + 스크롤 |
-| Shopify EUR 가격 `2.900€` | `.`이 천단위 구분자 → 정규식 분기 |
-| Cafe24 셀렉터 변형 | `brand_configs`에 `card_selector` 지정 |
-| ASICS Akamai 차단 | 해결 불가, 보류 |
-| Vercel 빈 화면 | `/assets/*` 라우트를 SPA fallback 위에 배치 |
-| CORS 에러 | `main.py`에서 `allow_origins=["*"]` |
+-- 핫 아이템 로그
+hot_item_log(
+  id INTEGER PRIMARY KEY,
+  season TEXT,
+  category TEXT,
+  style_keyword TEXT,
+  evidence_type TEXT,         -- 'ranking_data','sold_out','search_spike','buyer_feedback','field_observation'
+  evidence_detail TEXT,
+  confidence TEXT DEFAULT 'medium',
+  origin_type TEXT,           -- 'runway_led','capital_driven','viral_meme','market_organic'
+  reported_by TEXT,
+  reported_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+)
+
+-- 키워드 시그널 타임라인 (Origin 자동 분류용)
+keyword_signals(
+  id INTEGER PRIMARY KEY,
+  keyword TEXT NOT NULL,
+  season TEXT NOT NULL,
+  signal_type TEXT NOT NULL,  -- 'runway','expert','celeb','search','social','market','campaign'
+  signal_strength REAL,       -- 0~1 정규화
+  first_detected TEXT,        -- ISO date
+  source_detail TEXT,         -- "WGSN report", "Tagwalk FW25" 등
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+)
+
+-- Origin 분류 결과
+keyword_origin(
+  id INTEGER PRIMARY KEY,
+  keyword TEXT NOT NULL,
+  season TEXT NOT NULL,
+  origin_type TEXT,           -- 'runway_led','capital_driven','viral_meme','market_organic','unknown'
+  confidence REAL,            -- 분류 신뢰도 0~1
+  first_signal_type TEXT,     -- 가장 먼저 나타난 시그널
+  first_signal_date TEXT,
+  signal_sequence TEXT,       -- JSON: ["runway","expert","search","market"] 순서
+  auto_classified BOOLEAN DEFAULT TRUE,
+  manual_override TEXT,       -- 수동 보정 시
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+)
+
+-- 키워드 평가 (레벨 1)
+keyword_evaluations(
+  id INTEGER PRIMARY KEY,
+  keyword TEXT, season TEXT, evaluator_name TEXT,
+  evaluation TEXT,            -- 'agree','disagree'
+  comment TEXT,
+  evaluated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+)
+
+-- 키워드 사후 검증 (레벨 2)
+keyword_retrospectives(
+  id INTEGER PRIMARY KEY,
+  keyword TEXT, season TEXT,
+  predicted_status TEXT,
+  actual_status TEXT,
+  origin_type TEXT,
+  evaluator_name TEXT,
+  retrospected_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+)
+
+-- VLM 라벨링
+vlm_labels(
+  id INTEGER PRIMARY KEY,
+  source_type TEXT,           -- 'runway','market'
+  source_id INTEGER,
+  item TEXT, shape TEXT, size TEXT, color TEXT, texture TEXT,
+  raw_response TEXT,
+  model_used TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+)
+```
+
+## Origin 자동 분류 로직
+
+```python
+def classify_origin(keyword: str, signals: list[dict]) -> dict:
+    """
+    시그널 발생 순서로 Origin 자동 분류.
+    signals = sorted list of {type, first_detected, strength}
+    """
+    if not signals:
+        return {"type": "unknown", "confidence": 0}
+    
+    first = signals[0]["type"]
+    types_present = {s["type"] for s in signals}
+    sequence = [s["type"] for s in signals]
+    
+    # Runway-led: 런웨이가 가장 먼저
+    if first == "runway" and "expert" in types_present:
+        return {
+            "type": "runway_led",
+            "confidence": 0.8 if "market" in types_present else 0.5,
+            "first_signal": first,
+            "sequence": sequence
+        }
+    
+    # Capital-driven: 캠페인 감지 + 런웨이 부재/약함
+    if "campaign" in types_present and first in ("campaign", "celeb"):
+        return {
+            "type": "capital_driven",
+            "confidence": 0.7,
+            "first_signal": first,
+            "sequence": sequence
+        }
+    
+    # Viral/Meme: 소셜이 먼저 + 런웨이/전문가 부재
+    if first == "social" and "runway" not in types_present:
+        return {
+            "type": "viral_meme",
+            "confidence": 0.75,
+            "first_signal": first,
+            "sequence": sequence
+        }
+    
+    # Market-organic: 마켓이 먼저 + 선행 시그널 부재
+    if first == "market" and "runway" not in types_present and "social" not in types_present:
+        return {
+            "type": "market_organic",
+            "confidence": 0.6,
+            "first_signal": first,
+            "sequence": sequence
+        }
+    
+    return {"type": "unknown", "confidence": 0.3, "first_signal": first, "sequence": sequence}
+```
+
+## 동의어 매핑 사전
+
+```python
+SYNONYM_MAP = {
+    "sheer": ["transparent", "see-through", "시스루"],
+    "oversized": ["loose fit", "relaxed fit", "오버사이즈", "boxy"],
+    "leather": ["가죽", "faux leather", "레더", "vegan leather"],
+    "denim": ["데님", "jeans", "진"],
+    "knit": ["knitwear", "니트", "knitted"],
+    "burgundy": ["wine", "maroon", "버건디", "와인"],
+    "tailoring": ["tailored", "suiting", "blazer", "테일러드"],
+    "wool": ["울", "woolen", "cashmere"],
+    "silk": ["실크", "satin", "새틴"],
+    "linen": ["린넨", "리넨"],
+    "crop": ["크롭", "cropped"],
+    "wide": ["와이드", "wide leg"],
+    "slim": ["슬림", "skinny", "스키니"],
+}
+
+COLOR_NAMES = {
+    "black","white","navy","burgundy","beige","camel","khaki",
+    "red","blue","green","yellow","pink","purple","orange",
+    "gray","grey","brown","cream","ivory","cobalt","cherry",
+    "olive","teal","coral","lavender","mint","sage",
+}
+
+MATERIAL_NAMES = {
+    "leather","denim","sheer","knit","wool","silk","linen",
+    "cotton","nylon","polyester","suede","velvet","satin",
+    "mesh","lace","tweed","corduroy","fleece","fur","faux fur",
+}
+
+SILHOUETTE_NAMES = {
+    "oversized","slim","wide","crop","maxi","mini","midi",
+    "structured","relaxed","fitted","boxy","flared","tapered",
+    "asymmetric","draped",
+}
+```
+
+## 런웨이 시즌 매핑
+
+| 시즌 | 쇼 시기 | 리테일 시즌 |
+|-----|--------|------------|
+| 24SS | 2023.09~10 | 2024.02~07 |
+| 24FW | 2024.02~03 | 2024.08~01 |
+| 25SS | 2024.09~10 | 2025.02~07 |
+| 25FW | 2025.02~03 | 2025.08~01 |
+| 26SS | 2025.09~10 | 2026.02~07 |
+| 26FW | 2026.02~03 | 2026.08~01 |
+
+## 전문가 리포트 소스 코드
+
+| source | 설명 | 티어 |
+|--------|------|------|
+| wgsn | WGSN 장기 트렌드 예측 | T1 |
+| tagwalk | Tagwalk 런웨이 정량 분석 | T1 |
+| edited | EDITED 마켓 인텔리전스 | T2 |
+| pantone | Pantone Color Institute | T2 |
+| pv | Première Vision 소재 | T2 |
+| vogue | Vogue Runway / BoF | T3 |
+| highsnobiety | Highsnobiety/Hypebeast | T3 |
+| fashion_snoops | Fashion Snoops | T3 |
+| google_trends | Google Trends | T3 |
+| naver_datalab | 네이버 DataLab | T3 |
+
+## 패션 조닝 코드
+
+| zoning | 브랜드 예시 | 지배 Origin |
+|--------|-----------|-----------|
+| luxury | Lemaire | runway_led |
+| sports | Nike, Descente, NorthFace, Kolon Sport | market_organic |
+| casual | MLB, Youth, Marithe, Coor, Blankroom | viral_meme, capital_driven |
+| spa | Zara, H&M, 무신사 | 전체 팔로우 |
+| active | ALO Yoga, New Balance | market_organic, capital_driven |
+
+## VLM 프롬프트
+
+```
+Analyze this fashion runway look image and classify the following attributes.
+Respond ONLY in JSON format.
+
+{
+  "items": [
+    {
+      "item": "<bag|shoe|jacket|pants|skirt|dress|top|accessory|coat|hat|scarf>",
+      "shape": "<round|square|structured|unstructured|asymmetric|geometric|organic>",
+      "size": "<mini|small|medium|large|oversized>",
+      "color": "<primary color name in English>",
+      "texture": "<matte|glossy|textured|quilted|woven|smooth|distressed|embossed>"
+    }
+  ],
+  "overall_silhouette": "<oversized|slim|wide|fitted|relaxed|structured|draped>",
+  "dominant_colors": ["<color1>", "<color2>"],
+  "key_materials": ["<material1>", "<material2>"]
+}
+```
+
+## Confidence 계산
+
+```python
+def calculate_confidence(
+    runway_score: float,      # 0~1
+    expert_score: float,      # 0~1
+    search_score: float,      # 0~1
+    market_score: float,      # 0~1
+    evaluator_adj: float = 0  # -0.2 ~ +0.2
+) -> int:
+    weights = {"runway":0.30, "expert":0.25, "search":0.20, "market":0.25}
+    raw = sum(score * weights[k] for k, score in
+              zip(weights.keys(), [runway_score, expert_score, search_score, market_score]))
+    return round(max(0, min(1, raw + evaluator_adj)) * 100)
+```
+
+## 파일 구조
+
+```
+ftib/
+├── backend/
+│   ├── main.py
+│   ├── database.py
+│   ├── routers/
+│   │   ├── runway.py
+│   │   ├── market.py
+│   │   ├── trendflow.py        ← Origin 기반 재설계
+│   │   ├── analysis.py
+│   │   └── graph.py
+│   ├── models/schemas.py
+│   └── utils/
+│       ├── synonym_map.py
+│       ├── keyword_classifier.py
+│       ├── origin_classifier.py  ← 신규: Origin 자동 분류
+│       └── confidence.py
+├── frontend/src/
+│   ├── pages/
+│   │   ├── MarketBrandBoard.jsx
+│   │   ├── Runway.jsx
+│   │   ├── TrendFlow.jsx        ← Origin 기반 재설계
+│   │   ├── TrendAnalysis.jsx
+│   │   └── GraphView.jsx
+│   └── components/trendflow/
+│       ├── OriginFlowView.jsx    ← 신규: Origin별 시그널 플로우
+│       ├── ZoneDistribution.jsx  ← 신규: 조닝별 Origin 분포
+│       ├── TimelineComparison.jsx ← 신규: 통합 타임라인
+│       ├── KeywordList.jsx
+│       ├── KeywordDetailPanel.jsx
+│       ├── ExpertReportInput.jsx
+│       ├── CelebrityTracker.jsx
+│       └── ManualCorrectionUI.jsx
+├── scripts/
+│   ├── crawlers/
+│   ├── runway_crawl/
+│   ├── vlm/
+│   └── backtest/
+└── data/ftib.db
+```
+
+## Trend Flow 탭 컴포넌트 구조
+
+```
+TrendFlow.jsx
+├── 상단: 시즌 선택 + 조닝 필터
+├── 탭 1: OriginFlowView — Origin별 활성/비활성 채널 시각화
+│   ├── Runway-led 플로우 (모든 채널 활성, 순차)
+│   ├── Capital-driven 플로우 (캠페인→검색→마켓, 런웨이/전문가 비활성)
+│   ├── Viral/Meme 플로우 (소셜→검색→마켓, 전통채널 비활성)
+│   └── Market-organic 플로우 (마켓→검색, 선행시그널 비활성)
+├── 탭 2: ZoneDistribution — 조닝별 Origin 비율 바 + 모니터링 포인트
+├── 탭 3: TimelineComparison — 4가지 Origin의 시그널 타이밍 비교 바 차트
+└── 하단: KeywordList + KeywordDetailPanel
+    ├── 키워드별 Confidence 바 + Origin 태그 + 조닝 태그
+    ├── 선택 시 타임라인 (시즌별 시그널 발생 순서)
+    ├── 시그널 강도 바
+    ├── VLM 분석 결과 (있으면)
+    └── 수기 보정 UI (동의/비동의/코멘트)
+```

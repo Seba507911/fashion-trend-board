@@ -5,18 +5,43 @@ import ForceGraph2D from "react-force-graph-2d";
 
 const api = axios.create({ baseURL: "/api" });
 
-function useGraphData() {
+function useMarketGraph() {
   return useQuery({
     queryKey: ["analysis", "graph"],
     queryFn: () => api.get("/analysis/graph").then(r => r.data),
   });
 }
 
-const LEGEND = [
+function useVlmGraph(season) {
+  return useQuery({
+    queryKey: ["analysis", "vlm-graph", season],
+    queryFn: () => api.get("/analysis/vlm-graph", { params: season ? { season } : {} }).then(r => r.data),
+  });
+}
+
+const MARKET_LEGEND = [
   { type: "brand", label: "Brand", color: "#A08B7A" },
   { type: "category", label: "Category", color: "#9E8DBE" },
   { type: "material", label: "Material", color: "#7B97AA" },
   { type: "color", label: "Color", color: "#90A0A8" },
+];
+
+const VLM_LEGEND = [
+  { type: "designer", label: "Designer", color: "#8B7D6B" },
+  { type: "color", label: "Color", color: "#90A0A8" },
+  { type: "material", label: "Material", color: "#7B97AA" },
+  { type: "silhouette", label: "Silhouette", color: "#9E8DBE" },
+  { type: "texture", label: "Texture", color: "#A0887B" },
+];
+
+const VLM_SEASONS = [
+  { value: "", label: "All Seasons" },
+  { value: "spring-summer-2026", label: "SS26" },
+  { value: "fall-winter-2026", label: "FW26" },
+  { value: "spring-summer-2025", label: "SS25" },
+  { value: "fall-winter-2025", label: "FW25" },
+  { value: "spring-summer-2024", label: "SS24" },
+  { value: "fall-winter-2024", label: "FW24" },
 ];
 
 function LegendItem({ label, color }) {
@@ -28,10 +53,8 @@ function LegendItem({ label, color }) {
   );
 }
 
-export default function GraphView() {
-  const { data, isLoading } = useGraphData();
-  const [selected, setSelected] = useState(null);
-  const [filter, setFilter] = useState("all");
+/* Shared graph canvas component */
+function GraphCanvas({ data, isLoading, filter, setFilter, filterOptions, legend, selected, setSelected }) {
   const graphRef = useRef();
   const containerRef = useRef();
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
@@ -50,13 +73,17 @@ export default function GraphView() {
     return () => obs.disconnect();
   }, []);
 
+  const centerNodeType = legend[0]?.type || "brand";
+
   const graphData = (() => {
     if (!data) return { nodes: [], links: [] };
     let nodes = data.nodes;
     let edges = data.edges;
 
     if (filter !== "all") {
-      const typeNodes = new Set(nodes.filter(n => n.type === filter || n.type === "brand").map(n => n.id));
+      const typeNodes = new Set(
+        nodes.filter(n => n.type === filter || n.type === centerNodeType).map(n => n.id)
+      );
       nodes = nodes.filter(n => typeNodes.has(n.id));
       edges = edges.filter(e => typeNodes.has(e.source) && typeNodes.has(e.target));
     }
@@ -73,7 +100,7 @@ export default function GraphView() {
       graphRef.current.centerAt(node.x, node.y, 400);
       graphRef.current.zoom(2.5, 400);
     }
-  }, []);
+  }, [setSelected]);
 
   const paintNode = useCallback((node, ctx, globalScale) => {
     const size = node.size || 4;
@@ -91,17 +118,16 @@ export default function GraphView() {
       ctx.stroke();
     }
 
-    // Label — larger font, visible earlier
-    if (globalScale > 0.8 || node.type === "brand") {
+    if (globalScale > 0.8 || node.type === centerNodeType) {
       const label = node.label || "";
       const fontSize = Math.max(12 / globalScale, 3);
-      ctx.font = `${node.type === "brand" ? "600 " : ""}${fontSize}px sans-serif`;
+      ctx.font = `${node.type === centerNodeType ? "600 " : ""}${fontSize}px sans-serif`;
       ctx.textAlign = "center";
       ctx.textBaseline = "top";
       ctx.fillStyle = "#444";
       ctx.fillText(label, node.x, node.y + r + 1.5);
     }
-  }, [selected]);
+  }, [selected, centerNodeType]);
 
   const connections = selected && data ? data.edges.filter(
     e => e.source === selected.id || e.target === selected.id
@@ -112,11 +138,11 @@ export default function GraphView() {
   }).filter(Boolean).sort((a, b) => b.weight - a.weight) : [];
 
   return (
-    <main className="flex-1 flex overflow-hidden bg-[var(--color-bg)]">
-      {/* Graph Canvas */}
+    <div className="flex-1 flex overflow-hidden">
       <div className="flex-1 relative" ref={containerRef}>
+        {/* Filters */}
         <div className="absolute top-4 left-4 z-10 flex gap-2">
-          {["all", "material", "color", "category"].map(f => (
+          {filterOptions.map(f => (
             <button
               key={f}
               onClick={() => setFilter(f)}
@@ -126,14 +152,14 @@ export default function GraphView() {
                   : "bg-white border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-gray-50"
               }`}
             >
-              {f === "all" ? "All" : f.charAt(0).toUpperCase() + f.slice(1) + "s"}
+              {f === "all" ? "All" : f.charAt(0).toUpperCase() + f.slice(1) + (f === "all" ? "" : "s")}
             </button>
           ))}
         </div>
 
         {/* Legend */}
         <div className="absolute bottom-4 left-4 z-10 bg-white/90 border border-[var(--color-border)] rounded-md p-3 flex flex-col gap-1.5">
-          {LEGEND.map(l => <LegendItem key={l.type} {...l} />)}
+          {legend.map(l => <LegendItem key={l.type} {...l} />)}
         </div>
 
         {isLoading ? (
@@ -167,8 +193,8 @@ export default function GraphView() {
       </div>
 
       {/* Detail Panel */}
-      <aside className="w-[280px] border-l border-[var(--color-border)] bg-white p-5 overflow-y-auto shrink-0">
-        <h2 className="font-['Lora'] text-base font-semibold mb-4">Node Detail</h2>
+      <aside className="w-[260px] border-l border-[var(--color-border)] bg-white p-5 overflow-y-auto shrink-0">
+        <h2 className="font-['Lora'] text-sm font-semibold mb-4">Node Detail</h2>
         {selected ? (
           <>
             <div className="mb-4">
@@ -202,9 +228,102 @@ export default function GraphView() {
             </div>
           </>
         ) : (
-          <p className="text-sm text-[var(--color-text-muted)]">Click a node in the graph to view its connections and details.</p>
+          <p className="text-xs text-[var(--color-text-muted)]">Click a node to view connections.</p>
         )}
       </aside>
+    </div>
+  );
+}
+
+export default function GraphView() {
+  const [mode, setMode] = useState("runway"); // "runway" | "market"
+  const [vlmSeason, setVlmSeason] = useState("");
+  const [marketFilter, setMarketFilter] = useState("all");
+  const [vlmFilter, setVlmFilter] = useState("all");
+  const [marketSelected, setMarketSelected] = useState(null);
+  const [vlmSelected, setVlmSelected] = useState(null);
+
+  const { data: marketData, isLoading: marketLoading } = useMarketGraph();
+  const { data: vlmData, isLoading: vlmLoading } = useVlmGraph(vlmSeason || undefined);
+
+  return (
+    <main className="flex-1 flex flex-col overflow-hidden bg-[var(--color-bg)]">
+      {/* Top Bar */}
+      <div className="border-b border-[var(--color-border)] bg-white px-6 py-3 flex items-center gap-4 shrink-0">
+        <h1 className="font-['Lora'] text-base font-semibold tracking-wide mr-2">Graph View</h1>
+
+        {/* Mode Toggle */}
+        <div className="flex bg-gray-100 rounded-md p-0.5">
+          <button
+            onClick={() => setMode("runway")}
+            className={`px-4 py-1.5 text-xs rounded-md transition-colors ${
+              mode === "runway"
+                ? "bg-white text-[var(--color-primary)] font-medium shadow-sm"
+                : "text-[var(--color-text-secondary)] hover:text-[var(--color-text)]"
+            }`}
+          >
+            Runway (VLM)
+          </button>
+          <button
+            onClick={() => setMode("market")}
+            className={`px-4 py-1.5 text-xs rounded-md transition-colors ${
+              mode === "market"
+                ? "bg-white text-[var(--color-primary)] font-medium shadow-sm"
+                : "text-[var(--color-text-secondary)] hover:text-[var(--color-text)]"
+            }`}
+          >
+            Market Brand
+          </button>
+        </div>
+
+        {/* VLM Season Filter */}
+        {mode === "runway" && (
+          <select
+            value={vlmSeason}
+            onChange={e => setVlmSeason(e.target.value)}
+            className="text-xs border border-[var(--color-border)] rounded-md px-2.5 py-1.5 bg-white text-[var(--color-text-secondary)]"
+          >
+            {VLM_SEASONS.map(s => (
+              <option key={s.value} value={s.value}>{s.label}</option>
+            ))}
+          </select>
+        )}
+
+        {/* Stats */}
+        <div className="ml-auto text-[10px] text-[var(--color-text-muted)]">
+          {mode === "runway" && vlmData && (
+            <span>{vlmData.nodes?.length || 0} nodes &middot; {vlmData.edges?.length || 0} edges</span>
+          )}
+          {mode === "market" && marketData && (
+            <span>{marketData.nodes?.length || 0} nodes &middot; {marketData.edges?.length || 0} edges</span>
+          )}
+        </div>
+      </div>
+
+      {/* Graph */}
+      {mode === "runway" ? (
+        <GraphCanvas
+          data={vlmData}
+          isLoading={vlmLoading}
+          filter={vlmFilter}
+          setFilter={setVlmFilter}
+          filterOptions={["all", "color", "material", "silhouette", "texture"]}
+          legend={VLM_LEGEND}
+          selected={vlmSelected}
+          setSelected={setVlmSelected}
+        />
+      ) : (
+        <GraphCanvas
+          data={marketData}
+          isLoading={marketLoading}
+          filter={marketFilter}
+          setFilter={setMarketFilter}
+          filterOptions={["all", "material", "color", "category"]}
+          legend={MARKET_LEGEND}
+          selected={marketSelected}
+          setSelected={setMarketSelected}
+        />
+      )}
     </main>
   );
 }

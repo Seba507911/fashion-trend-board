@@ -77,6 +77,8 @@ SEASONS = [
     "spring-summer-2026",
     "fall-winter-2025",
     "spring-summer-2025",
+    "fall-winter-2024",
+    "spring-summer-2024",
 ]
 
 # 컬렉션 타입

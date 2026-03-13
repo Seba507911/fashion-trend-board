@@ -12,6 +12,7 @@ export default function Sidebar({ selectedBrand, onBrandSelect }) {
     { id: "market-brand-board", label: "Market Brand Board", path: "/" },
     { id: "trend-analysis", label: "Trend Analysis", path: "/trend" },
     { id: "graph-view", label: "Graph View", path: "/graph" },
+    { id: "vlm-viewer", label: "VLM Labels", path: "/vlm" },
   ];
 
   const isActive = (path) => location.pathname === path;

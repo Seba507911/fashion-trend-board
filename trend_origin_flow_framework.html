@@ -1,0 +1,334 @@
+<style>
+  .fw{font-family:var(--font-sans);padding:0.5rem 0}
+  .tabs{display:flex;gap:0;border-bottom:0.5px solid var(--color-border-tertiary);margin-bottom:1.5rem}
+  .tab{padding:10px 20px;font-size:13px;font-weight:500;color:var(--color-text-secondary);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;background:none;border-top:none;border-left:none;border-right:none}
+  .tab:hover{color:var(--color-text-primary)}
+  .tab.active{color:var(--color-text-primary);border-bottom-color:var(--color-text-info)}
+  .panel{display:none}
+  .panel.active{display:block}
+  .flow-canvas{position:relative;min-height:340px;margin:1rem 0}
+  .signal-node{position:absolute;padding:8px 14px;border-radius:var(--border-radius-md);font-size:12px;font-weight:500;border:0.5px solid var(--color-border-tertiary);background:var(--color-background-primary);transition:all .4s ease;opacity:0;transform:translateY(8px)}
+  .signal-node.vis{opacity:1;transform:translateY(0)}
+  .signal-node.active{border-color:var(--color-border-info);background:var(--color-background-info);color:var(--color-text-info)}
+  .signal-node.skip{opacity:0.3;border-style:dashed}
+  .signal-node.skip.vis{opacity:0.3}
+  .conn{position:absolute;height:2px;background:var(--color-border-secondary);transform-origin:left center;transition:all .4s ease;opacity:0}
+  .conn.vis{opacity:1}
+  .conn.active{background:var(--color-text-info)}
+  .conn.skip{background:var(--color-border-tertiary);opacity:0.3}
+  .time-label{position:absolute;font-size:11px;color:var(--color-text-tertiary);font-family:var(--font-mono)}
+  .zone-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:1rem 0}
+  .zone-card{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:16px;cursor:pointer;border:0.5px solid transparent;transition:all .2s}
+  .zone-card:hover{border-color:var(--color-border-secondary)}
+  .zone-card.sel{border-color:var(--color-border-info);background:var(--color-background-info)}
+  .zone-name{font-size:13px;font-weight:500;margin-bottom:6px}
+  .zone-desc{font-size:11px;color:var(--color-text-secondary);line-height:1.5}
+  .origin-bar{display:flex;height:6px;border-radius:3px;overflow:hidden;margin-top:10px;background:var(--color-background-tertiary)}
+  .origin-seg{height:100%;transition:width .4s ease}
+  .legend-row{display:flex;gap:16px;margin:12px 0 0;flex-wrap:wrap}
+  .legend-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--color-text-secondary)}
+  .legend-dot{width:8px;height:8px;border-radius:2px}
+  .timeline-row{display:flex;align-items:center;gap:0;margin:6px 0;position:relative}
+  .tl-label{width:100px;font-size:12px;color:var(--color-text-secondary);flex-shrink:0;font-weight:500}
+  .tl-track{flex:1;height:28px;position:relative;background:var(--color-background-secondary);border-radius:4px;overflow:hidden}
+  .tl-bar{position:absolute;height:100%;border-radius:4px;display:flex;align-items:center;padding:0 8px;font-size:10px;font-weight:500;color:#fff;white-space:nowrap;transition:all .5s ease}
+  .section-label{font-size:14px;font-weight:500;margin:1.5rem 0 0.75rem;color:var(--color-text-primary)}
+  .note{font-size:12px;color:var(--color-text-secondary);line-height:1.6;margin-top:12px;padding:12px 16px;background:var(--color-background-secondary);border-radius:var(--border-radius-md)}
+  .signal-desc{margin-top:16px;padding:14px 16px;background:var(--color-background-secondary);border-radius:var(--border-radius-md);font-size:12px;line-height:1.7;color:var(--color-text-secondary)}
+  .signal-desc strong{color:var(--color-text-primary);font-weight:500}
+  .btn-row{display:flex;gap:8px;margin:12px 0}
+  .sm-btn{padding:6px 14px;font-size:12px;border-radius:var(--border-radius-md);cursor:pointer;border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-secondary);transition:all .15s}
+  .sm-btn:hover{background:var(--color-background-secondary)}
+  .sm-btn.act{background:var(--color-background-info);color:var(--color-text-info);border-color:var(--color-border-info)}
+</style>
+
+<div class="fw">
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab(0)">Origin별 시그널 플로우</button>
+    <button class="tab" onclick="switchTab(1)">조닝별 Origin 분포</button>
+    <button class="tab" onclick="switchTab(2)">통합 타임라인 비교</button>
+  </div>
+
+  <!-- TAB 0: Origin Flow Patterns -->
+  <div class="panel active" id="p0">
+    <div class="btn-row">
+      <button class="sm-btn act" onclick="showOrigin('runway')">Runway-led</button>
+      <button class="sm-btn" onclick="showOrigin('capital')">Capital-driven</button>
+      <button class="sm-btn" onclick="showOrigin('viral')">Viral / Meme</button>
+      <button class="sm-btn" onclick="showOrigin('organic')">Market-organic</button>
+    </div>
+
+    <svg width="100%" viewBox="0 0 680 300" id="flow-svg">
+      <defs>
+        <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </marker>
+      </defs>
+    </svg>
+
+    <div class="signal-desc" id="origin-desc">
+      <strong>Runway-led</strong> — 런웨이 컬렉션에서 시작하여 전문가 리포트, 셀럽 착용을 거쳐 마켓에 도달하는 전통적 전파 경로. 럭셔리/하이엔드 브랜드에서 가장 지배적이며, FTIB 파이프라인이 가장 정확하게 추적할 수 있는 영역.
+    </div>
+  </div>
+
+  <!-- TAB 1: Zone Distribution -->
+  <div class="panel" id="p1">
+    <div class="zone-grid">
+      <div class="zone-card sel" onclick="selectZone(0)">
+        <div class="zone-name">럭셔리 / 하이엔드</div>
+        <div class="zone-desc">Lemaire, Prada, Chanel 등<br>런웨이 직접 반영</div>
+        <div class="origin-bar"><div class="origin-seg" style="width:60%;background:#3266ad"></div><div class="origin-seg" style="width:25%;background:#8B5CF6"></div><div class="origin-seg" style="width:10%;background:#D97706"></div><div class="origin-seg" style="width:5%;background:#059669"></div></div>
+      </div>
+      <div class="zone-card" onclick="selectZone(1)">
+        <div class="zone-name">스포츠 / 아웃도어</div>
+        <div class="zone-desc">Nike, Descente, NorthFace<br>기획 리드타임 김</div>
+        <div class="origin-bar"><div class="origin-seg" style="width:15%;background:#3266ad"></div><div class="origin-seg" style="width:30%;background:#8B5CF6"></div><div class="origin-seg" style="width:15%;background:#D97706"></div><div class="origin-seg" style="width:40%;background:#059669"></div></div>
+      </div>
+      <div class="zone-card" onclick="selectZone(2)">
+        <div class="zone-name">캐주얼 / 스트리트</div>
+        <div class="zone-desc">MLB, Youth, Marithe<br>빠른 사이클</div>
+        <div class="origin-bar"><div class="origin-seg" style="width:20%;background:#3266ad"></div><div class="origin-seg" style="width:30%;background:#8B5CF6"></div><div class="origin-seg" style="width:35%;background:#D97706"></div><div class="origin-seg" style="width:15%;background:#059669"></div></div>
+      </div>
+      <div class="zone-card" onclick="selectZone(3)">
+        <div class="zone-name">SPA / 매스</div>
+        <div class="zone-desc">Zara, H&M, 무신사<br>모든 Origin 팔로우</div>
+        <div class="origin-bar"><div class="origin-seg" style="width:25%;background:#3266ad"></div><div class="origin-seg" style="width:20%;background:#8B5CF6"></div><div class="origin-seg" style="width:30%;background:#D97706"></div><div class="origin-seg" style="width:25%;background:#059669"></div></div>
+      </div>
+    </div>
+    <div class="legend-row">
+      <span class="legend-item"><span class="legend-dot" style="background:#3266ad"></span>Runway-led</span>
+      <span class="legend-item"><span class="legend-dot" style="background:#8B5CF6"></span>Capital-driven</span>
+      <span class="legend-item"><span class="legend-dot" style="background:#D97706"></span>Viral / Meme</span>
+      <span class="legend-item"><span class="legend-dot" style="background:#059669"></span>Market-organic</span>
+    </div>
+
+    <div class="signal-desc" id="zone-desc">
+      <strong>럭셔리 / 하이엔드</strong> — Runway-led가 60%로 지배적. 런웨이 시그널이 가장 직접적으로 상품에 반영되며, 같은 시즌 내에 마켓 등장. FTIB의 핵심 추적 영역. Capital-driven(앰배서더)이 보조 채널로 작용.
+    </div>
+  </div>
+
+  <!-- TAB 2: Timeline Comparison -->
+  <div class="panel" id="p2">
+    <div class="section-label">Origin별 시그널 발생 타이밍 비교</div>
+
+    <div style="display:flex;align-items:center;gap:0;margin:8px 0 4px 100px">
+      <div style="flex:1;display:flex;justify-content:space-between;font-size:10px;color:var(--color-text-tertiary);font-family:var(--font-mono)">
+        <span>런웨이 쇼</span><span>+2개월</span><span>+4개월</span><span>+6개월</span><span>+9개월</span><span>+12개월</span>
+      </div>
+    </div>
+
+    <div id="tl-runway">
+      <div style="font-size:12px;font-weight:500;margin:16px 0 8px;color:var(--color-text-info)">Runway-led</div>
+      <div class="timeline-row"><div class="tl-label">런웨이</div><div class="tl-track"><div class="tl-bar" style="left:0;width:8%;background:#3266ad">●</div></div></div>
+      <div class="timeline-row"><div class="tl-label">전문가</div><div class="tl-track"><div class="tl-bar" style="left:5%;width:15%;background:#3266ad;opacity:.7">리포트</div></div></div>
+      <div class="timeline-row"><div class="tl-label">셀럽</div><div class="tl-track"><div class="tl-bar" style="left:25%;width:20%;background:#3266ad;opacity:.55">착용</div></div></div>
+      <div class="timeline-row"><div class="tl-label">검색량</div><div class="tl-track"><div class="tl-bar" style="left:30%;width:35%;background:#3266ad;opacity:.4">상승</div></div></div>
+      <div class="timeline-row"><div class="tl-label">마켓</div><div class="tl-track"><div class="tl-bar" style="left:40%;width:45%;background:#3266ad;opacity:.3">상품 등장</div></div></div>
+    </div>
+
+    <div id="tl-capital">
+      <div style="font-size:12px;font-weight:500;margin:16px 0 8px;color:#8B5CF6">Capital-driven</div>
+      <div class="timeline-row"><div class="tl-label">런웨이</div><div class="tl-track"><div class="tl-bar" style="left:0;width:5%;background:#8B5CF6;opacity:.2">약</div></div></div>
+      <div class="timeline-row"><div class="tl-label">전문가</div><div class="tl-track"><div class="tl-bar" style="left:5%;width:8%;background:#8B5CF6;opacity:.2">약</div></div></div>
+      <div class="timeline-row"><div class="tl-label">캠페인</div><div class="tl-track"><div class="tl-bar" style="left:20%;width:10%;background:#8B5CF6">런칭!</div></div></div>
+      <div class="timeline-row"><div class="tl-label">검색량</div><div class="tl-track"><div class="tl-bar" style="left:22%;width:30%;background:#8B5CF6;opacity:.6">폭발</div></div></div>
+      <div class="timeline-row"><div class="tl-label">마켓</div><div class="tl-track"><div class="tl-bar" style="left:25%;width:40%;background:#8B5CF6;opacity:.35">빠른 반영</div></div></div>
+    </div>
+
+    <div id="tl-viral">
+      <div style="font-size:12px;font-weight:500;margin:16px 0 8px;color:#D97706">Viral / Meme</div>
+      <div class="timeline-row"><div class="tl-label">런웨이</div><div class="tl-track"><div class="tl-bar" style="left:0;width:3%;background:#D97706;opacity:.15">—</div></div></div>
+      <div class="timeline-row"><div class="tl-label">전문가</div><div class="tl-track"><div class="tl-bar" style="left:0;width:3%;background:#D97706;opacity:.15">—</div></div></div>
+      <div class="timeline-row"><div class="tl-label">소셜</div><div class="tl-track"><div class="tl-bar" style="left:35%;width:12%;background:#D97706">밈 발생!</div></div></div>
+      <div class="timeline-row"><div class="tl-label">검색량</div><div class="tl-track"><div class="tl-bar" style="left:40%;width:20%;background:#D97706;opacity:.6">급등</div></div></div>
+      <div class="timeline-row"><div class="tl-label">마켓</div><div class="tl-track"><div class="tl-bar" style="left:45%;width:25%;background:#D97706;opacity:.35">빠른 소진</div></div></div>
+    </div>
+
+    <div id="tl-organic">
+      <div style="font-size:12px;font-weight:500;margin:16px 0 8px;color:#059669">Market-organic</div>
+      <div class="timeline-row"><div class="tl-label">런웨이</div><div class="tl-track"><div class="tl-bar" style="left:0;width:3%;background:#059669;opacity:.15">—</div></div></div>
+      <div class="timeline-row"><div class="tl-label">전문가</div><div class="tl-track"><div class="tl-bar" style="left:0;width:3%;background:#059669;opacity:.15">—</div></div></div>
+      <div class="timeline-row"><div class="tl-label">검색량</div><div class="tl-track"><div class="tl-bar" style="left:10%;width:70%;background:#059669;opacity:.25">완만한 상승</div></div></div>
+      <div class="timeline-row"><div class="tl-label">마켓</div><div class="tl-track"><div class="tl-bar" style="left:5%;width:80%;background:#059669;opacity:.35">점진적 확대</div></div></div>
+    </div>
+
+    <div class="note" style="margin-top:16px">
+      <strong>핵심 관찰:</strong> Runway-led는 시그널이 순차적으로 나타나 예측 가능. Capital-driven은 캠페인 시점에 급등. Viral은 예측 불가하지만 소셜→검색 순서가 명확. Market-organic은 선행 시그널 없이 점진적 — FTIB의 반복 크롤링으로 감지 가능.
+    </div>
+  </div>
+</div>
+
+<script>
+const flowData = {
+  runway: {
+    nodes: [
+      {id:'runway',x:40,y:60,w:120,label:'런웨이 컬렉션',active:true},
+      {id:'expert',x:200,y:60,w:110,label:'전문가 리포트',active:true},
+      {id:'celeb',x:350,y:60,w:110,label:'셀럽 착용',active:true},
+      {id:'search',x:350,y:140,w:100,label:'검색량 상승',active:true},
+      {id:'market',x:520,y:60,w:110,label:'마켓 등장',active:true},
+      {id:'social',x:200,y:140,w:100,label:'소셜 멘션',skip:true},
+      {id:'campaign',x:40,y:140,w:110,label:'캠페인 런칭',skip:true},
+    ],
+    edges:[[0,1],[1,2],[2,4],[2,3],[3,4]],
+    desc:'<strong>Runway-led</strong> — 런웨이에서 시작하여 전문가→셀럽→마켓 순으로 전파. 시그널이 순차적으로 나타나므로 FTIB가 가장 정확하게 추적 가능. 럭셔리/하이엔드에서 지배적. 전파 딜레이: 평균 6~12개월.'
+  },
+  capital: {
+    nodes: [
+      {id:'runway',x:40,y:60,w:120,label:'런웨이 컬렉션',skip:true},
+      {id:'expert',x:200,y:60,w:110,label:'전문가 리포트',skip:true},
+      {id:'celeb',x:350,y:60,w:130,label:'앰배서더 캠페인',active:true},
+      {id:'search',x:350,y:140,w:100,label:'검색량 폭발',active:true},
+      {id:'market',x:520,y:60,w:110,label:'마켓 빠른반영',active:true},
+      {id:'brand',x:40,y:140,w:130,label:'브랜드 투자 결정',active:true},
+    ],
+    edges:[[5,2],[2,3],[2,4],[3,4]],
+    desc:'<strong>Capital-driven</strong> — 브랜드가 셀럽 앰배서더/광고에 투자하여 의도적으로 확산. 런웨이·전문가 단계를 건너뜀. 캠페인 시점에 검색량 급등. FTIB에서는 "셀럽이름+브랜드" 검색량 조합으로 감지 가능.'
+  },
+  viral: {
+    nodes: [
+      {id:'runway',x:40,y:60,w:120,label:'런웨이 컬렉션',skip:true},
+      {id:'expert',x:200,y:60,w:110,label:'전문가 리포트',skip:true},
+      {id:'celeb',x:350,y:60,w:110,label:'셀럽 착용',skip:true},
+      {id:'search',x:350,y:140,w:100,label:'검색량 급등',active:true},
+      {id:'market',x:520,y:60,w:110,label:'마켓 빠른소진',active:true},
+      {id:'social',x:40,y:140,w:130,label:'소셜 밈 발생',active:true},
+      {id:'tiktok',x:200,y:140,w:100,label:'틱톡/릴스 확산',active:true},
+    ],
+    edges:[[5,6],[6,3],[3,4]],
+    desc:'<strong>Viral / Meme</strong> — 소셜미디어에서 자연발생한 밈으로 예측 불가하게 확산. 런웨이·전문가·셀럽 시그널이 모두 부재하거나 후행. FTIB에서는 소셜 멘션 모니터링 추가 시 감지 가능. 빠르지만 단명하는 패턴.'
+  },
+  organic: {
+    nodes: [
+      {id:'runway',x:40,y:60,w:120,label:'런웨이 컬렉션',skip:true},
+      {id:'expert',x:200,y:60,w:110,label:'전문가 리포트',skip:true},
+      {id:'celeb',x:350,y:60,w:110,label:'셀럽 착용',skip:true},
+      {id:'search',x:200,y:140,w:120,label:'검색량 완만상승',active:true},
+      {id:'market',x:40,y:140,w:130,label:'마켓 점진적 확대',active:true},
+      {id:'demand',x:520,y:60,w:110,label:'소비자 실수요',active:true},
+    ],
+    edges:[[4,3],[5,4]],
+    desc:'<strong>Market-organic</strong> — 선행 시그널 없이 소비자 수요에서 자연스럽게 성장. 기능성 소재나 실용적 카테고리에서 자주 나타남. FTIB에서는 반복 크롤링으로 상품 수 점진 증가를 감지. 스포츠/아웃도어에서 가장 지배적.'
+  }
+};
+
+const zoneData = [
+  {name:'럭셔리 / 하이엔드', desc:'<strong>럭셔리 / 하이엔드</strong> — Runway-led 60%로 지배적. 런웨이 시그널이 가장 직접적으로 반영되며, 같은 시즌 내에 마켓 등장. Capital-driven(앰배서더)이 25%로 보조. FTIB 핵심 추적 영역.<br><br><strong>모니터링 포인트:</strong> 런웨이 태그 → WGSN/Tagwalk 교차 → 마켓 매칭. 풀 A 키워드 위주 추적.', dist:[60,25,10,5]},
+  {name:'스포츠 / 아웃도어', desc:'<strong>스포츠 / 아웃도어</strong> — Market-organic 40%로 지배적. 기능성·실용성 수요가 자체적으로 성장. Capital-driven(선수/모델 앰배서더) 30%. 기획 리드타임이 길어 런웨이 영향은 간접적(15%).<br><br><strong>모니터링 포인트:</strong> 마켓 상품 수 점진 변화 + 앰배서더 캠페인 감지. 반복 크롤링이 핵심.', dist:[15,30,15,40]},
+  {name:'캐주얼 / 스트리트', desc:'<strong>캐주얼 / 스트리트</strong> — Viral/Meme 35%와 Capital-driven 30%가 지배적. SNS 밈에서 시작되는 트렌드가 많고, 셀럽 착용 효과가 큼. 사이클이 빨라 Runway-led는 20%에 불과.<br><br><strong>모니터링 포인트:</strong> 소셜 멘션 + 셀럽 검색량 스파이크가 핵심 시그널. 틱톡/인스타 해시태그 추적 필요.', dist:[20,30,35,15]},
+  {name:'SPA / 매스', desc:'<strong>SPA / 매스</strong> — 모든 Origin을 빠르게 팔로우(각 20~30%). 반응 속도가 핵심 — Zara는 2~4개월 내 런웨이 트렌드를 상품화. 무신사 입점 브랜드도 유사 패턴.<br><br><strong>모니터링 포인트:</strong> 4가지 Origin 시그널 중 어느 것이든 감지되면 마켓 반영까지 가장 짧은 딜레이. 마켓 반복 크롤링으로 "누가 먼저 반영했는가" 추적.', dist:[25,20,30,25]}
+];
+
+let currentOrigin = 'runway';
+
+function switchTab(idx) {
+  document.querySelectorAll('.tab').forEach((t,i) => {t.classList.toggle('active', i===idx)});
+  document.querySelectorAll('.panel').forEach((p,i) => {p.classList.toggle('active', i===idx)});
+}
+
+function showOrigin(type) {
+  currentOrigin = type;
+  document.querySelectorAll('#p0 .sm-btn').forEach(b => b.classList.remove('act'));
+  event.target.classList.add('act');
+  renderFlow(type);
+}
+
+function renderFlow(type) {
+  const data = flowData[type];
+  const svg = document.getElementById('flow-svg');
+  const ns = 'http://www.w3.org/2000/svg';
+  while(svg.childNodes.length > 1) svg.removeChild(svg.lastChild);
+
+  const dark = matchMedia('(prefers-color-scheme:dark)').matches;
+  const colors = {runway:'#3266ad', capital:'#8B5CF6', viral:'#D97706', organic:'#059669'};
+  const c = colors[type];
+
+  data.edges.forEach((e,i) => {
+    const from = data.nodes[e[0]];
+    const to = data.nodes[e[1]];
+    const x1 = from.x + from.w;
+    const y1 = from.y + 18;
+    const x2 = to.x;
+    const y2 = to.y + 18;
+    const line = document.createElementNS(ns,'line');
+    line.setAttribute('x1',x1); line.setAttribute('y1',y1);
+    line.setAttribute('x2',x2); line.setAttribute('y2',y2);
+    line.setAttribute('stroke', c);
+    line.setAttribute('stroke-width','1.5');
+    line.setAttribute('marker-end','url(#arrow)');
+    line.setAttribute('opacity','0');
+    svg.appendChild(line);
+    setTimeout(() => line.setAttribute('opacity','0.6'), 100 + i*150);
+  });
+
+  data.nodes.forEach((n,i) => {
+    const g = document.createElementNS(ns,'g');
+    const rect = document.createElementNS(ns,'rect');
+    rect.setAttribute('x',n.x); rect.setAttribute('y',n.y);
+    rect.setAttribute('width',n.w); rect.setAttribute('height',36);
+    rect.setAttribute('rx','6');
+    rect.setAttribute('stroke-width','0.5');
+    if(n.skip) {
+      rect.setAttribute('fill', dark?'rgba(255,255,255,0.03)':'rgba(0,0,0,0.02)');
+      rect.setAttribute('stroke', dark?'rgba(255,255,255,0.1)':'rgba(0,0,0,0.1)');
+      rect.setAttribute('stroke-dasharray','4 3');
+    } else if(n.active) {
+      rect.setAttribute('fill', c+'18');
+      rect.setAttribute('stroke', c);
+    }
+    g.appendChild(rect);
+
+    const text = document.createElementNS(ns,'text');
+    text.setAttribute('x', n.x + n.w/2);
+    text.setAttribute('y', n.y + 18);
+    text.setAttribute('text-anchor','middle');
+    text.setAttribute('dominant-baseline','central');
+    text.setAttribute('font-size','12');
+    text.setAttribute('font-weight','500');
+    text.setAttribute('font-family','var(--font-sans)');
+    if(n.skip) {
+      text.setAttribute('fill', dark?'rgba(255,255,255,0.25)':'rgba(0,0,0,0.25)');
+    } else {
+      text.setAttribute('fill', dark?'#e0e0e0':'#1a1a1a');
+    }
+    text.textContent = n.label;
+    g.appendChild(text);
+
+    g.setAttribute('opacity','0');
+    svg.appendChild(g);
+    setTimeout(() => g.setAttribute('opacity','1'), 50 + i*100);
+  });
+
+  if(type === 'runway') {
+    addTimeLabels(svg, ns, ['T+0','T+1~2M','T+3~6M','T+6~12M'], [60,230,380,550]);
+  } else if(type === 'capital') {
+    addTimeLabels(svg, ns, ['(약)','(약)','캠페인 시점','T+1~3M'], [80,230,380,550]);
+  } else if(type === 'viral') {
+    addTimeLabels(svg, ns, ['(없음)','(없음)','밈 발생!','T+1~4주'], [80,230,100,550]);
+  } else {
+    addTimeLabels(svg, ns, ['(없음)','(없음)','점진적','지속 성장'], [80,230,230,550]);
+  }
+
+  document.getElementById('origin-desc').innerHTML = data.desc;
+}
+
+function addTimeLabels(svg, ns, labels, xs) {
+  labels.forEach((l,i) => {
+    const t = document.createElementNS(ns,'text');
+    t.setAttribute('x',xs[i]); t.setAttribute('y',220);
+    t.setAttribute('font-size','10');
+    t.setAttribute('font-family','var(--font-mono)');
+    const dark = matchMedia('(prefers-color-scheme:dark)').matches;
+    t.setAttribute('fill', dark?'rgba(255,255,255,0.3)':'rgba(0,0,0,0.3)');
+    t.textContent = l;
+    svg.appendChild(t);
+  });
+}
+
+function selectZone(idx) {
+  document.querySelectorAll('.zone-card').forEach((c,i) => c.classList.toggle('sel', i===idx));
+  document.getElementById('zone-desc').innerHTML = zoneData[idx].desc;
+}
+
+renderFlow('runway');
+</script>

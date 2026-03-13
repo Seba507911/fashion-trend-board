@@ -1,517 +1,494 @@
-import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
-import axios from "axios";
-import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell,
-} from "recharts";
+import { useState, useEffect } from "react";
 
-const api = axios.create({ baseURL: "/api" });
-
-function useRunwaySignals() {
-  return useQuery({ queryKey: ["trendflow", "runway"], queryFn: () => api.get("/trendflow/runway-signals").then(r => r.data) });
-}
-function useMarketValidation() {
-  return useQuery({ queryKey: ["trendflow", "market"], queryFn: () => api.get("/trendflow/market-validation").then(r => r.data) });
-}
-function useCelebMock() {
-  return useQuery({ queryKey: ["trendflow", "celeb"], queryFn: () => api.get("/trendflow/celeb-mock").then(r => r.data) });
-}
-function useExpertMock() {
-  return useQuery({ queryKey: ["trendflow", "expert"], queryFn: () => api.get("/trendflow/expert-mock").then(r => r.data) });
-}
-function useForecastMock() {
-  return useQuery({ queryKey: ["trendflow", "forecast"], queryFn: () => api.get("/trendflow/forecast-mock").then(r => r.data) });
-}
-function useKeywords() {
-  return useQuery({ queryKey: ["trendflow", "keywords"], queryFn: () => api.get("/trendflow/keywords").then(r => r.data) });
-}
-
-const STAGE_COLORS = ["#E74C3C", "#F39C12", "#9B59B6", "#3498DB", "#2ECC71"];
-const BRAND_COLORS = {
-  alo: "#4ECDC4", newbalance: "#E74C3C", marithe: "#3498DB", asics: "#F39C12",
-  coor: "#5B7553", blankroom: "#2C2C2C", youth: "#E67E22",
-  lemaire: "#8D6E63", northface: "#D32F2F", descente: "#1565C0",
+/* ── Color Constants ── */
+const ORIGIN_COLORS = {
+  runway: "#3266ad",
+  capital: "#8B5CF6",
+  viral: "#D97706",
+  organic: "#059669",
 };
-const GROUP_COLORS = { color: "#E74C3C", material: "#3498DB", silhouette: "#9B59B6", category: "#2ECC71", style: "#F39C12" };
 
-/* ── Pipeline Step Header ── */
-function StepHeader({ number, title, subtitle, color }) {
-  return (
-    <div className="flex items-center gap-3 mb-4">
-      <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0" style={{ backgroundColor: color }}>
-        {number}
-      </div>
-      <div>
-        <h2 className="font-['Lora'] text-sm font-semibold tracking-wide">{title}</h2>
-        <p className="text-[10px] text-[var(--color-text-muted)]">{subtitle}</p>
-      </div>
-    </div>
-  );
-}
+const ORIGIN_LABELS = {
+  runway: "Runway-led",
+  capital: "Capital-driven",
+  viral: "Viral / Meme",
+  organic: "Market-organic",
+};
 
-/* ── Flow Arrow ── */
-function FlowArrow() {
-  return (
-    <div className="flex items-center justify-center py-2">
-      <div className="flex items-center gap-1 text-[var(--color-text-muted)]">
-        <div className="w-8 border-t border-dashed border-[var(--color-border)]" />
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M12 5v14M19 12l-7 7-7-7" />
-        </svg>
-        <div className="w-8 border-t border-dashed border-[var(--color-border)]" />
-      </div>
-    </div>
-  );
-}
+/* ── Static Data ── */
+const flowData = {
+  runway: {
+    nodes: [
+      { id: "runway", x: 40, y: 60, w: 120, label: "런웨이 컬렉션", active: true },
+      { id: "expert", x: 200, y: 60, w: 110, label: "전문가 리포트", active: true },
+      { id: "celeb", x: 350, y: 60, w: 110, label: "셀럽 착용", active: true },
+      { id: "search", x: 350, y: 140, w: 100, label: "검색량 상승", active: true },
+      { id: "market", x: 520, y: 60, w: 110, label: "마켓 등장", active: true },
+      { id: "social", x: 200, y: 140, w: 100, label: "소셜 멘션", skip: true },
+      { id: "campaign", x: 40, y: 140, w: 110, label: "캠페인 런칭", skip: true },
+    ],
+    edges: [[0, 1], [1, 2], [2, 4], [2, 3], [3, 4]],
+    timeLabels: ["T+0", "T+1~2M", "T+3~6M", "T+6~12M"],
+    timeXs: [60, 230, 380, 550],
+    desc: "Runway-led",
+    descText: "런웨이에서 시작하여 전문가→셀럽→마켓 순으로 전파. 시그널이 순차적으로 나타나므로 FTIB가 가장 정확하게 추적 가능. 럭셔리/하이엔드에서 지배적. 전파 딜레이: 평균 6~12개월.",
+  },
+  capital: {
+    nodes: [
+      { id: "runway", x: 40, y: 60, w: 120, label: "런웨이 컬렉션", skip: true },
+      { id: "expert", x: 200, y: 60, w: 110, label: "전문가 리포트", skip: true },
+      { id: "celeb", x: 350, y: 60, w: 130, label: "앰배서더 캠페인", active: true },
+      { id: "search", x: 350, y: 140, w: 100, label: "검색량 폭발", active: true },
+      { id: "market", x: 520, y: 60, w: 110, label: "마켓 빠른반영", active: true },
+      { id: "brand", x: 40, y: 140, w: 130, label: "브랜드 투자 결정", active: true },
+    ],
+    edges: [[5, 2], [2, 3], [2, 4], [3, 4]],
+    timeLabels: ["(약)", "(약)", "캠페인 시점", "T+1~3M"],
+    timeXs: [80, 230, 380, 550],
+    desc: "Capital-driven",
+    descText: "브랜드가 셀럽 앰배서더/광고에 투자하여 의도적으로 확산. 런웨이·전문가 단계를 건너뜀. 캠페인 시점에 검색량 급등. FTIB에서는 \"셀럽이름+브랜드\" 검색량 조합으로 감지 가능.",
+  },
+  viral: {
+    nodes: [
+      { id: "runway", x: 40, y: 60, w: 120, label: "런웨이 컬렉션", skip: true },
+      { id: "expert", x: 200, y: 60, w: 110, label: "전문가 리포트", skip: true },
+      { id: "celeb", x: 350, y: 60, w: 110, label: "셀럽 착용", skip: true },
+      { id: "search", x: 350, y: 140, w: 100, label: "검색량 급등", active: true },
+      { id: "market", x: 520, y: 60, w: 110, label: "마켓 빠른소진", active: true },
+      { id: "social", x: 40, y: 140, w: 130, label: "소셜 밈 발생", active: true },
+      { id: "tiktok", x: 200, y: 140, w: 100, label: "틱톡/릴스 확산", active: true },
+    ],
+    edges: [[5, 6], [6, 3], [3, 4]],
+    timeLabels: ["(없음)", "(없음)", "밈 발생!", "T+1~4주"],
+    timeXs: [80, 230, 100, 550],
+    desc: "Viral / Meme",
+    descText: "소셜미디어에서 자연발생한 밈으로 예측 불가하게 확산. 런웨이·전문가·셀럽 시그널이 모두 부재하거나 후행. FTIB에서는 소셜 멘션 모니터링 추가 시 감지 가능. 빠르지만 단명하는 패턴.",
+  },
+  organic: {
+    nodes: [
+      { id: "runway", x: 40, y: 60, w: 120, label: "런웨이 컬렉션", skip: true },
+      { id: "expert", x: 200, y: 60, w: 110, label: "전문가 리포트", skip: true },
+      { id: "celeb", x: 350, y: 60, w: 110, label: "셀럽 착용", skip: true },
+      { id: "search", x: 200, y: 140, w: 120, label: "검색량 완만상승", active: true },
+      { id: "market", x: 40, y: 140, w: 130, label: "마켓 점진적 확대", active: true },
+      { id: "demand", x: 520, y: 60, w: 110, label: "소비자 실수요", active: true },
+    ],
+    edges: [[4, 3], [5, 4]],
+    timeLabels: ["(없음)", "(없음)", "점진적", "지속 성장"],
+    timeXs: [80, 230, 230, 550],
+    desc: "Market-organic",
+    descText: "선행 시그널 없이 소비자 수요에서 자연스럽게 성장. 기능성 소재나 실용적 카테고리에서 자주 나타남. FTIB에서는 반복 크롤링으로 상품 수 점진 증가를 감지. 스포츠/아웃도어에서 가장 지배적.",
+  },
+};
 
-/* ── Keyword Tag ── */
-function KeywordTag({ label, group, active, onClick, size = "sm" }) {
-  const base = size === "sm" ? "px-2 py-0.5 text-[10px]" : "px-2.5 py-1 text-xs";
+const zoneData = [
+  {
+    name: "럭셔리 / 하이엔드",
+    shortDesc: "Lemaire, Prada, Chanel 등\n런웨이 직접 반영",
+    dist: [60, 25, 10, 5],
+    descTitle: "럭셔리 / 하이엔드",
+    descText: "Runway-led 60%로 지배적. 런웨이 시그널이 가장 직접적으로 반영되며, 같은 시즌 내에 마켓 등장. Capital-driven(앰배서더)이 25%로 보조. FTIB 핵심 추적 영역.",
+    monitorPoint: "런웨이 태그 → WGSN/Tagwalk 교차 → 마켓 매칭. 풀 A 키워드 위주 추적.",
+  },
+  {
+    name: "스포츠 / 아웃도어",
+    shortDesc: "Nike, Descente, NorthFace\n기획 리드타임 김",
+    dist: [15, 30, 15, 40],
+    descTitle: "스포츠 / 아웃도어",
+    descText: "Market-organic 40%로 지배적. 기능성·실용성 수요가 자체적으로 성장. Capital-driven(선수/모델 앰배서더) 30%. 기획 리드타임이 길어 런웨이 영향은 간접적(15%).",
+    monitorPoint: "마켓 상품 수 점진 변화 + 앰배서더 캠페인 감지. 반복 크롤링이 핵심.",
+  },
+  {
+    name: "캐주얼 / 스트리트",
+    shortDesc: "MLB, Youth, Marithe\n빠른 사이클",
+    dist: [20, 30, 35, 15],
+    descTitle: "캐주얼 / 스트리트",
+    descText: "Viral/Meme 35%와 Capital-driven 30%가 지배적. SNS 밈에서 시작되는 트렌드가 많고, 셀럽 착용 효과가 큼. 사이클이 빨라 Runway-led는 20%에 불과.",
+    monitorPoint: "소셜 멘션 + 셀럽 검색량 스파이크가 핵심 시그널. 틱톡/인스타 해시태그 추적 필요.",
+  },
+  {
+    name: "SPA / 매스",
+    shortDesc: "Zara, H&M, 무신사\n모든 Origin 팔로우",
+    dist: [25, 20, 30, 25],
+    descTitle: "SPA / 매스",
+    descText: "모든 Origin을 빠르게 팔로우(각 20~30%). 반응 속도가 핵심 — Zara는 2~4개월 내 런웨이 트렌드를 상품화. 무신사 입점 브랜드도 유사 패턴.",
+    monitorPoint: "4가지 Origin 시그널 중 어느 것이든 감지되면 마켓 반영까지 가장 짧은 딜레이. 마켓 반복 크롤링으로 \"누가 먼저 반영했는가\" 추적.",
+  },
+];
+
+const timelineData = {
+  runway: {
+    label: "Runway-led",
+    rows: [
+      { label: "런웨이", left: 0, width: 8, opacity: 1, text: "\u25CF" },
+      { label: "전문가", left: 5, width: 15, opacity: 0.7, text: "리포트" },
+      { label: "셀럽", left: 25, width: 20, opacity: 0.55, text: "착용" },
+      { label: "검색량", left: 30, width: 35, opacity: 0.4, text: "상승" },
+      { label: "마켓", left: 40, width: 45, opacity: 0.3, text: "상품 등장" },
+    ],
+  },
+  capital: {
+    label: "Capital-driven",
+    rows: [
+      { label: "런웨이", left: 0, width: 5, opacity: 0.2, text: "약" },
+      { label: "전문가", left: 5, width: 8, opacity: 0.2, text: "약" },
+      { label: "캠페인", left: 20, width: 10, opacity: 1, text: "런칭!" },
+      { label: "검색량", left: 22, width: 30, opacity: 0.6, text: "폭발" },
+      { label: "마켓", left: 25, width: 40, opacity: 0.35, text: "빠른 반영" },
+    ],
+  },
+  viral: {
+    label: "Viral / Meme",
+    rows: [
+      { label: "런웨이", left: 0, width: 3, opacity: 0.15, text: "\u2014" },
+      { label: "전문가", left: 0, width: 3, opacity: 0.15, text: "\u2014" },
+      { label: "소셜", left: 35, width: 12, opacity: 1, text: "밈 발생!" },
+      { label: "검색량", left: 40, width: 20, opacity: 0.6, text: "급등" },
+      { label: "마켓", left: 45, width: 25, opacity: 0.35, text: "빠른 소진" },
+    ],
+  },
+  organic: {
+    label: "Market-organic",
+    rows: [
+      { label: "런웨이", left: 0, width: 3, opacity: 0.15, text: "\u2014" },
+      { label: "전문가", left: 0, width: 3, opacity: 0.15, text: "\u2014" },
+      { label: "검색량", left: 10, width: 70, opacity: 0.25, text: "완만한 상승" },
+      { label: "마켓", left: 5, width: 80, opacity: 0.35, text: "점진적 확대" },
+    ],
+  },
+};
+
+/* ── Tab 0: SVG Flow Diagram ── */
+function FlowDiagram({ origin }) {
+  const data = flowData[origin];
+  const color = ORIGIN_COLORS[origin];
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    setVisible(false);
+    const t = setTimeout(() => setVisible(true), 50);
+    return () => clearTimeout(t);
+  }, [origin]);
+
   return (
-    <button
-      onClick={onClick}
-      className={`${base} rounded-full border transition-all ${
-        active
-          ? "border-[var(--color-primary)] bg-[var(--color-primary)] text-white"
-          : "border-[var(--color-border)] bg-white text-[var(--color-text-secondary)] hover:border-gray-400"
-      }`}
+    <svg
+      width="100%"
+      viewBox="0 0 680 250"
+      className="my-4"
+      style={{ transition: "opacity 0.3s", opacity: visible ? 1 : 0 }}
     >
-      <span className="inline-block w-1.5 h-1.5 rounded-full mr-1" style={{ backgroundColor: GROUP_COLORS[group] || "#999" }} />
-      {label}
-    </button>
-  );
-}
+      <defs>
+        <marker
+          id={`arrow-${origin}`}
+          viewBox="0 0 10 10"
+          refX="8"
+          refY="5"
+          markerWidth="6"
+          markerHeight="6"
+          orient="auto-start-reverse"
+        >
+          <path
+            d="M2 1L8 5L2 9"
+            fill="none"
+            stroke={color}
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </marker>
+      </defs>
 
-/* ── Stage 1: Runway Signals ── */
-function RunwaySignals({ data, activeKeyword }) {
-  if (!data) return <Skeleton />;
+      {/* Edges */}
+      {data.edges.map(([fromIdx, toIdx], i) => {
+        const from = data.nodes[fromIdx];
+        const to = data.nodes[toIdx];
+        const x1 = from.x + from.w;
+        const y1 = from.y + 18;
+        const x2 = to.x;
+        const y2 = to.y + 18;
+        return (
+          <line
+            key={`edge-${i}`}
+            x1={x1}
+            y1={y1}
+            x2={x2}
+            y2={y2}
+            stroke={color}
+            strokeWidth="1.5"
+            markerEnd={`url(#arrow-${origin})`}
+            opacity={visible ? 0.6 : 0}
+            style={{ transition: `opacity 0.4s ease ${0.1 + i * 0.15}s` }}
+          />
+        );
+      })}
 
-  const filtered = activeKeyword
-    ? data.top_signals.filter(s => s.keyword.includes(activeKeyword))
-    : data.top_signals.slice(0, 12);
-
-  return (
-    <div className="bg-white border border-[var(--color-border)] rounded-md p-5">
-      <StepHeader number={1} title="Runway Signal" subtitle={`${data.total_looks} looks from ${Object.keys(data.designer_focus).length} designers`} color={STAGE_COLORS[0]} />
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <span className="text-[10px] font-semibold tracking-widest text-[var(--color-text-muted)] uppercase">Top Keywords</span>
-          <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={filtered.slice(0, 10)} layout="vertical" margin={{ left: 5, right: 10 }}>
-              <XAxis type="number" tick={{ fontSize: 10 }} />
-              <YAxis type="category" dataKey="keyword" width={70} tick={{ fontSize: 10 }} />
-              <Tooltip formatter={(v) => [`${v} looks`]} />
-              <Bar dataKey="count" radius={[0, 3, 3, 0]}>
-                {filtered.slice(0, 10).map((_, i) => (
-                  <Cell key={i} fill={`${STAGE_COLORS[0]}${i < 3 ? "" : "80"}`} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-        <div>
-          <span className="text-[10px] font-semibold tracking-widest text-[var(--color-text-muted)] uppercase">Designer Focus</span>
-          <div className="mt-2 space-y-2 max-h-[220px] overflow-y-auto pr-1">
-            {Object.entries(data.designer_focus).slice(0, 8).map(([designer, tags]) => (
-              <div key={designer} className="flex items-start gap-2">
-                <span className="text-[11px] font-medium w-20 shrink-0 truncate">{designer}</span>
-                <div className="flex flex-wrap gap-1">
-                  {tags.slice(0, 3).map(t => (
-                    <span key={t.keyword} className="text-[9px] px-1.5 py-0.5 bg-red-50 text-red-700 rounded">
-                      {t.keyword} ({t.count})
-                    </span>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ── Stage 2: Expert Report ── */
-function ExpertReport({ data }) {
-  if (!data) return <Skeleton />;
-
-  const allPredictions = data.reports.flatMap(r => r.predictions.map(p => ({ ...p, source: r.source })));
-  const matched = allPredictions.filter(p => p.runway_match).length;
-  const total = allPredictions.length;
-
-  return (
-    <div className="bg-white border border-[var(--color-border)] rounded-md p-5">
-      <StepHeader number={2} title="Expert Report" subtitle={`${data.reports.length} reports analyzed`} color={STAGE_COLORS[1]} />
-      <div className="flex items-center gap-6 mb-4">
-        <div className="text-center">
-          <div className="text-2xl font-['Lora'] font-bold text-[var(--color-primary)]">{Math.round(matched / total * 100)}%</div>
-          <div className="text-[10px] text-[var(--color-text-muted)]">Runway Match Rate</div>
-        </div>
-        <div className="text-center">
-          <div className="text-2xl font-['Lora'] font-bold">{matched}/{total}</div>
-          <div className="text-[10px] text-[var(--color-text-muted)]">Predictions Verified</div>
-        </div>
-      </div>
-      <div className="space-y-3">
-        {data.reports.map(report => (
-          <div key={report.id} className="border border-[var(--color-border)] rounded p-3">
-            <div className="flex items-center justify-between mb-2">
-              <div>
-                <span className="text-[10px] font-bold tracking-widest text-amber-600 uppercase">{report.source}</span>
-                <span className="text-[10px] text-[var(--color-text-muted)] ml-2">{report.date}</span>
-              </div>
-              <span className="text-[10px] px-2 py-0.5 bg-amber-50 text-amber-700 rounded-full">
-                {report.predictions.filter(p => p.runway_match).length}/{report.predictions.length} matched
-              </span>
-            </div>
-            <div className="flex flex-wrap gap-1.5">
-              {report.predictions.map(pred => (
-                <span
-                  key={pred.keyword}
-                  className={`text-[10px] px-2 py-0.5 rounded-full border ${
-                    pred.runway_match
-                      ? "bg-green-50 text-green-700 border-green-200"
-                      : "bg-gray-50 text-gray-500 border-gray-200 line-through"
-                  }`}
-                >
-                  {pred.keyword}
-                  {pred.confidence === "high" && " ★"}
-                </span>
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
-      <div className="mt-3 border-2 border-dashed border-[var(--color-border)] rounded-md p-4 text-center text-[var(--color-text-muted)]">
-        <svg className="mx-auto mb-1 w-6 h-6 opacity-40" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 16v-4m0 0V8m0 4h4m-4 0H8m13 4v2a2 2 0 01-2 2H5a2 2 0 01-2-2v-2m14-10V4a2 2 0 00-2-2H9a2 2 0 00-2 2v4" />
-        </svg>
-        <p className="text-xs">Drop PDF report here to analyze</p>
-        <p className="text-[10px] mt-0.5">(WGSN, Pantone, EDITED 등)</p>
-      </div>
-    </div>
-  );
-}
-
-/* ── Stage 3: Celebrity & Influencer ── */
-function CelebInfluencer({ data, activeKeyword }) {
-  const [activeTab, setActiveTab] = useState("global_celeb");
-
-  if (!data) return <Skeleton />;
-
-  const activeGroup = data.groups.find(g => g.id === activeTab);
-  const people = activeGroup?.people || [];
-
-  // 키워드 적중률 히트맵 데이터
-  const allKeywords = [...new Set(data.groups.flatMap(g => g.people.flatMap(p => p.tags)))];
-
-  return (
-    <div className="bg-white border border-[var(--color-border)] rounded-md p-5">
-      <StepHeader number={3} title="Celebrity & Influencer" subtitle="Trend adoption monitoring" color={STAGE_COLORS[2]} />
-
-      <div className="flex gap-1 mb-4">
-        {data.groups.map(g => (
-          <button
-            key={g.id}
-            onClick={() => setActiveTab(g.id)}
-            className={`px-2.5 py-1.5 text-[10px] rounded-md border transition-colors ${
-              activeTab === g.id
-                ? "bg-purple-600 text-white border-purple-600"
-                : "border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-gray-50"
-            }`}
+      {/* Nodes */}
+      {data.nodes.map((n, i) => (
+        <g
+          key={n.id}
+          opacity={visible ? (n.skip ? 0.3 : 1) : 0}
+          style={{ transition: `opacity 0.4s ease ${0.05 + i * 0.1}s` }}
+        >
+          <rect
+            x={n.x}
+            y={n.y}
+            width={n.w}
+            height={36}
+            rx={6}
+            fill={n.skip ? "rgba(128,128,128,0.05)" : `${color}18`}
+            stroke={n.skip ? "rgba(128,128,128,0.2)" : color}
+            strokeWidth="0.5"
+            strokeDasharray={n.skip ? "4 3" : undefined}
+          />
+          <text
+            x={n.x + n.w / 2}
+            y={n.y + 18}
+            textAnchor="middle"
+            dominantBaseline="central"
+            fontSize="12"
+            fontWeight="500"
+            fill={n.skip ? "rgba(128,128,128,0.5)" : "var(--color-text-secondary)"}
+            style={{ fontFamily: "var(--font-sans, system-ui)" }}
           >
-            {g.label}
-          </button>
-        ))}
-      </div>
+            {n.label}
+          </text>
+        </g>
+      ))}
 
-      <div className="grid grid-cols-2 gap-3 mb-4">
-        {people.map(person => {
-          const highlighted = activeKeyword ? person.tags.includes(activeKeyword) : false;
-          return (
+      {/* Time Labels */}
+      {data.timeLabels.map((label, i) => (
+        <text
+          key={`tl-${i}`}
+          x={data.timeXs[i]}
+          y={220}
+          fontSize="10"
+          fill="rgba(128,128,128,0.5)"
+          style={{ fontFamily: "var(--font-mono, monospace)" }}
+        >
+          {label}
+        </text>
+      ))}
+    </svg>
+  );
+}
+
+/* ── Tab 1: Zone Cards ── */
+function OriginBar({ dist }) {
+  const colors = [ORIGIN_COLORS.runway, ORIGIN_COLORS.capital, ORIGIN_COLORS.viral, ORIGIN_COLORS.organic];
+  return (
+    <div className="flex h-1.5 rounded-full overflow-hidden mt-2.5 bg-[var(--color-bg)]">
+      {dist.map((pct, i) => (
+        <div
+          key={i}
+          className="h-full transition-all duration-400"
+          style={{ width: `${pct}%`, backgroundColor: colors[i] }}
+        />
+      ))}
+    </div>
+  );
+}
+
+function OriginLegend() {
+  const origins = ["runway", "capital", "viral", "organic"];
+  return (
+    <div className="flex gap-4 mt-3 flex-wrap">
+      {origins.map((key) => (
+        <span key={key} className="flex items-center gap-1.5 text-[11px] text-[var(--color-text-secondary)]">
+          <span
+            className="w-2 h-2 rounded-sm inline-block"
+            style={{ backgroundColor: ORIGIN_COLORS[key] }}
+          />
+          {ORIGIN_LABELS[key]}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+/* ── Tab 2: Timeline ── */
+function TimelineSection({ originKey }) {
+  const data = timelineData[originKey];
+  const color = ORIGIN_COLORS[originKey];
+
+  return (
+    <div className="mb-4">
+      <div className="text-xs font-medium mt-4 mb-2" style={{ color }}>
+        {data.label}
+      </div>
+      {data.rows.map((row, i) => (
+        <div key={i} className="flex items-center gap-0 my-1.5 relative">
+          <div className="w-[100px] text-xs text-[var(--color-text-secondary)] shrink-0 font-medium">
+            {row.label}
+          </div>
+          <div className="flex-1 h-7 relative bg-[var(--color-surface)] rounded overflow-hidden">
             <div
-              key={person.name}
-              className={`border rounded-md p-3 transition-all ${highlighted ? "border-purple-400 bg-purple-50/50" : "border-[var(--color-border)]"}`}
+              className="absolute h-full rounded flex items-center px-2 text-[10px] font-medium text-white whitespace-nowrap transition-all duration-500"
+              style={{
+                left: `${row.left}%`,
+                width: `${row.width}%`,
+                backgroundColor: color,
+                opacity: row.opacity,
+              }}
             >
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-medium">{person.name}</span>
-                <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
-                  person.trend_match >= 85 ? "bg-green-100 text-green-700" :
-                  person.trend_match >= 70 ? "bg-amber-100 text-amber-700" :
-                  "bg-gray-100 text-gray-600"
-                }`}>
-                  {person.trend_match}% match
-                </span>
-              </div>
-              <div className="flex flex-wrap gap-1">
-                {person.tags.map(tag => (
-                  <span
-                    key={tag}
-                    className={`text-[9px] px-1.5 py-0.5 rounded ${
-                      tag === activeKeyword ? "bg-purple-200 text-purple-800 font-medium" : "bg-gray-100 text-gray-600"
-                    }`}
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
-              <div className="text-[10px] text-[var(--color-text-muted)] mt-1.5">{person.looks} looks tracked</div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Keyword Heatmap */}
-      <div className="overflow-x-auto">
-        <span className="text-[10px] font-semibold tracking-widest text-[var(--color-text-muted)] uppercase">Keyword × Person Matrix</span>
-        <table className="text-[9px] w-full mt-1">
-          <thead>
-            <tr>
-              <th className="text-left p-1 font-medium">Person</th>
-              {allKeywords.slice(0, 8).map(k => (
-                <th key={k} className="p-1 font-medium text-center">{k}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {data.groups.flatMap(g => g.people).map(p => (
-              <tr key={p.name} className="border-t border-[var(--color-border)]">
-                <td className="p-1 font-medium">{p.name}</td>
-                {allKeywords.slice(0, 8).map(k => (
-                  <td key={k} className="p-1 text-center">
-                    {p.tags.includes(k) ? (
-                      <span className="inline-block w-3 h-3 rounded-sm bg-purple-500" />
-                    ) : (
-                      <span className="inline-block w-3 h-3 rounded-sm bg-gray-100" />
-                    )}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-}
-
-/* ── Stage 4: Market Validation ── */
-function MarketValidation({ data, activeKeyword }) {
-  if (!data) return <Skeleton />;
-
-  const kwData = activeKeyword && data.keyword_matches[activeKeyword]
-    ? [data.keyword_matches[activeKeyword]]
-    : Object.values(data.keyword_matches).sort((a, b) => b.matched_products - a.matched_products).slice(0, 8);
-
-  return (
-    <div className="bg-white border border-[var(--color-border)] rounded-md p-5">
-      <StepHeader number={4} title="Market Validation" subtitle={`${data.total_products} products across all brands`} color={STAGE_COLORS[3]} />
-
-      <div className="grid grid-cols-3 gap-3 mb-4">
-        <div className="text-center border border-[var(--color-border)] rounded-md p-3">
-          <div className="text-xl font-['Lora'] font-bold text-blue-600">{data.total_products}</div>
-          <div className="text-[10px] text-[var(--color-text-muted)]">Total Products</div>
-        </div>
-        <div className="text-center border border-[var(--color-border)] rounded-md p-3">
-          <div className="text-xl font-['Lora'] font-bold text-blue-600">{data.top_colors?.[0]?.color || "—"}</div>
-          <div className="text-[10px] text-[var(--color-text-muted)]">Top Market Color</div>
-        </div>
-        <div className="text-center border border-[var(--color-border)] rounded-md p-3">
-          <div className="text-xl font-['Lora'] font-bold text-blue-600">{data.categories?.[0]?.category || "—"}</div>
-          <div className="text-[10px] text-[var(--color-text-muted)]">Top Category</div>
-        </div>
-      </div>
-
-      <span className="text-[10px] font-semibold tracking-widest text-[var(--color-text-muted)] uppercase">Keyword Match in Market</span>
-      <div className="space-y-2 mt-2">
-        {kwData.map(kw => (
-          <div key={kw.keyword} className="border border-[var(--color-border)] rounded p-3">
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-xs font-medium">{kw.keyword}</span>
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] text-[var(--color-text-muted)]">{kw.matched_products} products</span>
-                <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
-                  kw.match_rate >= 10 ? "bg-blue-100 text-blue-700" :
-                  kw.match_rate >= 3 ? "bg-amber-100 text-amber-700" :
-                  "bg-gray-100 text-gray-600"
-                }`}>
-                  {kw.match_rate}%
-                </span>
-              </div>
-            </div>
-            {/* Progress bar */}
-            <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden mb-1.5">
-              <div
-                className="h-full rounded-full bg-blue-500 transition-all"
-                style={{ width: `${Math.min(kw.match_rate * 3, 100)}%` }}
-              />
-            </div>
-            {kw.by_brand.length > 0 && (
-              <div className="flex flex-wrap gap-1">
-                {kw.by_brand.slice(0, 5).map(b => (
-                  <span key={b.brand} className="text-[9px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-700">
-                    {b.brand}: {b.count}
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-
-      {/* Mock signal indicators */}
-      <div className="mt-4 grid grid-cols-3 gap-2">
-        <MockSignal label="SNS Mentions" value="12.4K" trend="+32%" positive />
-        <MockSignal label="Naver Search" value="8.7K" trend="+18%" positive />
-        <MockSignal label="Sold-out Rate" value="23%" trend="+5%" positive />
-      </div>
-    </div>
-  );
-}
-
-function MockSignal({ label, value, trend, positive }) {
-  return (
-    <div className="border border-dashed border-[var(--color-border)] rounded p-2.5 text-center">
-      <div className="text-sm font-bold">{value}</div>
-      <div className={`text-[10px] font-medium ${positive ? "text-green-600" : "text-red-500"}`}>{trend}</div>
-      <div className="text-[9px] text-[var(--color-text-muted)] mt-0.5">{label}</div>
-      <div className="text-[8px] text-[var(--color-text-muted)] italic">mock</div>
-    </div>
-  );
-}
-
-/* ── Stage 5: Next Runway Forecast ── */
-function ForecastPanel({ data }) {
-  if (!data) return <Skeleton />;
-
-  const sections = [
-    { key: "expanding", label: "Expanding", icon: "↑", color: "green", items: data.expanding },
-    { key: "shrinking", label: "Shrinking", icon: "↓", color: "red", items: data.shrinking },
-    { key: "morphing", label: "Morphing", icon: "↗", color: "amber", items: data.morphing },
-  ];
-
-  return (
-    <div className="bg-white border border-[var(--color-border)] rounded-md p-5">
-      <StepHeader number={5} title="Next Runway Forecast" subtitle="Trend direction prediction for SS27" color={STAGE_COLORS[4]} />
-      <div className="grid grid-cols-3 gap-3">
-        {sections.map(sec => (
-          <div key={sec.key}>
-            <div className={`flex items-center gap-1.5 mb-2 text-${sec.color}-600`}>
-              <span className="text-lg font-bold">{sec.icon}</span>
-              <span className="text-xs font-semibold">{sec.label}</span>
-            </div>
-            <div className="space-y-2">
-              {sec.items.map(item => (
-                <div key={item.keyword} className={`border-l-2 border-${sec.color}-400 pl-2.5 py-1`}>
-                  <div className="text-xs font-medium">{item.keyword}</div>
-                  <div className="text-[9px] text-[var(--color-text-muted)] mt-0.5">{item.signal}</div>
-                  <div className="flex items-center gap-1 mt-1">
-                    <div className="w-12 h-1 bg-gray-100 rounded-full overflow-hidden">
-                      <div className={`h-full rounded-full bg-${sec.color}-500`} style={{ width: `${item.confidence}%` }} />
-                    </div>
-                    <span className="text-[9px] text-[var(--color-text-muted)]">{item.confidence}%</span>
-                  </div>
-                </div>
-              ))}
+              {row.text}
             </div>
           </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-/* ── Skeleton ── */
-function Skeleton() {
-  return (
-    <div className="bg-white border border-[var(--color-border)] rounded-md p-5 animate-pulse">
-      <div className="h-4 bg-gray-200 rounded w-1/3 mb-3" />
-      <div className="h-32 bg-gray-100 rounded" />
+        </div>
+      ))}
     </div>
   );
 }
 
 /* ── Main Page ── */
 export default function TrendFlow() {
-  const [activeKeyword, setActiveKeyword] = useState(null);
-  const { data: keywords } = useKeywords();
-  const { data: runway } = useRunwaySignals();
-  const { data: market } = useMarketValidation();
-  const { data: celeb } = useCelebMock();
-  const { data: expert } = useExpertMock();
-  const { data: forecast } = useForecastMock();
+  const [activeTab, setActiveTab] = useState(0);
+  const [selectedOrigin, setSelectedOrigin] = useState("runway");
+  const [selectedZone, setSelectedZone] = useState(0);
+
+  const tabs = [
+    "Origin별 시그널 플로우",
+    "조닝별 Origin 분포",
+    "통합 타임라인 비교",
+  ];
 
   return (
     <main className="flex-1 overflow-y-auto bg-[var(--color-bg)]">
-      {/* Sticky Keyword Bar */}
-      <div className="sticky top-0 z-20 bg-[var(--color-bg)]/95 backdrop-blur border-b border-[var(--color-border)] px-8 py-3">
-        <div className="max-w-[1100px] mx-auto">
-          <div className="flex items-center gap-3">
-            <span className="text-[10px] font-semibold tracking-widest text-[var(--color-text-muted)] uppercase shrink-0">
-              Tracking
-            </span>
-            <div className="flex flex-wrap gap-1.5">
-              <button
-                onClick={() => setActiveKeyword(null)}
-                className={`px-2 py-0.5 text-[10px] rounded-full border transition-colors ${
-                  !activeKeyword ? "bg-gray-800 text-white border-gray-800" : "border-[var(--color-border)] text-[var(--color-text-muted)]"
-                }`}
-              >
-                All
-              </button>
-              {(keywords || []).map(kw => (
-                <KeywordTag
-                  key={kw.id}
-                  label={kw.label}
-                  group={kw.group}
-                  active={activeKeyword === kw.id}
-                  onClick={() => setActiveKeyword(activeKeyword === kw.id ? null : kw.id)}
-                />
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Pipeline Content */}
       <div className="max-w-[1100px] mx-auto px-8 py-6">
-        <h1 className="font-['Lora'] text-xl font-semibold tracking-wide mb-1">Trend Flow</h1>
+        <h1 className="font-['Lora'] text-xl font-semibold tracking-wide mb-1">
+          Trend Origin Flow Framework
+        </h1>
         <p className="text-sm text-[var(--color-text-secondary)] mb-6">
-          Runway → Expert → Celebrity → Market — end-to-end trend propagation tracker
+          트렌드가 어디에서 시작되어 어떤 경로로 전파되는지 분석하는 프레임워크
         </p>
 
-        {/* Pipeline visualization */}
-        <div className="flex items-center justify-between mb-6 px-4">
-          {["Runway", "Expert", "Celeb", "Market", "Forecast"].map((label, i) => (
-            <div key={label} className="flex items-center">
-              <div className="flex flex-col items-center">
-                <div
-                  className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold shadow-sm"
-                  style={{ backgroundColor: STAGE_COLORS[i] }}
-                >
-                  {i + 1}
-                </div>
-                <span className="text-[10px] font-medium mt-1 text-[var(--color-text-secondary)]">{label}</span>
-              </div>
-              {i < 4 && (
-                <div className="w-16 h-0.5 mx-1" style={{
-                  background: `linear-gradient(to right, ${STAGE_COLORS[i]}, ${STAGE_COLORS[i + 1]})`,
-                }} />
-              )}
-            </div>
+        {/* Tabs */}
+        <div className="flex gap-0 border-b border-[var(--color-border)] mb-6">
+          {tabs.map((label, i) => (
+            <button
+              key={i}
+              onClick={() => setActiveTab(i)}
+              className={`px-5 py-2.5 text-[13px] font-medium border-b-2 transition-all bg-transparent ${
+                activeTab === i
+                  ? "text-[var(--color-primary)] border-[var(--color-primary)]"
+                  : "text-[var(--color-text-secondary)] border-transparent hover:text-[var(--color-text-secondary)]"
+              }`}
+            >
+              {label}
+            </button>
           ))}
         </div>
 
-        {/* Stages */}
-        <RunwaySignals data={runway} activeKeyword={activeKeyword} />
-        <FlowArrow />
-        <ExpertReport data={expert} />
-        <FlowArrow />
-        <CelebInfluencer data={celeb} activeKeyword={activeKeyword} />
-        <FlowArrow />
-        <MarketValidation data={market} activeKeyword={activeKeyword} />
-        <FlowArrow />
-        <ForecastPanel data={forecast} />
+        {/* Tab 0: Origin Flow Patterns */}
+        {activeTab === 0 && (
+          <div>
+            {/* Origin selector buttons */}
+            <div className="flex gap-2 mb-3">
+              {Object.keys(ORIGIN_LABELS).map((key) => (
+                <button
+                  key={key}
+                  onClick={() => setSelectedOrigin(key)}
+                  className={`px-3.5 py-1.5 text-xs rounded-md border transition-all ${
+                    selectedOrigin === key
+                      ? "border-[var(--color-primary)] bg-[var(--color-primary)]/8 text-[var(--color-primary)] font-medium"
+                      : "border-[var(--color-border)] bg-[var(--color-bg)] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface)]"
+                  }`}
+                >
+                  {ORIGIN_LABELS[key]}
+                </button>
+              ))}
+            </div>
+
+            {/* SVG Flow Diagram */}
+            <FlowDiagram origin={selectedOrigin} />
+
+            {/* Description */}
+            <div className="mt-4 p-4 bg-[var(--color-surface)] rounded-md text-xs leading-relaxed text-[var(--color-text-secondary)]">
+              <strong className="text-[var(--color-text-secondary)] font-medium">
+                {flowData[selectedOrigin].desc}
+              </strong>
+              {" \u2014 "}
+              {flowData[selectedOrigin].descText}
+            </div>
+          </div>
+        )}
+
+        {/* Tab 1: Zone Distribution */}
+        {activeTab === 1 && (
+          <div>
+            {/* Zone cards grid */}
+            <div className="grid grid-cols-4 gap-3 mb-4">
+              {zoneData.map((zone, i) => (
+                <button
+                  key={i}
+                  onClick={() => setSelectedZone(i)}
+                  className={`text-left p-4 rounded-md border transition-all ${
+                    selectedZone === i
+                      ? "border-[var(--color-primary)] bg-[var(--color-primary)]/5"
+                      : "border-transparent bg-[var(--color-surface)] hover:border-[var(--color-border)]"
+                  }`}
+                >
+                  <div className="text-[13px] font-medium mb-1.5">{zone.name}</div>
+                  <div className="text-[11px] text-[var(--color-text-secondary)] leading-relaxed whitespace-pre-line">
+                    {zone.shortDesc}
+                  </div>
+                  <OriginBar dist={zone.dist} />
+                </button>
+              ))}
+            </div>
+
+            <OriginLegend />
+
+            {/* Zone description */}
+            <div className="mt-4 p-4 bg-[var(--color-surface)] rounded-md text-xs leading-relaxed text-[var(--color-text-secondary)]">
+              <strong className="text-[var(--color-text-secondary)] font-medium">
+                {zoneData[selectedZone].descTitle}
+              </strong>
+              {" \u2014 "}
+              {zoneData[selectedZone].descText}
+              <br /><br />
+              <strong className="text-[var(--color-text-secondary)] font-medium">
+                모니터링 포인트:
+              </strong>
+              {" "}
+              {zoneData[selectedZone].monitorPoint}
+            </div>
+          </div>
+        )}
+
+        {/* Tab 2: Timeline Comparison */}
+        {activeTab === 2 && (
+          <div>
+            <div className="text-sm font-medium mb-3">
+              Origin별 시그널 발생 타이밍 비교
+            </div>
+
+            {/* Timeline axis labels */}
+            <div className="flex items-center gap-0 mb-1 ml-[100px]">
+              <div className="flex-1 flex justify-between text-[10px] text-[var(--color-text-muted)] font-mono">
+                <span>런웨이 쇼</span>
+                <span>+2개월</span>
+                <span>+4개월</span>
+                <span>+6개월</span>
+                <span>+9개월</span>
+                <span>+12개월</span>
+              </div>
+            </div>
+
+            {/* Timeline sections */}
+            {["runway", "capital", "viral", "organic"].map((key) => (
+              <TimelineSection key={key} originKey={key} />
+            ))}
+
+            {/* Key observation note */}
+            <div className="mt-4 p-3 bg-[var(--color-surface)] rounded-md text-xs leading-relaxed text-[var(--color-text-secondary)]">
+              <strong className="text-[var(--color-text-secondary)] font-medium">
+                핵심 관찰:
+              </strong>
+              {" "}
+              Runway-led는 시그널이 순차적으로 나타나 예측 가능. Capital-driven은 캠페인 시점에 급등. Viral은 예측 불가하지만 소셜→검색 순서가 명확. Market-organic은 선행 시그널 없이 점진적 — FTIB의 반복 크롤링으로 감지 가능.
+            </div>
+          </div>
+        )}
 
         <div className="h-8" />
       </div>

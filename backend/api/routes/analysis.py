@@ -244,6 +244,165 @@ async def get_graph_data(db: aiosqlite.Connection = Depends(get_db)):
     }
 
 
+@router.get("/vlm-graph")
+async def get_vlm_graph_data(
+    season: Optional[str] = None,
+    db: aiosqlite.Connection = Depends(get_db),
+):
+    """런웨이 VLM 라벨 기반 그래프 뷰 — 디자이너×컬러×소재×실루엣×텍스처."""
+    query = """
+        SELECT
+            rl.designer, rl.designer_slug,
+            vl.dominant_colors, vl.key_materials,
+            vl.overall_silhouette, vl.items
+        FROM vlm_labels vl
+        JOIN runway_looks rl ON rl.id = vl.source_id
+    """
+    params: list = []
+    if season:
+        query += " WHERE rl.season = ?"
+        params.append(season)
+
+    cursor = await db.execute(query, params)
+    rows = await cursor.fetchall()
+
+    nodes: dict = {}
+    edges: defaultdict = defaultdict(int)
+
+    # Muted palette per node type
+    _designer_palette = [
+        "#8B7D6B", "#7A8B6D", "#6B7A8B", "#8B6B7A", "#7D8B6B",
+        "#6D7A8B", "#8B7A6B", "#6B8B7D", "#7A6B8B", "#8B6D7A",
+    ]
+    _type_colors = {
+        "material": "#7B97AA",
+        "silhouette": "#9E8DBE",
+        "texture": "#A0887B",
+    }
+
+    designer_counter: Counter = Counter()
+    color_counter: Counter = Counter()
+    material_counter: Counter = Counter()
+    silhouette_counter: Counter = Counter()
+    texture_counter: Counter = Counter()
+
+    for row in rows:
+        designer = row["designer"]
+        designer_slug = row["designer_slug"]
+        d_key = f"designer:{designer_slug}"
+
+        designer_counter[designer_slug] += 1
+
+        # 디자이너 노드 (최초 등장 시 등록, 이후 size 업데이트)
+        if d_key not in nodes:
+            idx = len([n for n in nodes.values() if n["type"] == "designer"]) % len(_designer_palette)
+            nodes[d_key] = {
+                "id": d_key,
+                "label": designer,
+                "type": "designer",
+                "size": 5,
+                "color": _designer_palette[idx],
+            }
+
+        # dominant_colors
+        colors = _parse_json_field(row["dominant_colors"])
+        for c in colors:
+            c_lower = c.strip().lower()
+            if not c_lower:
+                continue
+            col_key = f"color:{c_lower}"
+            color_counter[c_lower] += 1
+            edges[(d_key, col_key)] += 1
+
+        # key_materials
+        materials = _parse_json_field(row["key_materials"])
+        for m in materials:
+            m_clean = m.strip().lower()
+            if len(m_clean) < 2:
+                continue
+            mat_key = f"material:{m_clean}"
+            material_counter[m_clean] += 1
+            edges[(d_key, mat_key)] += 1
+            # color↔material 엣지
+            for c in colors:
+                c_lower = c.strip().lower()
+                if c_lower:
+                    edges[(f"color:{c_lower}", mat_key)] += 1
+
+        # overall_silhouette
+        sil = row["overall_silhouette"]
+        if sil:
+            sil_lower = sil.strip().lower()
+            sil_key = f"silhouette:{sil_lower}"
+            silhouette_counter[sil_lower] += 1
+            edges[(d_key, sil_key)] += 1
+
+        # items → textures
+        items = _parse_json_field(row["items"])
+        for item in items:
+            if isinstance(item, dict):
+                tex = item.get("texture", "")
+                if tex:
+                    tex_lower = tex.strip().lower()
+                    tex_key = f"texture:{tex_lower}"
+                    texture_counter[tex_lower] += 1
+                    edges[(d_key, tex_key)] += 1
+
+    # 디자이너 노드 size 업데이트
+    for slug, cnt in designer_counter.items():
+        d_key = f"designer:{slug}"
+        if d_key in nodes:
+            nodes[d_key]["size"] = min(5 + cnt // 4, 14)
+
+    # 상위 항목만 노드로 추가
+    for col, cnt in color_counter.most_common(20):
+        nodes[f"color:{col}"] = {
+            "id": f"color:{col}",
+            "label": col,
+            "type": "color",
+            "size": min(3 + cnt // 3, 9),
+            "color": _css_color_muted(col),
+        }
+
+    for mat, cnt in material_counter.most_common(20):
+        nodes[f"material:{mat}"] = {
+            "id": f"material:{mat}",
+            "label": mat,
+            "type": "material",
+            "size": min(3 + cnt // 3, 9),
+            "color": _type_colors["material"],
+        }
+
+    for sil, cnt in silhouette_counter.most_common(10):
+        nodes[f"silhouette:{sil}"] = {
+            "id": f"silhouette:{sil}",
+            "label": sil,
+            "type": "silhouette",
+            "size": min(4 + cnt // 4, 10),
+            "color": _type_colors["silhouette"],
+        }
+
+    for tex, cnt in texture_counter.most_common(15):
+        nodes[f"texture:{tex}"] = {
+            "id": f"texture:{tex}",
+            "label": tex,
+            "type": "texture",
+            "size": min(3 + cnt // 4, 8),
+            "color": _type_colors["texture"],
+        }
+
+    # 엣지 — 양쪽 노드가 모두 존재하는 것만
+    edge_list = []
+    for (src, tgt), weight in edges.items():
+        if src in nodes and tgt in nodes:
+            edge_list.append({"source": src, "target": tgt, "weight": weight})
+
+    return {
+        "nodes": list(nodes.values()),
+        "edges": edge_list,
+    }
+
+
 def _css_color(name: str) -> str:
     """컬러 이름을 CSS 색상으로 매핑."""
     mapping = {

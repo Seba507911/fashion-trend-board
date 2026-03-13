@@ -6,6 +6,7 @@ import TrendAnalysis from "./pages/TrendAnalysis";
 import GraphView from "./pages/GraphView";
 import Runway from "./pages/Runway";
 import TrendFlow from "./pages/TrendFlow";
+import VlmViewer from "./pages/VlmViewer";
 
 export default function App() {
   const [selectedBrand, setSelectedBrand] = useState(null);
@@ -20,6 +21,7 @@ export default function App() {
           <Route path="/graph" element={<GraphView />} />
           <Route path="/runway" element={<Runway />} />
           <Route path="/flow" element={<TrendFlow />} />
+          <Route path="/vlm" element={<VlmViewer />} />
         </Routes>
       </div>
     </BrowserRouter>
