@@ -173,7 +173,7 @@ function FlowDiagram({ origin }) {
   return (
     <svg
       width="100%"
-      viewBox="0 0 680 250"
+      viewBox="0 0 680 280"
       className="my-4"
       style={{ transition: "opacity 0.3s", opacity: visible ? 1 : 0 }}
     >
@@ -202,19 +202,47 @@ function FlowDiagram({ origin }) {
       {data.edges.map(([fromIdx, toIdx], i) => {
         const from = data.nodes[fromIdx];
         const to = data.nodes[toIdx];
-        const x1 = from.x + from.w;
-        const y1 = from.y + 18;
-        const x2 = to.x;
-        const y2 = to.y + 18;
+
+        // Check if nodes overlap horizontally (vertical connection)
+        const fromRight = from.x + from.w;
+        const toRight = to.x + to.w;
+        const hOverlap = from.x < toRight && to.x < fromRight;
+        // Check if target is far to the left (backward connection)
+        const isBackward = to.x + to.w < from.x - 40;
+
+        let pathD;
+        if (hOverlap && to.y > from.y) {
+          // Vertical: go from bottom-center of source, curve right, to top-center of target
+          const x1 = from.x + from.w / 2 + 20;
+          const y1 = from.y + 36;
+          const x2 = to.x + to.w / 2;
+          const y2 = to.y;
+          const midX = Math.max(fromRight, toRight) + 30;
+          pathD = `M${x1},${y1} C${midX},${y1} ${midX},${y2} ${x2},${y2}`;
+        } else if (isBackward) {
+          // Backward: curve down from source bottom, sweep left to target right
+          const x1 = from.x + from.w / 2;
+          const y1 = from.y + 36;
+          const x2 = to.x + to.w;
+          const y2 = to.y + 18;
+          const dropY = Math.max(from.y, to.y) + 70;
+          pathD = `M${x1},${y1} C${x1},${dropY} ${x2 + 60},${dropY} ${x2},${y2}`;
+        } else {
+          // Normal: right-center to left-center
+          const x1 = fromRight;
+          const y1 = from.y + 18;
+          const x2 = to.x;
+          const y2 = to.y + 18;
+          pathD = `M${x1},${y1} L${x2},${y2}`;
+        }
+
         return (
-          <line
+          <path
             key={`edge-${i}`}
-            x1={x1}
-            y1={y1}
-            x2={x2}
-            y2={y2}
+            d={pathD}
             stroke={color}
             strokeWidth="1.5"
+            fill="none"
             markerEnd={`url(#arrow-${origin})`}
             opacity={visible ? 0.6 : 0}
             style={{ transition: `opacity 0.4s ease ${0.1 + i * 0.15}s` }}
@@ -260,7 +288,7 @@ function FlowDiagram({ origin }) {
         <text
           key={`tl-${i}`}
           x={data.timeXs[i]}
-          y={220}
+          y={240}
           fontSize="10"
           fill="rgba(128,128,128,0.5)"
           style={{ fontFamily: "var(--font-mono, monospace)" }}

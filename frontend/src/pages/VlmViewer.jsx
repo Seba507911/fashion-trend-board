@@ -89,7 +89,7 @@ function DetailModal({ look, onClose }) {
   return (
     <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={onClose}>
       <div
-        className="bg-[var(--color-surface)] rounded-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto flex flex-col md:flex-row"
+        className="bg-white rounded-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto flex flex-col md:flex-row shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Image */}
