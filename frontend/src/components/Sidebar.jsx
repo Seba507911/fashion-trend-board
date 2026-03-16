@@ -7,12 +7,13 @@ export default function Sidebar({ selectedBrand, onBrandSelect }) {
   const navigate = useNavigate();
 
   const navItems = [
-    { id: "runway", label: "Runway", path: "/runway" },
     { id: "trend-flow", label: "Trend Flow", path: "/flow" },
+    { id: "trend-flow-check", label: "Trend Flow check(Test)", path: "/flow-check" },
+    { id: "runway", label: "Runway", path: "/runway" },
+    { id: "vlm-viewer", label: "Runway(VLM Test)", path: "/vlm" },
     { id: "market-brand-board", label: "Market Brand Board", path: "/" },
     { id: "trend-analysis", label: "Trend Analysis", path: "/trend" },
     { id: "graph-view", label: "Graph View", path: "/graph" },
-    { id: "vlm-viewer", label: "VLM Labels", path: "/vlm" },
   ];
 
   const isActive = (path) => location.pathname === path;

@@ -10,12 +10,12 @@ export function useBrands() {
   });
 }
 
-export function useProducts({ brand, category, season } = {}) {
+export function useProducts({ brand, category, season, keyword } = {}) {
   return useQuery({
-    queryKey: ["products", { brand, category, season }],
+    queryKey: ["products", { brand, category, season, keyword }],
     queryFn: () =>
       api
-        .get("/products", { params: { brand, category, season } })
+        .get("/products", { params: { brand, category, season, keyword } })
         .then((r) => r.data),
   });
 }

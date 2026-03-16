@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import axios from "axios";
 
 const api = axios.create({ baseURL: "/api" });
@@ -11,11 +12,11 @@ function useRunwayDesigners() {
   });
 }
 
-function useRunwayLooks({ designer, season } = {}) {
+function useRunwayLooks({ designer, season, tag } = {}) {
   return useQuery({
-    queryKey: ["runway", "looks", { designer, season }],
+    queryKey: ["runway", "looks", { designer, season, tag }],
     queryFn: () =>
-      api.get("/runway", { params: { designer, season, limit: 120 } }).then(r => r.data),
+      api.get("/runway", { params: { designer, season, tag, limit: 120 } }).then(r => r.data),
   });
 }
 
@@ -91,23 +92,28 @@ function LookModal({ look, onClose }) {
 }
 
 export default function Runway() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tagParam = searchParams.get("tag");
+  const seasonParam = searchParams.get("season");
+
   const { data: designers = [] } = useRunwayDesigners();
   const { data: seasons = [] } = useRunwaySeasons();
   const [selectedDesigner, setSelectedDesigner] = useState(null);
-  const [selectedSeason, setSelectedSeason] = useState(null);
+  const [selectedSeason, setSelectedSeason] = useState(seasonParam);
   const [selectedLook, setSelectedLook] = useState(null);
 
-  // Auto-select first designer (alphabetically) on initial load
+  // Auto-select first designer (alphabetically) on initial load — skip if tag filter is active
   useEffect(() => {
-    if (designers.length > 0 && selectedDesigner === null) {
+    if (!tagParam && designers.length > 0 && selectedDesigner === null) {
       const sorted = [...designers].sort((a, b) => a.designer.localeCompare(b.designer));
       setSelectedDesigner(sorted[0].designer_slug);
     }
-  }, [designers, selectedDesigner]);
+  }, [designers, selectedDesigner, tagParam]);
 
   const { data: looks = [], isLoading } = useRunwayLooks({
-    designer: selectedDesigner,
+    designer: tagParam ? null : selectedDesigner,
     season: selectedSeason,
+    tag: tagParam,
   });
 
   // 디자이너별로 그룹핑
@@ -141,9 +147,27 @@ export default function Runway() {
       <div className="shrink-0 bg-[var(--color-bg)] border-b border-[var(--color-border)] px-8 pt-6 pb-4">
         <div className="max-w-[1200px] mx-auto">
           <h1 className="font-['Lora'] text-xl font-semibold tracking-wide mb-1">Runway</h1>
-          <p className="text-sm text-[var(--color-text-secondary)] mb-4">
+          <p className="text-sm text-[var(--color-text-secondary)] mb-2">
             Collection looks from major fashion weeks &middot; Source: TagWalk
           </p>
+          {tagParam && (
+            <div className="mb-2 flex items-center gap-2">
+              <span className="text-xs px-2.5 py-1 rounded-full bg-[var(--color-primary)]/10 text-[var(--color-primary)] font-medium">
+                tag: {tagParam}
+              </span>
+              {seasonParam && (
+                <span className="text-xs px-2.5 py-1 rounded-full bg-[var(--color-primary)]/10 text-[var(--color-primary)] font-medium">
+                  season: {seasonParam}
+                </span>
+              )}
+              <button
+                onClick={() => { setSearchParams({}); setSelectedDesigner(null); }}
+                className="text-xs text-[var(--color-text-muted)] hover:text-[var(--color-text)] underline"
+              >
+                Clear
+              </button>
+            </div>
+          )}
 
           <div className="flex gap-3 flex-wrap">
             <select

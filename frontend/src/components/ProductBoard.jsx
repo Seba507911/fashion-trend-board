@@ -1,15 +1,19 @@
 import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useProducts, useCategories } from "../hooks/useProducts";
 import ProductCard from "./ProductCard";
 import ProductDetail from "./ProductDetail";
 
 export default function ProductBoard({ selectedBrand }) {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const keywordParam = searchParams.get("keyword");
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const { data: categories = [] } = useCategories();
   const { data: products = [], isLoading } = useProducts({
     brand: selectedBrand,
     category: selectedCategory,
+    keyword: keywordParam,
   });
 
   const subCategories = categories.filter((c) => c.parent_id);
@@ -35,6 +39,19 @@ export default function ProductBoard({ selectedBrand }) {
           {selectedBrand ? `${selectedBrand.toUpperCase()} — ` : ""}
           {products.length} Products
         </p>
+        {keywordParam && (
+          <div className="mt-2 flex items-center gap-2">
+            <span className="text-xs px-2.5 py-1 rounded-full bg-[var(--color-primary)]/10 text-[var(--color-primary)] font-medium">
+              keyword: {keywordParam}
+            </span>
+            <button
+              onClick={() => setSearchParams({})}
+              className="text-xs text-[var(--color-text-muted)] hover:text-[var(--color-text)] underline"
+            >
+              Clear
+            </button>
+          </div>
+        )}
       </header>
 
       {/* Category Tabs */}

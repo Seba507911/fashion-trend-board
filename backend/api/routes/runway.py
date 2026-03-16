@@ -16,6 +16,7 @@ async def list_runway_looks(
     designer: Optional[str] = None,
     season: Optional[str] = None,
     collection_type: Optional[str] = None,
+    tag: Optional[str] = None,
     limit: int = Query(default=60, le=200),
     offset: int = 0,
     db: aiosqlite.Connection = Depends(get_db),
@@ -33,6 +34,9 @@ async def list_runway_looks(
     if collection_type:
         query += " AND collection_type = ?"
         params.append(collection_type)
+    if tag:
+        query += " AND tags LIKE ?"
+        params.append(f"%{tag}%")
 
     query += " ORDER BY designer_slug, season DESC, look_number ASC LIMIT ? OFFSET ?"
     params.extend([limit, offset])

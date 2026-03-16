@@ -6,6 +6,7 @@ import TrendAnalysis from "./pages/TrendAnalysis";
 import GraphView from "./pages/GraphView";
 import Runway from "./pages/Runway";
 import TrendFlow from "./pages/TrendFlow";
+import TrendFlowCheck from "./pages/TrendFlowCheck";
 import VlmViewer from "./pages/VlmViewer";
 
 export default function App() {
@@ -21,6 +22,7 @@ export default function App() {
           <Route path="/graph" element={<GraphView />} />
           <Route path="/runway" element={<Runway />} />
           <Route path="/flow" element={<TrendFlow />} />
+          <Route path="/flow-check" element={<TrendFlowCheck />} />
           <Route path="/vlm" element={<VlmViewer />} />
         </Routes>
       </div>

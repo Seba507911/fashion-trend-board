@@ -13,6 +13,7 @@ async def list_products(
     brand: Optional[str] = None,
     category: Optional[str] = None,
     season: Optional[str] = None,
+    keyword: Optional[str] = None,
     price_min: Optional[int] = None,
     price_max: Optional[int] = None,
     limit: int = Query(default=50, le=200),
@@ -32,6 +33,10 @@ async def list_products(
     if season:
         query += " AND season_id = ?"
         params.append(season)
+    if keyword:
+        like = f"%{keyword}%"
+        query += " AND (name LIKE ? OR color LIKE ? OR material LIKE ?)"
+        params.extend([like, like, like])
     if price_min is not None:
         query += " AND price >= ?"
         params.append(price_min)
