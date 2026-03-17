@@ -86,7 +86,7 @@
 | Tommy Hilfiger | kr.tommy.com | 자체 | 아메리칸 캐주얼 | ⬜ |
 | Calvin Klein | calvinklein.co.kr | 자체 | | ⬜ |
 | Ralph Lauren | ralphlauren.co.kr | 자체 | 아메리칸 클래식 | ⬜ |
-| Polo Ralph Lauren | " | " | 무신사 인기 브랜드 | ⬜ |
+| Polo Ralph Lauren | ralphlauren.co.kr | 자체 | ✅ 수집 완료 (9개) stealth | ✅ |
 
 ### 국내 캐주얼 / 스트리트 (대형)
 

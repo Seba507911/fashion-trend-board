@@ -226,33 +226,7 @@ SHOPIFY_BRANDS: dict[str, dict] = {
         "currency": "USD",
         "season_id": "2026SS",
     },
-    "ami": {
-        "brand_id": "ami",
-        "base_url": "https://www.amiparis.com",
-        "card_selector": ".product-card, .collection-product",
-        "selectors": {
-            "name": ".product-card__title, .product-name",
-            "price": ".product-card__price, .product-price",
-            "color": ".product-card__color",
-            "image": ".product-card__image img, .product-media img",
-            "link": "a[href*='/products/']",
-        },
-        "collections": {
-            "coats-jackets": "outer",
-            "t-shirts-polos": "top",
-            "knitwear": "top",
-            "shirts": "top",
-            "sweatshirts": "top",
-            "trousers": "bottom",
-            "shorts": "bottom",
-            "shoes": "shoes",
-            "bags": "bag",
-            "accessories": "etc_acc",
-        },
-        "style_tags": ["french", "contemporary", "luxury"],
-        "currency": "EUR",
-        "season_id": "2026SS",
-    },
+    # ami: moved to custom crawler (backend/crawlers/brand_crawlers/ami.py)
 }
 
 
@@ -263,6 +237,7 @@ SHOPIFY_BRANDS: dict[str, dict] = {
 CUSTOM_BRANDS = [
     "newbalance", "asics", "northface", "descente", "nike", "kolonsport",
     "lululemon", "acne_studios", "zara", "hm",
+    "maison_kitsune", "ami", "ralph_lauren",
 ]
 
 
@@ -315,6 +290,18 @@ def get_crawler(brand_id: str):
     if brand_id == "hm":
         from backend.crawlers.brand_crawlers.hm import HMCrawler
         return HMCrawler()
+
+    if brand_id == "maison_kitsune":
+        from backend.crawlers.brand_crawlers.maison_kitsune import MaisonKitsuneCrawler
+        return MaisonKitsuneCrawler()
+
+    if brand_id == "ami":
+        from backend.crawlers.brand_crawlers.ami import AmiCrawler
+        return AmiCrawler()
+
+    if brand_id == "ralph_lauren":
+        from backend.crawlers.brand_crawlers.ralph_lauren import RalphLaurenCrawler
+        return RalphLaurenCrawler()
 
     raise ValueError(f"Unknown brand: {brand_id}. "
                      f"Available: {list(CAFE24_BRANDS) + list(SHOPIFY_BRANDS) + CUSTOM_BRANDS}")
