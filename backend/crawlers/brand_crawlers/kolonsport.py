@@ -188,6 +188,26 @@ class KolonSportCrawler(BaseCrawler):
                 cat_name = cname
                 break
 
+        # 소재: fabricContents 또는 description에서 추출
+        materials = []
+        fabric = raw.get("fabricContents") or raw.get("fabricContent") or ""
+        if isinstance(fabric, str) and fabric:
+            # "겉감:폴리에스터100%" 형태
+            parts = [p.strip() for p in fabric.replace("/", ",").split(",") if p.strip()]
+            materials = [p for p in parts if len(p) > 2]
+        # fallback: description에서 소재 패턴 추출
+        if not materials:
+            desc_text = raw.get("description") or ""
+            if desc_text:
+                import re as _re
+                mat_matches = _re.findall(r"[가-힣A-Za-z]+\s*\d+%", desc_text)
+                materials = list(dict.fromkeys(mat_matches))[:5]
+
+        # 설명
+        description = raw.get("description") or raw.get("detailDescription") or ""
+        if isinstance(description, str) and len(description) > 500:
+            description = description[:500]
+
         # 성별 태그
         gender_tag = "men" if gender == "MALE" else "women"
 
@@ -209,6 +229,8 @@ class KolonSportCrawler(BaseCrawler):
             "category_id": cat_name,
             "season_id": season_id,
             "colors": colors,
+            "materials": materials,
+            "description": description,
             "sizes": [],
             "thumbnail_url": thumbnail,
             "image_urls": image_urls,

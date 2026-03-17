@@ -263,6 +263,10 @@ class NikeCrawler(BaseCrawler):
                                 product["sizes"] = json.dumps(
                                     detail["sizes"], ensure_ascii=False
                                 )
+                            if detail.get("materials"):
+                                product["materials"] = json.dumps(
+                                    detail["materials"], ensure_ascii=False
+                                )
                             if detail.get("description"):
                                 product["description"] = detail["description"]
                             if detail.get("image_urls"):
@@ -293,8 +297,26 @@ class NikeCrawler(BaseCrawler):
             await page.goto(url, wait_until="domcontentloaded", timeout=30000)
             await asyncio.sleep(4)
 
+            # 소재/상세 탭 클릭 시도
+            try:
+                tab_btns = await page.query_selector_all(
+                    "button:has-text('상품 정보'), "
+                    "button:has-text('제품 상세'), "
+                    "button:has-text('소재'), "
+                    "[role='tab']:has-text('정보'), "
+                    "[role='tab']:has-text('상세')"
+                )
+                for btn in tab_btns:
+                    try:
+                        await btn.click()
+                        await asyncio.sleep(1)
+                    except Exception:
+                        pass
+            except Exception:
+                pass
+
             info = await page.evaluate("""() => {
-                const result = {sizes: [], colors: [], description: '', imageUrls: []};
+                const result = {sizes: [], colors: [], materials: [], description: '', imageUrls: []};
 
                 // 사이즈: 사이즈 선택 버튼들
                 const sizeButtons = document.querySelectorAll(
@@ -333,6 +355,32 @@ class NikeCrawler(BaseCrawler):
                     }
                 });
 
+                // 소재: 여러 후보 셀렉터에서 추출
+                const matSels = [
+                    '.description-preview__body', '.product-info__description',
+                    '[data-testid="product-description"]', '.pi-pdpmainbody'
+                ];
+                const allPageText = document.body.innerText || '';
+                // "소재:" / "Material:" 패턴
+                const matMatch = allPageText.match(/(?:소재|Material|원단)[:\s]+([\s\S]{5,200}?)(?:\n\n|제조|세탁|원산지|A\/S)/i);
+                if (matMatch) {
+                    const lines = matMatch[1].split('\n').map(s => s.trim()).filter(s => s.length > 2);
+                    lines.forEach(l => {
+                        if (!result.materials.includes(l)) result.materials.push(l);
+                    });
+                }
+                // fallback: 퍼센트 패턴 추출
+                if (result.materials.length === 0) {
+                    const pctMatches = allPageText.match(/[가-힣A-Za-z]+\s*\d+%/g);
+                    if (pctMatches) {
+                        pctMatches.slice(0, 5).forEach(m => {
+                            if (!m.includes('할인') && !m.includes('쿠폰') && !result.materials.includes(m)) {
+                                result.materials.push(m);
+                            }
+                        });
+                    }
+                }
+
                 // 설명
                 const descEl = document.querySelector(
                     '.description-preview__body, ' +
@@ -366,6 +414,8 @@ class NikeCrawler(BaseCrawler):
                 detail["sizes"] = list(dict.fromkeys(info["sizes"]))
             if info.get("colors"):
                 detail["colors"] = info["colors"]
+            if info.get("materials"):
+                detail["materials"] = info["materials"]
             if info.get("description"):
                 detail["description"] = info["description"]
             if info.get("imageUrls"):

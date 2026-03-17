@@ -70,14 +70,32 @@ class Cafe24Crawler(BaseCrawler):
                 const result = {};
                 result.productNo = (li.id || '').replace('anchorBoxId_', '');
 
-                const img = li.querySelector('.swiper-slide-active img, .swiper-slide:first-child img, .thumb img, .prdImg img, img.ThumbImage, .thumbnail img');
-                result.imgSrc = img ? (img.getAttribute('src') || img.getAttribute('data-src') || '') : '';
+                // 대표 이미지 — 품절 오버레이가 아닌 실제 상품 이미지 찾기
+                const allImgs = li.querySelectorAll('.swiper-slide-active img, .swiper-slide:first-child img, .thumb img, .prdImg img, img.ThumbImage, .thumbnail img');
+                result.imgSrc = '';
+                for (const img of allImgs) {
+                    const src = img.getAttribute('src') || img.getAttribute('data-src') || '';
+                    if (src && !src.includes('ico_product_soldout') &&
+                        !src.includes('btn_wish') &&
+                        !src.includes('echosting.cafe24.com/design/skin')) {
+                        result.imgSrc = src;
+                        break;
+                    }
+                }
 
                 const imgs = li.querySelectorAll('.swiper-slide img, .thumb img, img.ThumbImage, .thumbnail img');
                 result.imageUrls = [];
                 imgs.forEach(i => {
                     const src = i.getAttribute('src') || i.getAttribute('data-src') || '';
-                    if (src && !result.imageUrls.includes(src)) result.imageUrls.push(src);
+                    // 품절 오버레이/위시버튼 등 UI 이미지 필터링
+                    if (src && !result.imageUrls.includes(src) &&
+                        !src.includes('ico_product_soldout') &&
+                        !src.includes('btn_wish') &&
+                        !src.includes('ico_soldout') &&
+                        !src.includes('btn_cart') &&
+                        !src.includes('echosting.cafe24.com/design/skin')) {
+                        result.imageUrls.push(src);
+                    }
                 });
 
                 const nameEl = li.querySelector('.description .name a, .name a, .prd_name a, p.name a, .thumbnail-info .name a');
@@ -174,9 +192,26 @@ class Cafe24Crawler(BaseCrawler):
                     }
                 });
 
-                // 상세 설명
-                const contEl = document.querySelector('.cont, .product_detail, .detail_cont');
-                const contText = contEl ? contEl.innerText.trim() : '';
+                // 상세 설명 — 실제 상품 설명 영역만 수집 (결제/배송 안내 제외)
+                // 우선순위: 전용 description 셀렉터 → .cont 에서 결제 안내 필터링
+                const descCandidates = [
+                    '.prd_detail_basic', '.product-detail', '#prdDetail',
+                    '.cont', '.product_detail', '.detail_cont'
+                ];
+                let contText = '';
+                for (const sel of descCandidates) {
+                    const el = document.querySelector(sel);
+                    if (el) {
+                        const text = el.innerText.trim();
+                        // 결제/배송/교환/반품 안내가 아닌 실제 상품 설명인지 확인
+                        if (text.length > 10 && !text.startsWith('상품결제정보') &&
+                            !text.startsWith('배송정보') && !text.startsWith('교환') &&
+                            !text.startsWith('고액결제') && text.indexOf('카드사에서 확인전화') === -1) {
+                            contText = text;
+                            break;
+                        }
+                    }
+                }
                 result.description = '';
                 result.materials = [];
                 result.fitInfo = '';
@@ -191,12 +226,17 @@ class Cafe24Crawler(BaseCrawler):
                         });
                     }
 
+                    // 결제/배송/교환/반품 안내 부분 제거
+                    const cutPatterns = ['상품결제정보', '배송정보', '교환 및 반품', 'SIZE GUIDE'];
+                    let descEnd = contText.length;
+                    for (const pat of cutPatterns) {
+                        const idx = contText.indexOf(pat);
+                        if (idx > 0 && idx < descEnd) descEnd = idx;
+                    }
+                    result.description = contText.substring(0, Math.min(descEnd, 500)).trim();
                     const sizeIdx = contText.indexOf('SIZE GUIDE');
                     if (sizeIdx > 0) {
-                        result.description = contText.substring(0, sizeIdx).trim();
                         result.fitInfo = contText.substring(sizeIdx).trim().substring(0, 500);
-                    } else {
-                        result.description = contText.substring(0, 500);
                     }
                 }
 

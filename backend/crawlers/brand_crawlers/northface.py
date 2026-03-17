@@ -259,6 +259,27 @@ class NorthFaceCrawler(BaseCrawler):
             await page.goto(url, wait_until="domcontentloaded", timeout=30000)
             await asyncio.sleep(4)
 
+            # "상세보기" / 접힌 상세 영역 펼치기
+            try:
+                fold_btns = await page.query_selector_all(
+                    "button.pdp-details-toggle, "
+                    "button[aria-label*='상세'], "
+                    ".pdp-details button, "
+                    ".product-details-toggle, "
+                    "button:has-text('상세'), "
+                    "button:has-text('더보기'), "
+                    "a.btn-more-view"
+                )
+                for btn in fold_btns:
+                    try:
+                        await btn.click()
+                        await asyncio.sleep(1)
+                    except Exception:
+                        pass
+                await asyncio.sleep(1)
+            except Exception:
+                pass
+
             info = await page.evaluate("""() => {
                 const result = {sizes: [], colors: [], materials: [], description: '', imageUrls: []};
 
@@ -289,26 +310,52 @@ class NorthFaceCrawler(BaseCrawler):
                 });
 
                 // 소재: dt.tag-key "제품 소재" → dd.tag-value
-                const dtEls = document.querySelectorAll('dt.tag-key');
+                const dtEls = document.querySelectorAll('dt.tag-key, dt, th');
                 dtEls.forEach(dt => {
                     const label = dt.innerText.trim();
-                    if (label.includes('소재') || label.includes('재질')) {
+                    if (label.includes('소재') || label.includes('재질') || label.includes('혼용')) {
                         const dd = dt.nextElementSibling;
-                        if (dd && dd.tagName === 'DD') {
+                        if (dd) {
                             const matText = dd.innerText.trim();
                             if (matText && matText.length > 2) {
-                                // "겉감 : 폴리에스터 100%  주머니감 : 폴리에스터 100%" 형태
                                 result.materials.push(matText);
                             }
                         }
                     }
                 });
+                // 소재 fallback: 상세 영역에서 % 패턴 추출
+                if (result.materials.length === 0) {
+                    const allText = document.body.innerText || '';
+                    const matPatterns = allText.match(/(?:겉감|안감|충전재|주머니감|배색)\s*[:\s]*[가-힣A-Za-z]+\s*\d+%[^\\n]*/g);
+                    if (matPatterns) {
+                        matPatterns.forEach(m => {
+                            if (!result.materials.includes(m.trim())) result.materials.push(m.trim());
+                        });
+                    }
+                }
 
-                // 설명: pdp-details-content
-                const descEl = document.querySelector('.pdp-details-content');
-                if (descEl) {
-                    const text = descEl.innerText.trim();
-                    if (text.length > 10) result.description = text.substring(0, 500);
+                // 설명: 여러 후보 셀렉터
+                const descSels = [
+                    '.pdp-details-content', '.product-description',
+                    '.pdp-body', '.product-detail-info', '.detail-info'
+                ];
+                for (const sel of descSels) {
+                    const el = document.querySelector(sel);
+                    if (el) {
+                        const text = el.innerText.trim();
+                        if (text.length > 10) {
+                            result.description = text.substring(0, 500);
+                            break;
+                        }
+                    }
+                }
+                // 설명 fallback: og:description
+                if (!result.description) {
+                    const ogDesc = document.querySelector('meta[property="og:description"]');
+                    if (ogDesc) {
+                        const content = ogDesc.getAttribute('content') || '';
+                        if (content.length > 10) result.description = content;
+                    }
                 }
 
                 // 갤러리 이미지

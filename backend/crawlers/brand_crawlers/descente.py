@@ -245,6 +245,25 @@ class DescenteCrawler(BaseCrawler):
             await page.goto(url, wait_until="domcontentloaded", timeout=30000)
             await asyncio.sleep(4)
 
+            # 접힌 상세 영역 모두 펼치기 (fold-item 토글)
+            try:
+                fold_btns = await page.query_selector_all(
+                    ".fold-item .fold-btn, "
+                    "button.fold-toggle, "
+                    ".prod-detail-info button, "
+                    "button:has-text('상품정보'), "
+                    "button:has-text('상세정보')"
+                )
+                for btn in fold_btns:
+                    try:
+                        await btn.click()
+                        await asyncio.sleep(0.5)
+                    except Exception:
+                        pass
+                await asyncio.sleep(1)
+            except Exception:
+                pass
+
             info = await page.evaluate("""() => {
                 const result = {sizes: [], colors: [], materials: [], description: '', imageUrls: []};
 
@@ -263,7 +282,7 @@ class DescenteCrawler(BaseCrawler):
                 });
 
                 // 소재: 상품정보제공고시 테이블에서 '소재' 행 찾기
-                const specRows = document.querySelectorAll('.fold-item .fold-content table.tbl-info tr');
+                const specRows = document.querySelectorAll('.fold-item .fold-content table.tbl-info tr, table.tbl-info tr, .prod-spec tr, .product-spec tr');
                 specRows.forEach(row => {
                     const th = row.querySelector('th');
                     const td = row.querySelector('td');
@@ -272,9 +291,7 @@ class DescenteCrawler(BaseCrawler):
                         if (label.includes('소재') || label.includes('재질') || label.includes('혼용')) {
                             const matText = td.innerText.trim();
                             if (matText && matText.length > 2) {
-                                // 파싱: "[BLK0]겉감1:나일론(72)폴리우레탄(28)" 형태
                                 const parts = matText.split(',').map(s => s.trim()).filter(s => s.length > 2);
-                                // 컬러 코드 제거하고 소재만 추출
                                 parts.forEach(part => {
                                     const cleaned = part.replace(/\\[[^\\]]+\\]/g, '').trim();
                                     if (cleaned && !result.materials.includes(cleaned)) {
@@ -285,12 +302,37 @@ class DescenteCrawler(BaseCrawler):
                         }
                     }
                 });
+                // 소재 fallback: 페이지 텍스트에서 소재 패턴 추출
+                if (result.materials.length === 0) {
+                    const allText = document.body.innerText || '';
+                    const matPatterns = allText.match(/(?:겉감|안감|충전재|배색)\s*[\d]*\s*[:\s]*[가-힣A-Za-z]+\s*\(\d+\)/g);
+                    if (matPatterns) {
+                        matPatterns.forEach(m => {
+                            const cleaned = m.replace(/\\[[^\\]]+\\]/g, '').trim();
+                            if (cleaned && !result.materials.includes(cleaned)) result.materials.push(cleaned);
+                        });
+                    }
+                }
 
-                // 설명: og:description
-                const ogDesc = document.querySelector('meta[property="og:description"]');
-                if (ogDesc) {
-                    const content = ogDesc.getAttribute('content') || '';
-                    if (content.length > 10) result.description = content;
+                // 설명: 여러 후보
+                const descSels = ['.prod-detail-text', '.prod-desc', '.prod-detail-info'];
+                for (const sel of descSels) {
+                    const el = document.querySelector(sel);
+                    if (el) {
+                        const text = el.innerText.trim();
+                        if (text.length > 10) {
+                            result.description = text.substring(0, 500);
+                            break;
+                        }
+                    }
+                }
+                // 설명 fallback: og:description
+                if (!result.description) {
+                    const ogDesc = document.querySelector('meta[property="og:description"]');
+                    if (ogDesc) {
+                        const content = ogDesc.getAttribute('content') || '';
+                        if (content.length > 10) result.description = content;
+                    }
                 }
 
                 // 갤러리 이미지
