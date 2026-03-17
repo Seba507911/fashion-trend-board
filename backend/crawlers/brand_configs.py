@@ -268,6 +268,7 @@ CUSTOM_BRANDS = [
     "newbalance", "asics", "northface", "descente", "nike", "kolonsport",
     "lululemon", "acne_studios", "zara", "hm",
     "maison_kitsune", "ami", "ralph_lauren", "thisisneverthat", "on_running",
+    "nanamica",
 ]
 
 
@@ -340,6 +341,10 @@ def get_crawler(brand_id: str):
     if brand_id == "on_running":
         from backend.crawlers.brand_crawlers.on_running import OnRunningCrawler
         return OnRunningCrawler()
+
+    if brand_id == "nanamica":
+        from backend.crawlers.brand_crawlers.nanamica import NanamicaCrawler
+        return NanamicaCrawler()
 
     raise ValueError(f"Unknown brand: {brand_id}. "
                      f"Available: {list(CAFE24_BRANDS) + list(SHOPIFY_BRANDS) + CUSTOM_BRANDS}")

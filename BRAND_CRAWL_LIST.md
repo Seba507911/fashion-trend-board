@@ -194,6 +194,30 @@
 | WAAC | wafrfr.com | Cafe24 | 코오롱 골프 | ⬜ |
 | 세르지오 타키니 | sergiotacchini.co.kr | 자체 | F&F 브랜드 | ⬜ |
 
+### 국내 추가 브랜드
+
+| 브랜드 | 사이트 | 플랫폼 | 크롤링 노트 | 상태 |
+|--------|--------|--------|------------|------|
+| UNIQLO | uniqlo.com/kr | 자체 | SPA, URL 탐색 필요 | ⬜ |
+| New Era Korea | neweracap.co.kr | 자체 | 카드 셀렉터 탐색 필요 | ⬜ |
+| Kangol Korea | kangol.kr | 자체 | DNS/접근 실패, 재확인 필요 | ⚠️ |
+| Snow Peak Korea | snowpeak.co.kr | 자체 | 카테고리 URL 확인 필요 | ⬜ |
+
+### 일본 브랜드 (트렌드 Origin 참조)
+
+> 일본 컨템포러리/디자이너 — 런웨이-오리진 트렌드 참조 + 소재/실루엣 벤치마크
+
+| 브랜드 | 사이트 | 플랫폼 | 크롤링 노트 | 상태 |
+|--------|--------|--------|------------|------|
+| nanamica | nanamica.com | 자체 | ✅ 수집 완료 (170개) | ✅ |
+| CAPTAIN SUNSHINE | captain-sunshine.com | 자체 | DNS 해석 실패, 도메인 재확인 | ⚠️ |
+| COMOLI | comoli.jp | 자체 | 404 (사이트 구조 변경) | ⚠️ |
+| DANTON | danton-japan.com? | 자체 | DNS 해석 실패, 도메인 재확인 | ⚠️ |
+| AURALEE | auralee.jp | 자체 | 404 (컬렉션 URL 다름) | ⚠️ |
+| A.PRESSE | apresse.jp? | 자체 | DNS 해석 실패, 도메인 재확인 | ⚠️ |
+| visvim | visvim.tv | 자체 | 404 (사이트 리뉴얼 가능) | ⚠️ |
+| KAPITAL | kapital-webshop.jp | 자체 | 403 CloudFront WAF | ⚠️ |
+
 ### 리셀 / 플랫폼 (랭킹·품절 데이터용)
 
 | 플랫폼 | 사이트 | 수집 목적 | 상태 |

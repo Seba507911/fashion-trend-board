@@ -28,7 +28,19 @@ const BRAND_GROUPS = [
   {
     zoning: "SPA / 매스",
     groups: [
-      { region: "Global", ids: ["zara", "cos", "hm"] },
+      { region: "Global", ids: ["zara", "cos", "hm", "uniqlo"] },
+    ],
+  },
+  {
+    zoning: "일본 컨템포러리",
+    groups: [
+      { region: "Japan", ids: ["nanamica", "captain_sunshine", "comoli", "danton", "auralee", "apresse", "visvim", "kapital"] },
+    ],
+  },
+  {
+    zoning: "기타",
+    groups: [
+      { region: "Korea", ids: ["newera", "kangol", "snowpeak"] },
     ],
   },
 ];

@@ -179,6 +179,20 @@ INSERT OR IGNORE INTO brands (id, name, name_kr, brand_type, website_url) VALUES
 ('amomento', 'AMOMENTO', '아모멘토', 'competitor', 'https://www.amfrfr.com/'),
 ('recto', 'RECTO', '렉토', 'competitor', 'https://rfrfrfr.com/');
 
+INSERT OR IGNORE INTO brands (id, name, name_kr, brand_type, website_url) VALUES
+('uniqlo', 'UNIQLO', '유니클로', 'competitor', 'https://www.uniqlo.com/kr/ko/'),
+('newera', 'New Era', '뉴에라', 'competitor', 'https://www.neweracap.co.kr/'),
+('kangol', 'Kangol', '캉골', 'competitor', 'https://kangol.kr/'),
+('snowpeak', 'Snow Peak', '스노우피크', 'competitor', 'https://www.snowpeak.co.kr/'),
+('nanamica', 'nanamica', '나나미카', 'competitor', 'https://www.nanamica.com/'),
+('captain_sunshine', 'CAPTAIN SUNSHINE', '캡틴선샤인', 'competitor', 'https://captain-sunshine.com/'),
+('comoli', 'COMOLI', '코모리', 'competitor', 'https://www.comoli.jp/'),
+('danton', 'DANTON', '단톤', 'competitor', 'https://www.danton-japan.com/'),
+('auralee', 'AURALEE', '오라리', 'competitor', 'https://www.auralee.jp/'),
+('apresse', 'A.PRESSE', '아프레쎄', 'competitor', 'https://apresse.jp/'),
+('visvim', 'visvim', '비즈빔', 'competitor', 'https://www.visvim.tv/'),
+('kapital', 'KAPITAL', '캐피탈', 'competitor', 'https://www.kapital.jp/');
+
 INSERT OR IGNORE INTO seasons (id, year, season_code, label, is_current) VALUES
 ('2025SS', 2025, 'SS', '2025 Spring/Summer', 0),
 ('2025FW', 2025, 'FW', '2025 Fall/Winter', 0),
