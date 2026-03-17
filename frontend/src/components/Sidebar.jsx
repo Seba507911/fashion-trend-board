@@ -1,10 +1,46 @@
+import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useBrands } from "../hooks/useProducts";
+
+/* ── Brand hierarchy: zoning → region → brand_ids ── */
+const BRAND_GROUPS = [
+  {
+    zoning: "럭셔리 / 컨템포러리",
+    groups: [
+      { region: "Global", ids: ["lemaire", "jacquemus", "ami", "maison_kitsune", "acne_studios", "recto"] },
+      { region: "Korea", ids: ["wooyoungmi", "ader_error", "dunst", "amomento"] },
+    ],
+  },
+  {
+    zoning: "스포츠 / 아웃도어",
+    groups: [
+      { region: "Global", ids: ["nike", "newbalance", "on_running", "hoka", "salomon", "lululemon", "alo"] },
+      { region: "Korea", ids: ["descente", "northface", "kolonsport", "k2", "blackyak", "fila"] },
+    ],
+  },
+  {
+    zoning: "캐주얼 / 스트리트",
+    groups: [
+      { region: "Global", ids: ["ralph_lauren", "stussy", "carhartt_wip"] },
+      { region: "Korea", ids: ["youth", "marithe", "coor", "blankroom", "mardi", "thisisneverthat", "emis"] },
+    ],
+  },
+  {
+    zoning: "SPA / 매스",
+    groups: [
+      { region: "Global", ids: ["zara", "cos", "hm"] },
+    ],
+  },
+];
+
+// Flatten all known brand IDs for grouping
+const KNOWN_IDS = new Set(BRAND_GROUPS.flatMap(z => z.groups.flatMap(g => g.ids)));
 
 export default function Sidebar({ selectedBrand, onBrandSelect }) {
   const { data: brands = [] } = useBrands();
   const location = useLocation();
   const navigate = useNavigate();
+  const [expandedZoning, setExpandedZoning] = useState(null);
 
   const navItems = [
     { id: "trend-flow", label: "Trend Flow", path: "/flow" },
@@ -18,8 +54,37 @@ export default function Sidebar({ selectedBrand, onBrandSelect }) {
 
   const isActive = (path) => location.pathname === path;
 
+  // Build brand lookup map
+  const brandMap = {};
+  brands.forEach(b => { brandMap[b.id] = b; });
+
+  // Brands not in any group (ungrouped)
+  const ungroupedBrands = brands.filter(b => !KNOWN_IDS.has(b.id));
+
+  const toggleZoning = (zoning) => {
+    setExpandedZoning(expandedZoning === zoning ? null : zoning);
+  };
+
+  const BrandButton = ({ brandId }) => {
+    const brand = brandMap[brandId];
+    if (!brand) return null;
+    return (
+      <button
+        onClick={() => onBrandSelect(brand.id)}
+        className={`pl-10 pr-2.5 py-1 text-[11px] flex items-center gap-2 rounded-sm overflow-hidden ${
+          selectedBrand === brand.id
+            ? "bg-[var(--color-primary)]/5 text-[var(--color-primary)] font-medium"
+            : "text-[var(--color-text-secondary)] hover:bg-black/3"
+        }`}
+      >
+        <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${selectedBrand === brand.id ? "bg-[var(--color-primary)]" : "bg-[var(--color-text-muted)]"}`} />
+        <span className="truncate">{brand.name}</span>
+      </button>
+    );
+  };
+
   return (
-    <aside className="w-[220px] min-h-screen border-r border-[var(--color-border)] bg-[var(--color-sidebar)] p-6 flex flex-col gap-5 shrink-0">
+    <aside className="w-[220px] min-h-screen border-r border-[var(--color-border)] bg-[var(--color-sidebar)] p-6 flex flex-col gap-5 shrink-0 overflow-y-auto">
       <div
         className="flex items-center gap-2 cursor-pointer"
         onClick={() => navigate("/")}
@@ -50,11 +115,13 @@ export default function Sidebar({ selectedBrand, onBrandSelect }) {
               {item.label}
             </button>
 
+            {/* Brand Board 하위: 조닝별 브랜드 계층 */}
             {item.id === "market-brand-board" && isActive("/") && (
-              <div className="flex flex-col gap-0.5 mt-1">
+              <div className="flex flex-col gap-0 mt-1">
+                {/* All Brands */}
                 <button
                   onClick={() => onBrandSelect(null)}
-                  className={`pl-8 pr-2.5 py-1.5 text-xs flex items-center gap-2.5 rounded-sm ${
+                  className={`pl-5 pr-2.5 py-1.5 text-xs flex items-center gap-2 rounded-sm ${
                     selectedBrand === null
                       ? "bg-[var(--color-primary)]/5 text-[var(--color-primary)] font-medium"
                       : "text-[var(--color-text-secondary)] hover:bg-black/3"
@@ -63,20 +130,69 @@ export default function Sidebar({ selectedBrand, onBrandSelect }) {
                   <span className={`w-2 h-2 rounded-full ${selectedBrand === null ? "bg-[var(--color-primary)]" : "bg-[var(--color-text-muted)]"}`} />
                   All Brands
                 </button>
-                {brands.map((brand) => (
-                  <button
-                    key={brand.id}
-                    onClick={() => onBrandSelect(brand.id)}
-                    className={`pl-8 pr-2.5 py-1.5 text-xs flex items-center gap-2.5 rounded-sm overflow-hidden ${
-                      selectedBrand === brand.id
-                        ? "bg-[var(--color-primary)]/5 text-[var(--color-primary)] font-medium"
-                        : "text-[var(--color-text-secondary)] hover:bg-black/3"
-                    }`}
-                  >
-                    <span className={`w-2 h-2 rounded-full shrink-0 ${selectedBrand === brand.id ? "bg-[var(--color-primary)]" : "bg-[var(--color-text-muted)]"}`} />
-                    <span className="truncate">{brand.name}</span>
-                  </button>
-                ))}
+
+                {/* Zoning groups */}
+                {BRAND_GROUPS.map((zone) => {
+                  // Only show zonings that have at least one brand in DB
+                  const hasAnyBrand = zone.groups.some(g => g.ids.some(id => brandMap[id]));
+                  if (!hasAnyBrand) return null;
+
+                  const isExpanded = expandedZoning === zone.zoning;
+
+                  return (
+                    <div key={zone.zoning}>
+                      <button
+                        onClick={() => toggleZoning(zone.zoning)}
+                        className="w-full pl-5 pr-2.5 py-1.5 text-[10px] font-semibold tracking-wide text-[var(--color-text-muted)] flex items-center gap-1.5 hover:text-[var(--color-text-secondary)]"
+                      >
+                        <span className="text-[9px]">{isExpanded ? "▾" : "▸"}</span>
+                        {zone.zoning}
+                      </button>
+
+                      {isExpanded && zone.groups.map((group) => {
+                        const groupBrands = group.ids.filter(id => brandMap[id]);
+                        if (groupBrands.length === 0) return null;
+                        return (
+                          <div key={group.region}>
+                            <div className="pl-8 py-0.5 text-[9px] font-medium tracking-wider text-[var(--color-text-muted)] uppercase">
+                              {group.region}
+                            </div>
+                            {groupBrands.map(id => (
+                              <BrandButton key={id} brandId={id} />
+                            ))}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })}
+
+                {/* Ungrouped brands */}
+                {ungroupedBrands.length > 0 && (
+                  <div>
+                    <button
+                      onClick={() => toggleZoning("__other")}
+                      className="w-full pl-5 pr-2.5 py-1.5 text-[10px] font-semibold tracking-wide text-[var(--color-text-muted)] flex items-center gap-1.5 hover:text-[var(--color-text-secondary)]"
+                    >
+                      <span className="text-[9px]">{expandedZoning === "__other" ? "▾" : "▸"}</span>
+                      기타
+                    </button>
+                    {expandedZoning === "__other" && ungroupedBrands.map(brand => (
+                      <button
+                        key={brand.id}
+                        onClick={() => onBrandSelect(brand.id)}
+                        className={`pl-10 pr-2.5 py-1 text-[11px] flex items-center gap-2 rounded-sm overflow-hidden ${
+                          selectedBrand === brand.id
+                            ? "bg-[var(--color-primary)]/5 text-[var(--color-primary)] font-medium"
+                            : "text-[var(--color-text-secondary)] hover:bg-black/3"
+                        }`}
+                      >
+                        <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${selectedBrand === brand.id ? "bg-[var(--color-primary)]" : "bg-[var(--color-text-muted)]"}`} />
+                        <span className="truncate">{brand.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>

@@ -152,6 +152,33 @@ INSERT OR IGNORE INTO brands (id, name, name_kr, brand_type, website_url) VALUES
 ('gucci', 'Gucci', '구찌', 'reference', 'https://www.gucci.com/'),
 ('lemaire', 'Lemaire', '르메르', 'reference', 'https://www.lemaire.fr/');
 
+INSERT OR IGNORE INTO brands (id, name, name_kr, brand_type, website_url) VALUES
+('zara', 'ZARA', '자라', 'competitor', 'https://www.zara.com/kr/'),
+('cos', 'COS', '코스', 'competitor', 'https://www.cos.com/kr/'),
+('hm', 'H&M', '에이치앤엠', 'competitor', 'https://www2.hm.com/ko_kr/'),
+('on_running', 'On Running', '온러닝', 'competitor', 'https://www.on.com/ko-kr/'),
+('hoka', 'HOKA', '호카', 'competitor', 'https://www.hoka.com/ko/kr/'),
+('lululemon', 'Lululemon', '룰루레몬', 'competitor', 'https://www.lululemon.co.kr/'),
+('k2', 'K2', '케이투', 'competitor', 'https://www.k2.co.kr/'),
+('blackyak', 'Black Yak', '블랙야크', 'competitor', 'https://www.blackyak.com/'),
+('fila', 'FILA Korea', '필라코리아', 'competitor', 'https://www.fila.co.kr/'),
+('ralph_lauren', 'Ralph Lauren', '랄프로렌', 'competitor', 'https://www.ralphlauren.co.kr/'),
+('mardi', 'Mardi Mercredi', '마르디 메크르디', 'competitor', 'https://www.mardimercredi.com/'),
+('stussy', 'Stüssy', '스투시', 'competitor', 'https://www.stussy.com/'),
+('maison_kitsune', 'Maison Kitsuné', '메종키츠네', 'competitor', 'https://www.maisonkitsune.com/'),
+('dunst', 'DUNST', '던스트', 'competitor', 'https://dunst.co.kr/'),
+('jacquemus', 'Jacquemus', '자크뮈스', 'competitor', 'https://www.jacquemus.com/'),
+('ami', 'Ami Paris', '아미파리스', 'competitor', 'https://www.amiparis.com/'),
+('emis', 'EMIS', '이미스', 'competitor', 'https://emis.kr/'),
+('thisisneverthat', 'thisisneverthat', '디스이즈네버댓', 'competitor', 'https://www.thisisneverthat.com/'),
+('acne_studios', 'Acne Studios', '아크네스튜디오', 'competitor', 'https://www.acnestudios.com/kr/'),
+('wooyoungmi', 'WOOYOUNGMI', '우영미', 'competitor', 'https://www.wooyoungmi.com/'),
+('ader_error', 'ADER error', '아더에러', 'competitor', 'https://www.adererror.com/'),
+('salomon', 'Salomon', '살로몬', 'competitor', 'https://www.salomon.com/ko-kr/'),
+('carhartt_wip', 'Carhartt WIP', '칼하트WIP', 'competitor', 'https://www.carhartt-wip.com/'),
+('amomento', 'AMOMENTO', '아모멘토', 'competitor', 'https://www.amfrfr.com/'),
+('recto', 'RECTO', '렉토', 'competitor', 'https://rfrfrfr.com/');
+
 INSERT OR IGNORE INTO seasons (id, year, season_code, label, is_current) VALUES
 ('2025SS', 2025, 'SS', '2025 Spring/Summer', 0),
 ('2025FW', 2025, 'FW', '2025 Fall/Winter', 0),
