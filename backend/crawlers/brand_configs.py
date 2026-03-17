@@ -262,7 +262,7 @@ SHOPIFY_BRANDS: dict[str, dict] = {
 
 CUSTOM_BRANDS = [
     "newbalance", "asics", "northface", "descente", "nike", "kolonsport",
-    "lululemon", "acne_studios",
+    "lululemon", "acne_studios", "zara", "hm",
 ]
 
 
@@ -307,6 +307,14 @@ def get_crawler(brand_id: str):
     if brand_id == "acne_studios":
         from backend.crawlers.brand_crawlers.acne_studios import AcneStudiosCrawler
         return AcneStudiosCrawler()
+
+    if brand_id == "zara":
+        from backend.crawlers.brand_crawlers.zara import ZaraCrawler
+        return ZaraCrawler()
+
+    if brand_id == "hm":
+        from backend.crawlers.brand_crawlers.hm import HMCrawler
+        return HMCrawler()
 
     raise ValueError(f"Unknown brand: {brand_id}. "
                      f"Available: {list(CAFE24_BRANDS) + list(SHOPIFY_BRANDS) + CUSTOM_BRANDS}")

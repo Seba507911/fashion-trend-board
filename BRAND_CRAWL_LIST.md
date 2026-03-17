@@ -150,8 +150,8 @@
 
 | 브랜드 | 사이트 | 플랫폼 | 크롤링 노트 | 상태 |
 |--------|--------|--------|------------|------|
-| ZARA | zara.com/kr | 자체 | SPA 대표, 트렌드 팔로우 속도 벤치마크 | ⬜ |
-| H&M | hm.com/kr | 자체 | | ⬜ |
+| ZARA | zara.com/kr | 자체 | ✅ 수집 완료 (2,504개) stealth+API 인터셉트 | ✅ |
+| H&M | hm.com/kr | 자체 | ✅ 수집 완료 (37개) stealth, 일부 카테고리 | ✅ |
 | UNIQLO | uniqlo.com/kr | 자체 | 기본템/기능성 | ⬜ |
 | COS | cos.com/kr | 자체 | H&M 그룹, 미니멀 | ⬜ |
 | & Other Stories | stories.com | 자체 | H&M 그룹, 컨템 SPA | ⬜ |
