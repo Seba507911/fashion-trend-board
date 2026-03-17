@@ -16,7 +16,7 @@
 | Loewe | loewe.com | 자체 | WAF 가능성 | ⚠️ |
 | Bottega Veneta | bottegaveneta.com | 자체 | Kering 그룹, WAF 가능성 | ⚠️ |
 | Miu Miu | miumiu.com | 자체 | Prada 그룹 | ⚠️ |
-| Acne Studios | acnestudios.com | 자체 | 북유럽 컨템포러리 | ⬜ |
+| Acne Studios | acnestudios.com | 자체 | ✅ 수집 완료 (68개) | ✅ |
 | Ami Paris | amiparis.com | Shopify | Shopify 패턴 | ⬜ |
 | Maison Kitsuné | maisonkitsune.com | Shopify | Shopify 패턴 | ⬜ |
 | Jil Sander | jilsander.com | 자체 | 미니멀 하이엔드 | ⚠️ |
@@ -52,7 +52,7 @@
 | HOKA | hoka.com/kr | 자체 | 러닝코어 트렌드 핵심 | ⬜ |
 | Salomon | salomon.com/kr | 자체 | 고프코어/아웃도어 | ⬜ |
 | Arc'teryx | arcteryx.com/kr | 자체 | 고프코어 대표 | ⚠️ |
-| Lululemon | lululemon.co.kr | 자체 | 애슬레저 대표 | ⬜ |
+| Lululemon | lululemon.co.kr | 자체 | ✅ 수집 완료 (40개) | ✅ |
 
 ### 국내 스포츠 / 아웃도어
 
@@ -180,7 +180,7 @@
 | On Running | on.com/kr | 자체 | 러닝코어 핵심 | ⬜ |
 | HOKA | hoka.com/kr | 자체 | 러닝코어 핵심 | ⬜ |
 | Salomon | salomon.com/kr | 자체 | 고프코어→러닝 확장 | ⬜ |
-| Lululemon | lululemon.co.kr | 자체 | 애슬레저 대표 | ⬜ |
+| Lululemon | lululemon.co.kr | 자체 | ✅ 수집 완료 (40개) | ✅ |
 | ALO Yoga | aloyoga.co.kr | Shopify | ✅ 수집 완료 | ✅ |
 | Patagonia | patagonia.co.kr | 자체 | 아웃도어/서스테이너블 | ⬜ |
 
