@@ -3,50 +3,56 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useBrands } from "../hooks/useProducts";
 
 /* ── Brand hierarchy: zoning → region → brand_ids ── */
+/* Only brands with collected products are shown in main groups */
 const BRAND_GROUPS = [
   {
     zoning: "럭셔리 / 컨템포러리",
     groups: [
-      { region: "Global", ids: ["lemaire", "jacquemus", "ami", "maison_kitsune", "acne_studios"] },
-      { region: "Korea", ids: ["wooyoungmi", "ader_error", "dunst", "amomento", "recto"] },
+      { region: "Global", ids: ["lemaire", "acne_studios"] },
+      { region: "Korea", ids: [] },
     ],
   },
   {
     zoning: "스포츠 / 아웃도어",
     groups: [
-      { region: "Global", ids: ["nike", "newbalance", "on_running", "hoka", "salomon", "lululemon", "alo"] },
-      { region: "Korea", ids: ["descente", "northface", "kolonsport", "k2", "blackyak", "fila"] },
+      { region: "Global", ids: ["nike", "newbalance", "on_running", "lululemon", "alo"] },
+      { region: "Korea", ids: ["descente", "northface", "kolonsport", "fila"] },
     ],
   },
   {
     zoning: "캐주얼 / 스트리트",
     groups: [
-      { region: "Global", ids: ["ralph_lauren", "stussy", "carhartt_wip"] },
+      { region: "Global", ids: ["ralph_lauren", "stussy"] },
       { region: "Korea", ids: ["youth", "marithe", "coor", "blankroom", "mardi", "thisisneverthat", "emis"] },
     ],
   },
   {
     zoning: "SPA / 매스",
     groups: [
-      { region: "Global", ids: ["zara", "cos", "hm", "uniqlo"] },
+      { region: "Global", ids: ["zara", "hm"] },
     ],
   },
   {
     zoning: "일본 컨템포러리",
     groups: [
-      { region: "Japan", ids: ["nanamica", "captain_sunshine", "comoli", "danton", "auralee", "apresse", "visvim", "kapital"] },
-    ],
-  },
-  {
-    zoning: "기타",
-    groups: [
-      { region: "Korea", ids: ["newera", "kangol", "snowpeak"] },
+      { region: "Japan", ids: ["nanamica"] },
     ],
   },
 ];
 
+/* TBA: registered but not yet collected */
+const TBA_BRAND_IDS = [
+  "jacquemus", "ami", "maison_kitsune", "wooyoungmi", "ader_error", "dunst", "amomento", "recto",
+  "hoka", "salomon", "k2", "blackyak", "cos", "uniqlo",
+  "carhartt_wip", "captain_sunshine", "comoli", "danton", "auralee", "apresse", "visvim", "kapital",
+  "newera", "kangol", "snowpeak",
+];
+
 // Flatten all known brand IDs for grouping
-const KNOWN_IDS = new Set(BRAND_GROUPS.flatMap(z => z.groups.flatMap(g => g.ids)));
+const KNOWN_IDS = new Set([
+  ...BRAND_GROUPS.flatMap(z => z.groups.flatMap(g => g.ids)),
+  ...TBA_BRAND_IDS,
+]);
 
 export default function Sidebar({ selectedBrand, onBrandSelect }) {
   const { data: brands = [] } = useBrands();
@@ -179,7 +185,36 @@ export default function Sidebar({ selectedBrand, onBrandSelect }) {
                   );
                 })}
 
-                {/* Ungrouped brands */}
+                {/* TBA brands */}
+                {(() => {
+                  const tbaBrands = TBA_BRAND_IDS.filter(id => brandMap[id]);
+                  if (tbaBrands.length === 0) return null;
+                  return (
+                    <div>
+                      <button
+                        onClick={() => toggleZoning("__tba")}
+                        className="w-full pl-5 pr-2.5 py-1.5 text-[10px] font-semibold tracking-wide text-[var(--color-text-muted)] flex items-center gap-1.5 hover:text-[var(--color-text-secondary)]"
+                      >
+                        <span className="text-[9px]">{expandedZoning === "__tba" ? "▾" : "▸"}</span>
+                        TBA (수집 예정)
+                      </button>
+                      {expandedZoning === "__tba" && tbaBrands.map(id => {
+                        const brand = brandMap[id];
+                        return (
+                          <div
+                            key={id}
+                            className="pl-10 pr-2.5 py-1 text-[11px] flex items-center gap-2 text-[var(--color-text-muted)]"
+                          >
+                            <span className="w-1.5 h-1.5 rounded-full shrink-0 bg-[var(--color-border)]" />
+                            <span className="truncate">{brand.name}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
+
+                {/* Ungrouped brands (not in any category) */}
                 {ungroupedBrands.length > 0 && (
                   <div>
                     <button
@@ -190,18 +225,7 @@ export default function Sidebar({ selectedBrand, onBrandSelect }) {
                       기타
                     </button>
                     {expandedZoning === "__other" && ungroupedBrands.map(brand => (
-                      <button
-                        key={brand.id}
-                        onClick={() => onBrandSelect(brand.id)}
-                        className={`pl-10 pr-2.5 py-1 text-[11px] flex items-center gap-2 rounded-sm overflow-hidden ${
-                          selectedBrand === brand.id
-                            ? "bg-[var(--color-primary)]/5 text-[var(--color-primary)] font-medium"
-                            : "text-[var(--color-text-secondary)] hover:bg-black/3"
-                        }`}
-                      >
-                        <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${selectedBrand === brand.id ? "bg-[var(--color-primary)]" : "bg-[var(--color-text-muted)]"}`} />
-                        <span className="truncate">{brand.name}</span>
-                      </button>
+                      <BrandButton key={brand.id} brandId={brand.id} />
                     ))}
                   </div>
                 )}

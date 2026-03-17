@@ -78,25 +78,32 @@ class OnRunningCrawler(BaseCrawler):
                             await page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
                             await asyncio.sleep(1.5)
                         items = await page.evaluate("""() => {
+                            const badges = ['베스트 셀러','곧 출시 예정','신제품','새로운 색상','리미티드 에디션','남성','여성','유니섹스','NEW','BEST','LIMITED'];
                             return Array.from(document.querySelectorAll('article')).map(el => {
                                 const link = el.querySelector('a[href*="/products/"]');
                                 if (!link) return null;
                                 const text = el.innerText.trim();
                                 const lines = text.split('\\n').map(l => l.trim()).filter(l => l.length > 0);
-                                // Parse lines: typically [badge], name, description, price
-                                let name = '', price = '';
+                                let name = '', price = '', desc = '';
                                 for (const line of lines) {
                                     if (line.startsWith('₩') || line.includes('₩')) { price = line; continue; }
-                                    if (!name && line.length > 2 && !line.includes('베스트') && !line.includes('곧 출시') && !line.includes('남성') && !line.includes('여성') && !line.includes('유니섹스')) {
-                                        name = line;
-                                    }
+                                    const isBadge = badges.some(b => line === b || line.startsWith(b));
+                                    if (isBadge) continue;
+                                    // Description lines contain gender/use-case keywords
+                                    if (line.includes('데일리') || line.includes('러닝') || line.includes('트레일') || line.includes('주행') || line.includes('퍼포먼스') || line.includes('쿠셔닝')) { desc = line; continue; }
+                                    if (!name && line.length > 2) name = line;
                                 }
                                 const img = el.querySelector('img');
+                                let imgSrc = img ? (img.src || '') : '';
+                                // Add size param to Contentful images for faster loading
+                                if (imgSrc.includes('ctfassets.net') && !imgSrc.includes('?w=')) {
+                                    imgSrc += '?w=480&fm=webp';
+                                }
                                 return {
                                     href: link.href,
                                     name: name,
                                     price: price,
-                                    img: img ? (img.src || '') : '',
+                                    img: imgSrc,
                                 };
                             }).filter(x => x && x.name && x.href);
                         }""")
