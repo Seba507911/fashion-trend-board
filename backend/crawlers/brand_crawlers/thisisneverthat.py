@@ -15,7 +15,7 @@ BASE_URL = "https://www.thisisneverthat.com"
 
 CATEGORY_URLS = {
     "outer": [f"{BASE_URL}/collections/outerwear"],
-    "top": [
+    "inner": [
         f"{BASE_URL}/collections/tops",
         f"{BASE_URL}/collections/sweats",
         f"{BASE_URL}/collections/knit",
@@ -23,7 +23,7 @@ CATEGORY_URLS = {
     "bottom": [
         f"{BASE_URL}/collections/bottoms",
     ],
-    "accessories": [
+    "acc_etc": [
         f"{BASE_URL}/collections/accessories",
         f"{BASE_URL}/collections/headwear",
     ],

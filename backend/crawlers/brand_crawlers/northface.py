@@ -23,7 +23,7 @@ CATEGORY_URLS = {
         f"{BASE_URL}/category/n/men/jacket-vest",
         f"{BASE_URL}/category/n/women/jacket-vest",
     ],
-    "top": [
+    "inner": [
         f"{BASE_URL}/category/n/men/top",
         f"{BASE_URL}/category/n/women/top",
     ],
@@ -31,7 +31,7 @@ CATEGORY_URLS = {
         f"{BASE_URL}/category/n/men/bottom",
         f"{BASE_URL}/category/n/women/bottom",
     ],
-    "down": [
+    "wear_etc": [
         f"{BASE_URL}/category/n/men/down",
         f"{BASE_URL}/category/n/women/down",
     ],
@@ -42,7 +42,7 @@ CATEGORY_URLS = {
     "bag": [
         f"{BASE_URL}/category/n/men/bag-acc/bag",
     ],
-    "accessories": [
+    "acc_etc": [
         f"{BASE_URL}/category/n/men/bag-acc/accessories",
     ],
 }

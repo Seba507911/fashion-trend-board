@@ -23,7 +23,7 @@ CATEGORY_URLS = {
         f"{BASE_URL}/DESCENTE/category/201101189",  # MEN Jackets
         f"{BASE_URL}/DESCENTE/category/202101189",  # WOMEN Jackets
     ],
-    "top": [
+    "inner": [
         f"{BASE_URL}/DESCENTE/category/201101005",  # MEN Long Sleeves
         f"{BASE_URL}/DESCENTE/category/201101104",  # MEN T-shirts
         f"{BASE_URL}/DESCENTE/category/202101005",  # WOMEN Long Sleeves

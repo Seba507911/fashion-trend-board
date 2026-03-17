@@ -17,10 +17,10 @@ BASE_URL = "https://www.nanamica.com"
 # cid1=1: nanamica, cid1=2: SELECTION, cid1=3: THE NORTH FACE Purple Label
 CATEGORY_URLS = {
     "outer": [f"{BASE_URL}/itemlist/?cid1=1&cid2=3"],     # nanamica OUTER
-    "top": [f"{BASE_URL}/itemlist/?cid1=1&cid2=4"],       # nanamica TOPS
+    "inner": [f"{BASE_URL}/itemlist/?cid1=1&cid2=4"],       # nanamica TOPS
     "bottom": [f"{BASE_URL}/itemlist/?cid1=1&cid2=5"],    # nanamica BOTTOMS
     "bag": [f"{BASE_URL}/itemlist/?cid1=1&cid2=7"],       # nanamica BAGS
-    "accessories": [f"{BASE_URL}/itemlist/?cid1=1&cid2=8"],# nanamica ACCESSORIES
+    "acc_etc": [f"{BASE_URL}/itemlist/?cid1=1&cid2=8"],# nanamica ACCESSORIES
 }
 
 

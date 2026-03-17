@@ -22,7 +22,7 @@ CATEGORY_URLS = {
         f"{BASE_URL}/kr/en/man/clothing/outerwear/",
         f"{BASE_URL}/kr/en/woman/clothing/outerwear/",
     ],
-    "top": [
+    "inner": [
         f"{BASE_URL}/kr/en/man/clothing/t-shirts/",
         f"{BASE_URL}/kr/en/man/clothing/sweatshirts/",
         f"{BASE_URL}/kr/en/man/clothing/knitwear/",
@@ -45,7 +45,7 @@ CATEGORY_URLS = {
         f"{BASE_URL}/kr/en/man/bags/",
         f"{BASE_URL}/kr/en/woman/bags/",
     ],
-    "accessories": [
+    "acc_etc": [
         f"{BASE_URL}/kr/en/man/accessories/",
         f"{BASE_URL}/kr/en/woman/accessories/",
     ],

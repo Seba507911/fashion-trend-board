@@ -19,7 +19,7 @@ CATEGORY_URLS = {
         f"{BASE_URL}/ko_kr/ladies/new-arrivals/jackets-and-coats.html",
         f"{BASE_URL}/ko_kr/men/new-arrivals/jackets-and-coats.html",
     ],
-    "top": [
+    "inner": [
         f"{BASE_URL}/ko_kr/ladies/new-arrivals/tops.html",
         f"{BASE_URL}/ko_kr/men/new-arrivals/t-shirts-and-tops.html",
         f"{BASE_URL}/ko_kr/ladies/new-arrivals/knitwear.html",
@@ -29,14 +29,14 @@ CATEGORY_URLS = {
         f"{BASE_URL}/ko_kr/ladies/new-arrivals/jeans.html",
         f"{BASE_URL}/ko_kr/men/new-arrivals/trousers.html",
     ],
-    "dress": [
+    "wear_etc": [
         f"{BASE_URL}/ko_kr/ladies/new-arrivals/dresses.html",
     ],
     "shoes": [
         f"{BASE_URL}/ko_kr/ladies/new-arrivals/shoes.html",
         f"{BASE_URL}/ko_kr/men/new-arrivals/shoes.html",
     ],
-    "accessories": [
+    "acc_etc": [
         f"{BASE_URL}/ko_kr/ladies/new-arrivals/accessories.html",
     ],
 }

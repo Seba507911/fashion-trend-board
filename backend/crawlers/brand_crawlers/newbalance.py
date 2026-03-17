@@ -17,12 +17,12 @@ BASE_URL = "https://www.nbkorea.com"
 
 # cIdx → 카테고리 매핑
 CATEGORY_URLS = {
-    "sneakers": f"{BASE_URL}/product/productList.action?cateGrpCode=250110&cIdx=1280",
+    "shoes": f"{BASE_URL}/product/productList.action?cateGrpCode=250110&cIdx=1280",
     "outer": f"{BASE_URL}/product/productList.action?cateGrpCode=250110&cIdx=1293",
-    "top": f"{BASE_URL}/product/productList.action?cateGrpCode=250110&cIdx=1294",
+    "inner": f"{BASE_URL}/product/productList.action?cateGrpCode=250110&cIdx=1294",
     "bottom": f"{BASE_URL}/product/productList.action?cateGrpCode=250110&cIdx=2377",
     "bag": f"{BASE_URL}/product/productList.action?cateGrpCode=250110&cIdx=1299",
-    "hat": f"{BASE_URL}/product/productList.action?cateGrpCode=250110&cIdx=1300",
+    "headwear": f"{BASE_URL}/product/productList.action?cateGrpCode=250110&cIdx=1300",
 }
 
 

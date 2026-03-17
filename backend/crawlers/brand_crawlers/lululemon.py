@@ -18,7 +18,7 @@ from backend.crawlers.base_crawler import BaseCrawler
 BASE_URL = "https://www.lululemon.co.kr"
 
 CATEGORY_URLS = {
-    "top": [
+    "inner": [
         f"{BASE_URL}/ko-kr/c/womens-tops/",
         f"{BASE_URL}/ko-kr/c/mens-tops/",
     ],
@@ -30,10 +30,10 @@ CATEGORY_URLS = {
         f"{BASE_URL}/ko-kr/c/womens-pants/",
         f"{BASE_URL}/ko-kr/c/mens-pants/",
     ],
-    "dress": [
+    "wear_etc": [
         f"{BASE_URL}/ko-kr/c/skirts-dresses-rompers/",
     ],
-    "accessories": [
+    "acc_etc": [
         f"{BASE_URL}/ko-kr/c/accessories/",
     ],
 }

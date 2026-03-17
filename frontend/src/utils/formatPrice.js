@@ -2,6 +2,7 @@ export function formatPrice(price, currency = "KRW") {
   if (!price) return "";
   if (currency === "USD") return `$${Number(price).toLocaleString()}`;
   if (currency === "EUR") return `€${Number(price).toLocaleString()}`;
+  if (currency === "JPY") return `¥${Number(price).toLocaleString()}`;
   return `₩${Number(price).toLocaleString()}`;
 }
 

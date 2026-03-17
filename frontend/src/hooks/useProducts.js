@@ -11,11 +11,12 @@ export function useBrands() {
 }
 
 export function useProducts({ brand, category, season, keyword } = {}) {
+  const limit = brand ? 200 : 500;
   return useQuery({
     queryKey: ["products", { brand, category, season, keyword }],
     queryFn: () =>
       api
-        .get("/products", { params: { brand, category, season, keyword } })
+        .get("/products", { params: { brand, category, season, keyword, limit } })
         .then((r) => r.data),
   });
 }

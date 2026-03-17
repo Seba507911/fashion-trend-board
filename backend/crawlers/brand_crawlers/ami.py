@@ -15,7 +15,7 @@ BASE_URL = "https://www.amiparis.com"
 
 CATEGORY_URLS = {
     "outer": [f"{BASE_URL}/ko-kr/shopping/man-coats-jackets"],
-    "top": [
+    "inner": [
         f"{BASE_URL}/ko-kr/shopping/man-t-shirts-polos",
         f"{BASE_URL}/ko-kr/shopping/man-knitwear",
         f"{BASE_URL}/ko-kr/shopping/man-shirts",
@@ -28,7 +28,7 @@ CATEGORY_URLS = {
     ],
     "shoes": [f"{BASE_URL}/ko-kr/shopping/man-shoes"],
     "bag": [f"{BASE_URL}/ko-kr/shopping/man-bags", f"{BASE_URL}/ko-kr/shopping/woman-bags"],
-    "accessories": [f"{BASE_URL}/ko-kr/shopping/man-accessories"],
+    "acc_etc": [f"{BASE_URL}/ko-kr/shopping/man-accessories"],
 }
 
 

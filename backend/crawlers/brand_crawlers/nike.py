@@ -25,7 +25,7 @@ CATEGORY_URLS: dict[str, list[str]] = {
         f"{BASE_URL}/kr/w/mens-jackets-vests-50r7yznik1",
         f"{BASE_URL}/kr/w/womens-jackets-vests-50r7yz5e1x6",
     ],
-    "top": [
+    "inner": [
         f"{BASE_URL}/kr/w/mens-tops-t-shirts-9om13znik1",
         f"{BASE_URL}/kr/w/womens-tops-t-shirts-5e1x6z9om13",
     ],

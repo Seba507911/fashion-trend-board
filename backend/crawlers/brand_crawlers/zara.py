@@ -17,7 +17,7 @@ BASE_URL = "https://www.zara.com"
 
 # Zara 카테고리 페이지 URL (API의 categoryId는 페이지 로드 시 자동 결정)
 CATEGORY_PAGES = {
-    "top": [
+    "inner": [
         f"{BASE_URL}/kr/ko/woman-shirts-l1217.html",
         f"{BASE_URL}/kr/ko/woman-tshirts-l1362.html",
         f"{BASE_URL}/kr/ko/man-tshirts-l855.html",
@@ -33,7 +33,7 @@ CATEGORY_PAGES = {
         f"{BASE_URL}/kr/ko/man-trousers-l838.html",
         f"{BASE_URL}/kr/ko/man-jeans-l659.html",
     ],
-    "dress": [
+    "wear_etc": [
         f"{BASE_URL}/kr/ko/woman-dresses-l1066.html",
     ],
     "shoes": [
@@ -43,7 +43,7 @@ CATEGORY_PAGES = {
     "bag": [
         f"{BASE_URL}/kr/ko/woman-bags-l1024.html",
     ],
-    "accessories": [
+    "acc_etc": [
         f"{BASE_URL}/kr/ko/woman-accessories-l1003.html",
         f"{BASE_URL}/kr/ko/man-accessories-l587.html",
     ],

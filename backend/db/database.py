@@ -198,23 +198,30 @@ INSERT OR IGNORE INTO seasons (id, year, season_code, label, is_current) VALUES
 ('2025FW', 2025, 'FW', '2025 Fall/Winter', 0),
 ('2026SS', 2026, 'SS', '2026 Spring/Summer', 1);
 
+-- 대분류
 INSERT OR IGNORE INTO categories (id, name, name_kr, parent_id, sort_order) VALUES
-('apparel', 'Apparel', '의류', NULL, 1),
-('accessories', 'Accessories', '용품', NULL, 2),
-('footwear', 'Footwear', '신발', NULL, 3),
-('outer', 'Outer', '아우터', 'apparel', 1),
-('top', 'Top', '상의', 'apparel', 2),
-('bottom', 'Bottom', '하의', 'apparel', 3),
-('dress', 'Dress', '원피스', 'apparel', 4),
-('set', 'Set-up', '셋업', 'apparel', 5),
-('bag', 'Bag', '가방', 'accessories', 1),
-('hat', 'Hat/Cap', '모자', 'accessories', 2),
-('scarf', 'Scarf/Muffler', '스카프/머플러', 'accessories', 3),
-('etc_acc', 'Others', '기타용품', 'accessories', 4),
-('sneakers', 'Sneakers', '스니커즈', 'footwear', 1),
-('boots', 'Boots', '부츠', 'footwear', 2),
-('sandals', 'Sandals', '샌들', 'footwear', 3),
-('loafers', 'Loafers/Flats', '로퍼/플랫', 'footwear', 4);
+('wear', 'Wear', '의류', NULL, 1),
+('accessory', 'Accessory', '용품', NULL, 2);
+
+-- 의류 중분류
+INSERT OR IGNORE INTO categories (id, name, name_kr, parent_id, sort_order) VALUES
+('outer', 'Outer', '아우터', 'wear', 1),
+('inner', 'Inner', '상의', 'wear', 2),
+('bottom', 'Bottom', '하의', 'wear', 3),
+('wear_etc', 'Wear Etc', '기타의류', 'wear', 4);
+
+-- 용품 중분류
+INSERT OR IGNORE INTO categories (id, name, name_kr, parent_id, sort_order) VALUES
+('headwear', 'Headwear', '모자', 'accessory', 1),
+('bag', 'Bag', '가방', 'accessory', 2),
+('shoes', 'Shoes', '신발', 'accessory', 3),
+('acc_etc', 'Acc Etc', '기타용품', 'accessory', 4);
+
+-- Legacy aliases (keep for backward compat)
+INSERT OR IGNORE INTO categories (id, name, name_kr, parent_id, sort_order) VALUES
+('top', 'Top', '상의', 'wear', 2),
+('dress', 'Dress', '원피스/드레스', 'wear', 4),
+('accessories', 'Accessories', '기타용품', 'accessory', 4);
 """
 
 

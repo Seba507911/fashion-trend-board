@@ -19,7 +19,7 @@ CATEGORY_URLS = {
         f"{BASE_URL}/ko/men-clothing-outerwear/10014",
         f"{BASE_URL}/ko/women-clothing-outerwear/70014",
     ],
-    "top": [
+    "inner": [
         f"{BASE_URL}/ko/men-clothing-shirts/10011",
         f"{BASE_URL}/ko/men-clothing-t-shirts-sweatshirts/10010",
         f"{BASE_URL}/ko/men-clothing-sweaters/10009",
@@ -33,13 +33,13 @@ CATEGORY_URLS = {
         f"{BASE_URL}/ko/women-clothing-pants/70013",
         f"{BASE_URL}/ko/women-clothing-skirts/70015",
     ],
-    "dress": [f"{BASE_URL}/ko/women-clothing-dresses/70012"],
+    "wear_etc": [f"{BASE_URL}/ko/women-clothing-dresses/70012"],
     "shoes": [
         f"{BASE_URL}/ko/men-shoes/10015",
         f"{BASE_URL}/ko/women-shoes/70016",
     ],
     "bag": [f"{BASE_URL}/ko/women-accessories-handbags/70019"],
-    "accessories": [
+    "acc_etc": [
         f"{BASE_URL}/ko/men-accessories/10016",
         f"{BASE_URL}/ko/women-accessories/70017",
     ],

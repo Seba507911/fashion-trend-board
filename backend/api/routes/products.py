@@ -16,7 +16,7 @@ async def list_products(
     keyword: Optional[str] = None,
     price_min: Optional[int] = None,
     price_max: Optional[int] = None,
-    limit: int = Query(default=50, le=200),
+    limit: int = Query(default=200, le=500),
     offset: int = 0,
     db: aiosqlite.Connection = Depends(get_db),
 ):

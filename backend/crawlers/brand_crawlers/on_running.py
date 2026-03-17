@@ -19,7 +19,7 @@ CATEGORY_URLS = {
         f"{BASE_URL}/ko-kr/shop/mens/shoes",
         f"{BASE_URL}/ko-kr/shop/womens/shoes",
     ],
-    "top": [
+    "inner": [
         f"{BASE_URL}/ko-kr/shop/mens/tops",
         f"{BASE_URL}/ko-kr/shop/womens/tops",
     ],
@@ -31,7 +31,7 @@ CATEGORY_URLS = {
         f"{BASE_URL}/ko-kr/shop/mens/pants-and-tights",
         f"{BASE_URL}/ko-kr/shop/womens/pants-and-tights",
     ],
-    "accessories": [
+    "acc_etc": [
         f"{BASE_URL}/ko-kr/shop/mens/accessories",
         f"{BASE_URL}/ko-kr/shop/womens/accessories",
     ],

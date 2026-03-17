@@ -21,7 +21,7 @@ CATEGORY_URLS = {
         f"{BASE_URL}/product/list.html?cate_no=815",   # 여성 아우터
         f"{BASE_URL}/product/list.html?cate_no=820",   # 남성 아우터
     ],
-    "top": [
+    "inner": [
         f"{BASE_URL}/product/list.html?cate_no=816",   # 여성 상의
         f"{BASE_URL}/product/list.html?cate_no=821",   # 남성 상의
     ],
@@ -29,10 +29,10 @@ CATEGORY_URLS = {
         f"{BASE_URL}/product/list.html?cate_no=817",   # 여성 하의
         f"{BASE_URL}/product/list.html?cate_no=822",   # 남성 하의
     ],
-    "dress": [
+    "wear_etc": [
         f"{BASE_URL}/product/list.html?cate_no=818",   # 여성 세트/원피스
     ],
-    "accessories": [
+    "acc_etc": [
         f"{BASE_URL}/product/list.html?cate_no=819",   # 여성 액세서리
         f"{BASE_URL}/product/list.html?cate_no=824",   # 남성 액세서리
     ],
