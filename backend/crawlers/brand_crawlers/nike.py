@@ -355,23 +355,21 @@ class NikeCrawler(BaseCrawler):
                     }
                 });
 
-                // 소재: 여러 후보 셀렉터에서 추출
-                const matSels = [
-                    '.description-preview__body', '.product-info__description',
-                    '[data-testid="product-description"]', '.pi-pdpmainbody'
-                ];
+                // 소재: 페이지 텍스트에서 추출
                 const allPageText = document.body.innerText || '';
-                // "소재:" / "Material:" 패턴
-                const matMatch = allPageText.match(/(?:소재|Material|원단)[:\s]+([\s\S]{5,200}?)(?:\n\n|제조|세탁|원산지|A\/S)/i);
+                // "소재:" / "Material:" 패턴 — RegExp 생성자 사용 (슬래시 이스케이프 회피)
+                const matRe = new RegExp('(?:소재|Material|원단)[:\\s]+([\\s\\S]{5,200}?)(?:\\n\\n|제조|세탁|원산지|A.S)', 'i');
+                const matMatch = allPageText.match(matRe);
                 if (matMatch) {
-                    const lines = matMatch[1].split('\n').map(s => s.trim()).filter(s => s.length > 2);
+                    const lines = matMatch[1].split('\\n').map(s => s.trim()).filter(s => s.length > 2);
                     lines.forEach(l => {
                         if (!result.materials.includes(l)) result.materials.push(l);
                     });
                 }
                 // fallback: 퍼센트 패턴 추출
                 if (result.materials.length === 0) {
-                    const pctMatches = allPageText.match(/[가-힣A-Za-z]+\s*\d+%/g);
+                    const pctRe = new RegExp('[가-힣A-Za-z]+\\s*\\d+%', 'g');
+                    const pctMatches = allPageText.match(pctRe);
                     if (pctMatches) {
                         pctMatches.slice(0, 5).forEach(m => {
                             if (!m.includes('할인') && !m.includes('쿠폰') && !result.materials.includes(m)) {
