@@ -1,7 +1,8 @@
-"""Ami Paris Korea 크롤러.
+"""On Running Korea 크롤러.
 
-대상: https://www.amiparis.com/ko-kr/
-Shopify 기반이지만 커스텀 테마 → Playwright로 .product-item 파싱.
+대상: https://www.on.com/ko-kr/
+Nuxt.js SPA, article 태그 기반.
+카테고리: /ko-kr/shop/{gender}/{category}
 """
 from __future__ import annotations
 
@@ -11,36 +12,41 @@ from typing import Optional
 
 from backend.crawlers.base_crawler import BaseCrawler
 
-BASE_URL = "https://www.amiparis.com"
+BASE_URL = "https://www.on.com"
 
 CATEGORY_URLS = {
-    "outer": [f"{BASE_URL}/ko-kr/shopping/man-coats-jackets"],
+    "shoes": [
+        f"{BASE_URL}/ko-kr/shop/mens/shoes",
+        f"{BASE_URL}/ko-kr/shop/womens/shoes",
+    ],
     "top": [
-        f"{BASE_URL}/ko-kr/shopping/man-t-shirts-polos",
-        f"{BASE_URL}/ko-kr/shopping/man-knitwear",
-        f"{BASE_URL}/ko-kr/shopping/man-shirts",
-        f"{BASE_URL}/ko-kr/shopping/man-sweatshirts",
-        f"{BASE_URL}/ko-kr/shopping/woman-tops",
+        f"{BASE_URL}/ko-kr/shop/mens/tops",
+        f"{BASE_URL}/ko-kr/shop/womens/tops",
+    ],
+    "outer": [
+        f"{BASE_URL}/ko-kr/shop/mens/outerwear",
+        f"{BASE_URL}/ko-kr/shop/womens/outerwear",
     ],
     "bottom": [
-        f"{BASE_URL}/ko-kr/shopping/man-trousers",
-        f"{BASE_URL}/ko-kr/shopping/woman-trousers",
+        f"{BASE_URL}/ko-kr/shop/mens/pants-and-tights",
+        f"{BASE_URL}/ko-kr/shop/womens/pants-and-tights",
     ],
-    "shoes": [f"{BASE_URL}/ko-kr/shopping/man-shoes"],
-    "bag": [f"{BASE_URL}/ko-kr/shopping/man-bags", f"{BASE_URL}/ko-kr/shopping/woman-bags"],
-    "accessories": [f"{BASE_URL}/ko-kr/shopping/man-accessories"],
+    "accessories": [
+        f"{BASE_URL}/ko-kr/shop/mens/accessories",
+        f"{BASE_URL}/ko-kr/shop/womens/accessories",
+    ],
 }
 
 
-class AmiCrawler(BaseCrawler):
+class OnRunningCrawler(BaseCrawler):
     def __init__(self):
-        super().__init__("ami")
+        super().__init__("on_running")
 
     async def get_product_list_urls(self, season=None):
         return [u for urls in CATEGORY_URLS.values() for u in urls]
 
     def get_card_selector(self):
-        return ".product-item"
+        return "article"
 
     def _url_to_category(self, page_url):
         for cat_id, urls in CATEGORY_URLS.items():
@@ -49,7 +55,7 @@ class AmiCrawler(BaseCrawler):
                     return cat_id
         return None
 
-    async def crawl(self, season=None, max_pages=15, dry_run=False, fetch_details=False):
+    async def crawl(self, season=None, max_pages=12, dry_run=False, fetch_details=False):
         from playwright.async_api import async_playwright
         from playwright_stealth import Stealth
 
@@ -66,48 +72,50 @@ class AmiCrawler(BaseCrawler):
                     self.logger.info(f"Crawling {i+1}: {url}")
                     cat = self._url_to_category(url)
                     try:
-                        await page.goto(url, wait_until="domcontentloaded", timeout=25000)
+                        await page.goto(url, wait_until="domcontentloaded", timeout=30000)
                         await asyncio.sleep(8)
-                        for _ in range(5):
+                        for _ in range(8):
                             await page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
                             await asyncio.sleep(1.5)
                         items = await page.evaluate("""() => {
-                            return Array.from(document.querySelectorAll('.product-item')).map(el => {
-                                const links = el.querySelectorAll('a[href]');
-                                let href = '';
-                                for (const a of links) {
-                                    if (a.href.includes('/products/')) { href = a.href; break; }
-                                }
-                                if (!href && links.length > 0) href = links[0].href;
+                            return Array.from(document.querySelectorAll('article')).map(el => {
+                                const link = el.querySelector('a[href*="/products/"]');
+                                if (!link) return null;
                                 const text = el.innerText.trim();
-                                const lines = text.split('\\n').map(l => l.trim()).filter(l => l.length > 1);
-                                // First non-price line is name
+                                const lines = text.split('\\n').map(l => l.trim()).filter(l => l.length > 0);
+                                // Parse lines: typically [badge], name, description, price
                                 let name = '', price = '';
                                 for (const line of lines) {
-                                    if (line.includes('₩') || line.includes('KRW')) { if (!price) price = line; continue; }
-                                    if (line === '정가' || line === '세일가' || line === 'NEW') continue;
-                                    if (!name) name = line;
+                                    if (line.startsWith('₩') || line.includes('₩')) { price = line; continue; }
+                                    if (!name && line.length > 2 && !line.includes('베스트') && !line.includes('곧 출시') && !line.includes('남성') && !line.includes('여성') && !line.includes('유니섹스')) {
+                                        name = line;
+                                    }
                                 }
                                 const img = el.querySelector('img');
                                 return {
-                                    href, name, price,
+                                    href: link.href,
+                                    name: name,
+                                    price: price,
                                     img: img ? (img.src || '') : '',
                                 };
-                            }).filter(x => x.name && x.href);
+                            }).filter(x => x && x.name && x.href);
                         }""")
                         for item in items:
-                            slug = item["href"].split("/products/")[-1].split("?")[0] if "/products/" in item["href"] else ""
-                            if not slug: continue
-                            pid = self.make_product_id(slug[:30])
-                            if pid in seen: continue
+                            slug = item["href"].split("/products/")[-1].split("/")[0] if "/products/" in item["href"] else ""
+                            if not slug:
+                                continue
+                            pid = self.make_product_id(slug[:40])
+                            if pid in seen:
+                                continue
                             seen.add(pid)
-                            price_str = re.sub(r"[^\d]", "", item.get("price", "").split("KRW")[0].replace(",", ""))
+                            price_str = re.sub(r"[^\d]", "", item.get("price", ""))
                             raw = {
                                 "id": pid, "product_name": item["name"], "product_name_kr": item["name"],
                                 "price": int(price_str) if price_str else 0, "sale_price": None, "currency": "KRW",
                                 "category_id": cat, "season_id": "2026SS", "colors": [],
                                 "thumbnail_url": item["img"], "image_urls": [item["img"]] if item["img"] else [],
-                                "product_url": item["href"], "style_tags": ["french", "contemporary", "luxury"],
+                                "product_url": item["href"],
+                                "style_tags": ["running", "athleisure", "performance"],
                             }
                             products.append(self.normalize_product(raw))
                         self.logger.info(f"Found {len(items)}, total unique: {len(products)}")

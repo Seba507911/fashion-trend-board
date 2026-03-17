@@ -14,36 +14,10 @@ from backend.crawlers.base_crawler import BaseCrawler
 
 BASE_URL = "https://www.maisonkitsune.com"
 
+# Main category pages (sub-category pages don't render product-items)
 CATEGORY_URLS = {
-    "top": [
-        f"{BASE_URL}/kr/man/categories/t-shirts.html",
-        f"{BASE_URL}/kr/man/categories/sweatshirts.html",
-        f"{BASE_URL}/kr/man/categories/shirts.html",
-        f"{BASE_URL}/kr/man/categories/knitwear.html",
-        f"{BASE_URL}/kr/woman/categories/t-shirts.html",
-        f"{BASE_URL}/kr/woman/categories/sweatshirts.html",
-        f"{BASE_URL}/kr/woman/categories/shirts.html",
-    ],
-    "outer": [
-        f"{BASE_URL}/kr/man/categories/outerwear.html",
-        f"{BASE_URL}/kr/woman/categories/outerwear.html",
-    ],
-    "bottom": [
-        f"{BASE_URL}/kr/man/categories/pants.html",
-        f"{BASE_URL}/kr/woman/categories/pants.html",
-        f"{BASE_URL}/kr/woman/categories/skirts.html",
-    ],
-    "accessories": [
-        f"{BASE_URL}/kr/man/categories/accessories.html",
-        f"{BASE_URL}/kr/woman/categories/accessories.html",
-    ],
-    "bag": [
-        f"{BASE_URL}/kr/woman/categories/bags.html",
-    ],
-    "shoes": [
-        f"{BASE_URL}/kr/man/categories/shoes.html",
-        f"{BASE_URL}/kr/woman/categories/shoes.html",
-    ],
+    "all_men": [f"{BASE_URL}/kr/man/categories.html"],
+    "all_women": [f"{BASE_URL}/kr/woman/categories.html"],
 }
 
 

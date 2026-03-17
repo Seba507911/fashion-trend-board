@@ -7,8 +7,8 @@ const BRAND_GROUPS = [
   {
     zoning: "럭셔리 / 컨템포러리",
     groups: [
-      { region: "Global", ids: ["lemaire", "jacquemus", "ami", "maison_kitsune", "acne_studios", "recto"] },
-      { region: "Korea", ids: ["wooyoungmi", "ader_error", "dunst", "amomento"] },
+      { region: "Global", ids: ["lemaire", "jacquemus", "ami", "maison_kitsune", "acne_studios"] },
+      { region: "Korea", ids: ["wooyoungmi", "ader_error", "dunst", "amomento", "recto"] },
     ],
   },
   {

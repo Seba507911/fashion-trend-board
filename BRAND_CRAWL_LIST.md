@@ -48,7 +48,7 @@
 | Adidas | adidas.co.kr | 자체 | ❌ Akamai WAF | ❌ |
 | ASICS | asics.com/kr | 자체 | ❌ Akamai WAF | ❌ |
 | Puma | puma.com/kr | 자체 | WAF 가능성 | ⚠️ |
-| On Running | on.com/kr | 자체 | 러닝코어 트렌드 핵심 | ⬜ |
+| On Running | on.com/kr | 자체 | ✅ 수집 완료 (116개) stealth+Nuxt | ✅ |
 | HOKA | hoka.com/kr | 자체 | 러닝코어 트렌드 핵심 | ⬜ |
 | Salomon | salomon.com/kr | 자체 | 고프코어/아웃도어 | ⬜ |
 | Arc'teryx | arcteryx.com/kr | 자체 | 고프코어 대표 | ⚠️ |
