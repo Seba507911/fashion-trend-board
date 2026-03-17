@@ -77,7 +77,7 @@
 
 | 브랜드 | 사이트 | 플랫폼 | 크롤링 노트 | 상태 |
 |--------|--------|--------|------------|------|
-| Stüssy | stussy.com | Shopify | 스트리트 오리진 | ⬜ |
+| Stüssy | stussy.com | Shopify | ✅ 수집 완료 (133개) | ✅ |
 | Carhartt WIP | carhartt-wip.com | 자체 | 워크웨어/스트리트 | ⬜ |
 | Dickies | dickies.com | 자체 | 워크웨어 | ⬜ |
 | Vans | vans.co.kr | 자체 | 스트리트 | ⚠️ |
@@ -99,8 +99,8 @@
 | Blankroom | blankroom.kr | Cafe24 | ✅ 수집 완료 (98개) | ✅ |
 | COVERNAT | covernat.net | Cafe24 | 무신사 인기 | ⬜ |
 | thisisneverthat | thisisneverthat.com | Shopify | 스트리트 대표 | ⬜ |
-| Mardi Mercredi | mardimercredi.com | Cafe24 | 급성장 브랜드 | ⬜ |
-| Emis | emis.kr | Cafe24 | 캡/액세서리 강세 | ⬜ |
+| Mardi Mercredi | mardimercredi.com | Cafe24 | ✅ 수집 완료 (141개) | ✅ |
+| Emis | emis.kr | Cafe24 | ✅ 수집 완료 (80개) | ✅ |
 | IAB Studio | iabstudio.co.kr | 자체 | 스트리트 하이프 | ⬜ |
 | Yale | wordsstore.co.kr | Cafe24 | 아이비리그 캐주얼 | ⬜ |
 | CPGN Studio | cpgnstudio.com | Cafe24 | | ⬜ |

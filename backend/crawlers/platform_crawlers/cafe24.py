@@ -101,6 +101,20 @@ class Cafe24Crawler(BaseCrawler):
                 const nameEl = li.querySelector('.description .name a, .name a, .prd_name a, p.name a, .thumbnail-info .name a');
                 result.href = nameEl ? nameEl.getAttribute('href') : '';
                 result.name = nameEl ? nameEl.innerText.trim() : '';
+                // Fallback: Emis 등 일부 사이트는 .name 안 span에 상품명이 있음
+                if (!result.name) {
+                    const nameSpan = li.querySelector('.name span[style], .name > span:not(.supplier):not(.icon):not(.srn-icon)');
+                    if (nameSpan) result.name = nameSpan.innerText.trim();
+                }
+                // href fallback: thumb-box > a
+                if (!result.href) {
+                    const thumbLink = li.querySelector('.thumb-box a[href*="product"], a[href*="product_no"]');
+                    if (thumbLink) result.href = thumbLink.getAttribute('href');
+                }
+                // productNo fallback: data-no attribute
+                if (!result.productNo) {
+                    result.productNo = li.getAttribute('data-no') || '';
+                }
                 // productNo fallback: href에서 product_no 추출
                 if (!result.productNo && result.href) {
                     const m = result.href.match(/product_no=(\\d+)/) || result.href.match(/\\/(\\d+)\\//);
