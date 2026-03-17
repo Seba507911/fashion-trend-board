@@ -11,7 +11,8 @@ export function useBrands() {
 }
 
 export function useProducts({ brand, category, season, keyword } = {}) {
-  const limit = brand ? 200 : 500;
+  // 브랜드 선택 시 해당 브랜드 전체, 미선택 시 200개
+  const limit = brand ? 3000 : 200;
   return useQuery({
     queryKey: ["products", { brand, category, season, keyword }],
     queryFn: () =>

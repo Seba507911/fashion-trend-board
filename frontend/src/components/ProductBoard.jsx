@@ -18,6 +18,9 @@ export default function ProductBoard({ selectedBrand }) {
 
   const subCategories = categories.filter((c) => c.parent_id);
 
+  // 카테고리 표시 순서
+  const CATEGORY_ORDER = ["outer", "inner", "bottom", "wear_etc", "headwear", "bag", "shoes", "acc_etc"];
+
   // 카테고리별 그룹핑
   const grouped = {};
   for (const p of products) {
@@ -25,6 +28,13 @@ export default function ProductBoard({ selectedBrand }) {
     if (!grouped[catId]) grouped[catId] = [];
     grouped[catId].push(p);
   }
+
+  // 정렬된 카테고리 키
+  const sortedCatKeys = Object.keys(grouped).sort((a, b) => {
+    const ia = CATEGORY_ORDER.indexOf(a);
+    const ib = CATEGORY_ORDER.indexOf(b);
+    return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
+  });
 
   const categoryLabel = (catId) => {
     const cat = categories.find((c) => c.id === catId);
@@ -95,7 +105,7 @@ export default function ProductBoard({ selectedBrand }) {
           ))}
         </div>
       ) : (
-        Object.entries(grouped).map(([catId, catProducts]) => (
+        sortedCatKeys.map((catId) => { const catProducts = grouped[catId]; return (
           <section key={catId} className="mb-8">
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-sm font-semibold">
@@ -111,7 +121,7 @@ export default function ProductBoard({ selectedBrand }) {
               ))}
             </div>
           </section>
-        ))
+        ); })
       )}
 
       {/* Product Detail Modal */}

@@ -16,7 +16,7 @@ async def list_products(
     keyword: Optional[str] = None,
     price_min: Optional[int] = None,
     price_max: Optional[int] = None,
-    limit: int = Query(default=200, le=500),
+    limit: int = Query(default=500, le=5000),
     offset: int = 0,
     db: aiosqlite.Connection = Depends(get_db),
 ):
@@ -44,7 +44,7 @@ async def list_products(
         query += " AND price <= ?"
         params.append(price_max)
 
-    query += " ORDER BY created_at DESC LIMIT ? OFFSET ?"
+    query += " ORDER BY category_id, product_name LIMIT ? OFFSET ?"
     params.extend([limit, offset])
 
     cursor = await db.execute(query, params)
