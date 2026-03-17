@@ -87,27 +87,12 @@ class ZaraCrawler(BaseCrawler):
                         continue
 
                     # Price
+                    # Price (KRW, e.g. 55900 = ₩55,900)
                     price = 0
                     sale_price = None
-                    price_info = comp.get("price") or comp.get("seo", {}).get("price", {})
-                    if isinstance(price_info, dict):
-                        price = price_info.get("price", 0) // 100 if price_info.get("price", 0) > 1000 else price_info.get("price", 0)
-                        old = price_info.get("oldPrice", 0)
-                        if old and old > price:
-                            sale_price = price
-                            price = old // 100 if old > 1000 else old
 
-                    # Image
-                    xmedia = comp.get("xmedia", [])
+                    # Image + Color — from detail.colors
                     img_url = ""
-                    if xmedia:
-                        first_media = xmedia[0] if xmedia else {}
-                        path = first_media.get("path", "")
-                        name_media = first_media.get("name", "")
-                        if path and name_media:
-                            img_url = f"https://static.zara.net/assets/public/{path}/{name_media}.jpg?ts=0&w=750"
-
-                    # Color
                     colors = []
                     detail = comp.get("detail", {})
                     if isinstance(detail, dict):
@@ -116,6 +101,34 @@ class ZaraCrawler(BaseCrawler):
                             cname = c.get("name", "")
                             if cname:
                                 colors.append(cname)
+                            # Image from color xmedia
+                            if not img_url:
+                                color_xmedia = c.get("xmedia", [])
+                                for xm in color_xmedia:
+                                    if xm.get("type") == "image":
+                                        path = xm.get("path", "")
+                                        name_media = xm.get("name", "")
+                                        ts = xm.get("timestamp", "0")
+                                        if path and name_media:
+                                            img_url = f"https://static.zara.net{path}/{name_media}.jpg?ts={ts}&w=750"
+                                            break
+                            # Price from color (more reliable)
+                            if not price:
+                                cprice = c.get("price", 0)
+                                if isinstance(cprice, (int, float)):
+                                    price = int(cprice)
+                                elif isinstance(cprice, dict):
+                                    price = int(cprice.get("price", 0) or 0)
+
+                    # Fallback: xmedia at component level
+                    if not img_url:
+                        xmedia = comp.get("xmedia", [])
+                        if xmedia:
+                            first_media = xmedia[0]
+                            path = first_media.get("path", "")
+                            name_media = first_media.get("name", "")
+                            if path and name_media:
+                                img_url = f"https://static.zara.net{path}/{name_media}.jpg?ts=0&w=750"
 
                     # URL
                     seo = comp.get("seo", {})

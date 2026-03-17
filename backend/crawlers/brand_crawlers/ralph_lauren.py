@@ -15,15 +15,34 @@ from backend.crawlers.base_crawler import BaseCrawler
 BASE_URL = "https://www.ralphlauren.co.kr"
 
 CATEGORY_URLS = {
-    "outer": [f"{BASE_URL}/ko/men-clothing-outerwear/10014"],
+    "outer": [
+        f"{BASE_URL}/ko/men-clothing-outerwear/10014",
+        f"{BASE_URL}/ko/women-clothing-outerwear/70014",
+    ],
     "top": [
         f"{BASE_URL}/ko/men-clothing-shirts/10011",
         f"{BASE_URL}/ko/men-clothing-t-shirts-sweatshirts/10010",
         f"{BASE_URL}/ko/men-clothing-sweaters/10009",
+        f"{BASE_URL}/ko/men-clothing-polo-shirts/10008",
+        f"{BASE_URL}/ko/women-clothing-tops/70009",
+        f"{BASE_URL}/ko/women-clothing-sweaters/70011",
     ],
-    "bottom": [f"{BASE_URL}/ko/men-clothing-pants/10013"],
-    "shoes": [f"{BASE_URL}/ko/men-shoes/10015"],
-    "accessories": [f"{BASE_URL}/ko/men-accessories/10016"],
+    "bottom": [
+        f"{BASE_URL}/ko/men-clothing-pants/10013",
+        f"{BASE_URL}/ko/men-clothing-shorts/10012",
+        f"{BASE_URL}/ko/women-clothing-pants/70013",
+        f"{BASE_URL}/ko/women-clothing-skirts/70015",
+    ],
+    "dress": [f"{BASE_URL}/ko/women-clothing-dresses/70012"],
+    "shoes": [
+        f"{BASE_URL}/ko/men-shoes/10015",
+        f"{BASE_URL}/ko/women-shoes/70016",
+    ],
+    "bag": [f"{BASE_URL}/ko/women-accessories-handbags/70019"],
+    "accessories": [
+        f"{BASE_URL}/ko/men-accessories/10016",
+        f"{BASE_URL}/ko/women-accessories/70017",
+    ],
 }
 
 
@@ -44,7 +63,7 @@ class RalphLaurenCrawler(BaseCrawler):
                     return cat_id
         return None
 
-    async def crawl(self, season=None, max_pages=10, dry_run=False, fetch_details=False):
+    async def crawl(self, season=None, max_pages=18, dry_run=False, fetch_details=False):
         from playwright.async_api import async_playwright
         from playwright_stealth import Stealth
 

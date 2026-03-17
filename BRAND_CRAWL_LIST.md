@@ -65,7 +65,7 @@
 | Discovery Expedition | discovery-expedition.com | 자체 | F&F 브랜드, 필수 수집 | ⬜ |
 | K2 | k2.co.kr | 자체 | | ⬜ |
 | Black Yak | blackyak.com | 자체 | 국내 아웃도어 주요 | ⬜ |
-| FILA Korea | fila.co.kr | 자체 | 레트로 스포츠 | ⬜ |
+| FILA Korea | fila.co.kr | Shopify | ✅ 수집 완료 (84개) | ✅ |
 | Prospecs | prospecs.com | 자체 | 국내 스포츠 | ⬜ |
 | Nerdy | nerdy.kr | Cafe24 | 스포츠캐주얼 | ⬜ |
 
@@ -98,7 +98,7 @@
 | Coor | cfrfr.com | Cafe24 | ✅ 수집 완료 (120개) | ✅ |
 | Blankroom | blankroom.kr | Cafe24 | ✅ 수집 완료 (98개) | ✅ |
 | COVERNAT | covernat.net | Cafe24 | 무신사 인기 | ⬜ |
-| thisisneverthat | thisisneverthat.com | Shopify | 스트리트 대표 | ⬜ |
+| thisisneverthat | thisisneverthat.com | 자체 | ✅ 수집 완료 (68개) | ✅ |
 | Mardi Mercredi | mardimercredi.com | Cafe24 | ✅ 수집 완료 (141개) | ✅ |
 | Emis | emis.kr | Cafe24 | ✅ 수집 완료 (80개) | ✅ |
 | IAB Studio | iabstudio.co.kr | 자체 | 스트리트 하이프 | ⬜ |

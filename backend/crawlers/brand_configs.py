@@ -227,6 +227,36 @@ SHOPIFY_BRANDS: dict[str, dict] = {
         "season_id": "2026SS",
     },
     # ami: moved to custom crawler (backend/crawlers/brand_crawlers/ami.py)
+    "fila": {
+        "brand_id": "fila",
+        "base_url": "https://www.fila.co.kr",
+        "card_selector": ".product-card, .card-product, .product-card-wrapper",
+        "selectors": {
+            "name": ".product-card__title, .card__heading a, h3 a",
+            "price": ".product-card__price, .price, .price-item",
+            "color": ".product-card__color",
+            "image": ".product-card__image img, .card__media img, img.motion-reduce",
+            "link": "a[href*='/products/']",
+        },
+        "collections": {
+            "%EB%B0%94%EB%9E%8C%EB%A7%89%EC%9D%B4-%EC%A7%91%EC%97%85-%EB%82%A8%EC%84%B1-%EC%9D%98%EB%A5%98": "outer",
+            "%EB%B0%94%EB%9E%8C%EB%A7%89%EC%9D%B4-%EC%A7%91%EC%97%85-%EC%97%AC%EC%84%B1-%EC%9D%98%EB%A5%98": "outer",
+            "%EB%B0%98%ED%8C%94-%EB%82%A8%EC%84%B1-%EC%9D%98%EB%A5%98": "top",
+            "%EA%B8%B4%ED%8C%94-%EB%82%A8%EC%84%B1-%EC%9D%98%EB%A5%98": "top",
+            "%EB%A7%A8%ED%88%AC%EB%A7%A8-%ED%9B%84%EB%94%94-%EB%82%A8%EC%84%B1-%EC%9D%98%EB%A5%98": "top",
+            "%EB%B0%98%ED%8C%94-%EC%97%AC%EC%84%B1-%EC%9D%98%EB%A5%98": "top",
+            "%EA%B8%B4%ED%8C%94-%EC%97%AC%EC%84%B1-%EC%9D%98%EB%A5%98": "top",
+            "%EB%9F%AC%EB%8B%9D-%EB%82%A8%EC%84%B1-%EC%8B%A0%EB%B0%9C": "sneakers",
+            "%EB%9F%AC%EB%8B%9D-%EC%97%AC%EC%84%B1-%EC%8B%A0%EB%B0%9C": "sneakers",
+            "%EB%9D%BC%EC%9D%B4%ED%94%84%EC%8A%A4%ED%83%80%EC%9D%BC-%EB%82%A8%EC%84%B1-%EC%8B%A0%EB%B0%9C": "sneakers",
+            "%EB%9D%BC%EC%9D%B4%ED%94%84%EC%8A%A4%ED%83%80%EC%9D%BC-%EC%97%AC%EC%84%B1-%EC%8B%A0%EB%B0%9C": "sneakers",
+            "%EB%AA%A8%EC%9E%90-%EB%82%A8%EC%84%B1-%EC%9A%A9%ED%92%88": "hat",
+            "%EB%A9%94%EC%8B%A0%EC%A0%80-%ED%81%AC%EB%A1%9C%EC%8A%A4%EB%B0%B1-%EB%82%A8%EC%84%B1-%EC%9A%A9%ED%92%88": "bag",
+        },
+        "style_tags": ["retro", "sportswear"],
+        "currency": "KRW",
+        "season_id": "2026SS",
+    },
 }
 
 
@@ -237,7 +267,7 @@ SHOPIFY_BRANDS: dict[str, dict] = {
 CUSTOM_BRANDS = [
     "newbalance", "asics", "northface", "descente", "nike", "kolonsport",
     "lululemon", "acne_studios", "zara", "hm",
-    "maison_kitsune", "ami", "ralph_lauren",
+    "maison_kitsune", "ami", "ralph_lauren", "thisisneverthat",
 ]
 
 
@@ -302,6 +332,10 @@ def get_crawler(brand_id: str):
     if brand_id == "ralph_lauren":
         from backend.crawlers.brand_crawlers.ralph_lauren import RalphLaurenCrawler
         return RalphLaurenCrawler()
+
+    if brand_id == "thisisneverthat":
+        from backend.crawlers.brand_crawlers.thisisneverthat import ThisisneverthatCrawler
+        return ThisisneverthatCrawler()
 
     raise ValueError(f"Unknown brand: {brand_id}. "
                      f"Available: {list(CAFE24_BRANDS) + list(SHOPIFY_BRANDS) + CUSTOM_BRANDS}")
