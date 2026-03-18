@@ -66,12 +66,14 @@ const flowData = {
       { id: "runway", x: 40, y: 50, w: 120, label: "런웨이 컬렉션", skip: true },
       { id: "expert", x: 210, y: 50, w: 120, label: "전문가 리포트", skip: true },
       { id: "celeb", x: 380, y: 50, w: 110, label: "셀럽 착용", skip: true },
-      { id: "demand", x: 40, y: 130, w: 130, label: "소비자 실수요", active: true },
-      { id: "market", x: 270, y: 130, w: 140, label: "마켓 점진적 확대", active: true },
-      { id: "search", x: 490, y: 130, w: 140, label: "검색량 완만상승", active: true },
+      { id: "search", x: 210, y: 130, w: 130, label: "검색량 완만상승", active: true },
+      { id: "market", x: 40, y: 130, w: 130, label: "마켓 점진적 확대", active: true },
+      { id: "demand", x: 540, y: 50, w: 110, label: "소비자 실수요", active: true },
     ],
-    // demand→market→search (하단 좌→우 흐름, 겹침 없음)
-    edges: [[3,4],[4,5]],
+    // demand→market (우회), market→search
+    edges: [[5,4],[4,3]],
+    // demand→market은 커스텀 경로 필요 (검색량 노드 위로 우회)
+    customEdges: true,
     desc: "Market-organic",
     descText: "선행 시그널 없이 소비자 수요에서 자연스럽게 성장. 기능성 소재나 실용적 카테고리에서 자주 나타남. FTIB에서는 반복 크롤링으로 상품 수 점진 증가를 감지. 스포츠/아웃도어에서 가장 지배적.",
   },
@@ -188,9 +190,11 @@ function FlowDiagram({ origin }) {
     if (fCy > tCy) {
       return `M${fR},${fCy} C${fR + 30},${fCy} ${tL - 30},${tCy} ${tL},${tCy}`;
     }
-    // 우상→좌하 (역방향): 오른쪽 하단 → 왼쪽 상단
+    // 우상→좌하 (역방향): 사이에 노드가 있으면 상단으로 우회
     if (tCx < fCx) {
-      return `M${fCx},${from.y + nodeH} C${fCx},${from.y + nodeH + 40} ${tCx + to.w},${tCy} ${to.x + to.w},${tCy}`;
+      // 상단을 통해 우회: from 좌측 → 위로 올라가 → to 상단으로 내려옴
+      const topY = Math.min(from.y, to.y) - 25;
+      return `M${from.x},${fCy} C${from.x - 30},${fCy} ${from.x - 30},${topY} ${fCx - 60},${topY} L${tCx + 60},${topY} C${to.x + to.w + 30},${topY} ${to.x + to.w + 30},${tCy} ${to.x + to.w},${tCy}`;
     }
     // 기본: 대각선 베지어
     return `M${fR},${fCy} C${fR + 40},${fCy} ${tL - 40},${tCy} ${tL},${tCy}`;
