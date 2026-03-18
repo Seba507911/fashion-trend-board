@@ -15,69 +15,59 @@ const ORIGIN_LABELS = {
   organic: "Market-organic",
 };
 
-/* ── Static Data ── */
+/* ── Static Data — 순서도 스타일 (좌→우 흐름) ── */
 const flowData = {
   runway: {
     nodes: [
-      { id: "runway", x: 40, y: 60, w: 120, label: "런웨이 컬렉션", active: true },
-      { id: "expert", x: 200, y: 60, w: 110, label: "전문가 리포트", active: true },
-      { id: "celeb", x: 350, y: 60, w: 110, label: "셀럽 착용", active: true },
-      { id: "search", x: 350, y: 140, w: 100, label: "검색량 상승", active: true },
-      { id: "market", x: 520, y: 60, w: 110, label: "마켓 등장", active: true },
-      { id: "social", x: 200, y: 140, w: 100, label: "소셜 멘션", skip: true },
-      { id: "campaign", x: 40, y: 140, w: 110, label: "캠페인 런칭", skip: true },
+      { id: "runway", label: "런웨이 컬렉션", active: true },
+      { id: "expert", label: "전문가 리포트", active: true },
+      { id: "celeb", label: "셀럽 착용", active: true },
+      { id: "search", label: "검색량 상승", active: true },
+      { id: "market", label: "마켓 등장", active: true },
     ],
-    edges: [[0, 1], [1, 2], [2, 4], [2, 3], [3, 4]],
-    timeLabels: ["T+0", "T+1~2M", "T+3~6M", "T+6~12M"],
-    timeXs: [60, 230, 380, 550],
+    edges: [[0,1],[1,2],[2,3],[3,4]],
+    skipped: [],
     desc: "Runway-led",
-    descText: "런웨이에서 시작하여 전문가→셀럽→마켓 순으로 전파. 시그널이 순차적으로 나타나므로 FTIB가 가장 정확하게 추적 가능. 럭셔리/하이엔드에서 지배적. 전파 딜레이: 평균 6~12개월.",
+    descText: "런웨이에서 시작하여 전문가→셀럽→검색→마켓 순으로 전파. 시그널이 순차적으로 나타나므로 FTIB가 가장 정확하게 추적 가능. 럭셔리/하이엔드에서 지배적. 전파 딜레이: 평균 6~12개월.",
+    timeLabels: ["T+0", "T+1~2M", "T+3~6M", "T+6~9M", "T+9~12M"],
   },
   capital: {
     nodes: [
-      { id: "runway", x: 40, y: 60, w: 120, label: "런웨이 컬렉션", skip: true },
-      { id: "expert", x: 200, y: 60, w: 110, label: "전문가 리포트", skip: true },
-      { id: "celeb", x: 350, y: 60, w: 130, label: "앰배서더 캠페인", active: true },
-      { id: "search", x: 350, y: 140, w: 100, label: "검색량 폭발", active: true },
-      { id: "market", x: 520, y: 60, w: 110, label: "마켓 빠른반영", active: true },
-      { id: "brand", x: 40, y: 140, w: 130, label: "브랜드 투자 결정", active: true },
+      { id: "brand", label: "브랜드 투자 결정", active: true },
+      { id: "celeb", label: "앰배서더 캠페인", active: true },
+      { id: "search", label: "검색량 폭발", active: true },
+      { id: "market", label: "마켓 빠른 반영", active: true },
     ],
-    edges: [[5, 2], [2, 3], [2, 4], [3, 4]],
-    timeLabels: ["(약)", "(약)", "캠페인 시점", "T+1~3M"],
-    timeXs: [80, 230, 380, 550],
+    edges: [[0,1],[1,2],[1,3],[2,3]],
+    skipped: ["런웨이", "전문가"],
     desc: "Capital-driven",
     descText: "브랜드가 셀럽 앰배서더/광고에 투자하여 의도적으로 확산. 런웨이·전문가 단계를 건너뜀. 캠페인 시점에 검색량 급등. FTIB에서는 \"셀럽이름+브랜드\" 검색량 조합으로 감지 가능.",
+    timeLabels: ["투자 결정", "캠페인 런칭", "T+1~2M", "T+2~4M"],
   },
   viral: {
     nodes: [
-      { id: "runway", x: 40, y: 60, w: 120, label: "런웨이 컬렉션", skip: true },
-      { id: "expert", x: 200, y: 60, w: 110, label: "전문가 리포트", skip: true },
-      { id: "celeb", x: 350, y: 60, w: 110, label: "셀럽 착용", skip: true },
-      { id: "search", x: 350, y: 140, w: 100, label: "검색량 급등", active: true },
-      { id: "market", x: 520, y: 60, w: 110, label: "마켓 빠른소진", active: true },
-      { id: "social", x: 40, y: 140, w: 130, label: "소셜 밈 발생", active: true },
-      { id: "tiktok", x: 200, y: 140, w: 100, label: "틱톡/릴스 확산", active: true },
+      { id: "social", label: "소셜 밈 발생", active: true },
+      { id: "tiktok", label: "틱톡/릴스 확산", active: true },
+      { id: "search", label: "검색량 급등", active: true },
+      { id: "market", label: "마켓 빠른 소진", active: true },
     ],
-    edges: [[5, 6], [6, 3], [3, 4]],
-    timeLabels: ["(없음)", "(없음)", "밈 발생!", "T+1~4주"],
-    timeXs: [80, 230, 100, 550],
+    edges: [[0,1],[1,2],[2,3]],
+    skipped: ["런웨이", "전문가", "셀럽"],
     desc: "Viral / Meme",
     descText: "소셜미디어에서 자연발생한 밈으로 예측 불가하게 확산. 런웨이·전문가·셀럽 시그널이 모두 부재하거나 후행. FTIB에서는 소셜 멘션 모니터링 추가 시 감지 가능. 빠르지만 단명하는 패턴.",
+    timeLabels: ["밈 발생", "1~2주", "T+2~4주", "T+1~2M"],
   },
   organic: {
     nodes: [
-      { id: "runway", x: 40, y: 60, w: 120, label: "런웨이 컬렉션", skip: true },
-      { id: "expert", x: 200, y: 60, w: 110, label: "전문가 리포트", skip: true },
-      { id: "celeb", x: 350, y: 60, w: 110, label: "셀럽 착용", skip: true },
-      { id: "search", x: 200, y: 140, w: 120, label: "검색량 완만상승", active: true },
-      { id: "market", x: 40, y: 140, w: 130, label: "마켓 점진적 확대", active: true },
-      { id: "demand", x: 520, y: 60, w: 110, label: "소비자 실수요", active: true },
+      { id: "demand", label: "소비자 실수요", active: true },
+      { id: "market", label: "마켓 점진 확대", active: true },
+      { id: "search", label: "검색량 완만 상승", active: true },
     ],
-    edges: [[4, 3], [5, 4]],
-    timeLabels: ["(없음)", "(없음)", "점진적", "지속 성장"],
-    timeXs: [80, 230, 230, 550],
+    edges: [[0,1],[1,2]],
+    skipped: ["런웨이", "전문가", "셀럽"],
     desc: "Market-organic",
     descText: "선행 시그널 없이 소비자 수요에서 자연스럽게 성장. 기능성 소재나 실용적 카테고리에서 자주 나타남. FTIB에서는 반복 크롤링으로 상품 수 점진 증가를 감지. 스포츠/아웃도어에서 가장 지배적.",
+    timeLabels: ["지속 수요", "점진 성장", "후행 감지"],
   },
 };
 
@@ -120,7 +110,7 @@ const timelineData = {
   runway: {
     label: "Runway-led",
     rows: [
-      { label: "런웨이", left: 0, width: 8, opacity: 1, text: "\u25CF" },
+      { label: "런웨이", left: 0, width: 8, opacity: 1, text: "●" },
       { label: "전문가", left: 5, width: 15, opacity: 0.7, text: "리포트" },
       { label: "셀럽", left: 25, width: 20, opacity: 0.55, text: "착용" },
       { label: "검색량", left: 30, width: 35, opacity: 0.4, text: "상승" },
@@ -140,8 +130,8 @@ const timelineData = {
   viral: {
     label: "Viral / Meme",
     rows: [
-      { label: "런웨이", left: 0, width: 3, opacity: 0.15, text: "\u2014" },
-      { label: "전문가", left: 0, width: 3, opacity: 0.15, text: "\u2014" },
+      { label: "런웨이", left: 0, width: 3, opacity: 0.15, text: "—" },
+      { label: "전문가", left: 0, width: 3, opacity: 0.15, text: "—" },
       { label: "소셜", left: 35, width: 12, opacity: 1, text: "밈 발생!" },
       { label: "검색량", left: 40, width: 20, opacity: 0.6, text: "급등" },
       { label: "마켓", left: 45, width: 25, opacity: 0.35, text: "빠른 소진" },
@@ -150,19 +140,20 @@ const timelineData = {
   organic: {
     label: "Market-organic",
     rows: [
-      { label: "런웨이", left: 0, width: 3, opacity: 0.15, text: "\u2014" },
-      { label: "전문가", left: 0, width: 3, opacity: 0.15, text: "\u2014" },
+      { label: "런웨이", left: 0, width: 3, opacity: 0.15, text: "—" },
+      { label: "전문가", left: 0, width: 3, opacity: 0.15, text: "—" },
       { label: "검색량", left: 10, width: 70, opacity: 0.25, text: "완만한 상승" },
       { label: "마켓", left: 5, width: 80, opacity: 0.35, text: "점진적 확대" },
     ],
   },
 };
 
-/* ── Tab 0: SVG Flow Diagram ── */
+/* ── Tab 0: 순서도 스타일 Flow Diagram ── */
 function FlowDiagram({ origin }) {
   const data = flowData[origin];
   const color = ORIGIN_COLORS[origin];
   const [visible, setVisible] = useState(false);
+  const nodeCount = data.nodes.length;
 
   useEffect(() => {
     setVisible(false);
@@ -170,133 +161,137 @@ function FlowDiagram({ origin }) {
     return () => clearTimeout(t);
   }, [origin]);
 
+  // 노드를 좌→우 일직선으로 배치
+  const nodeW = 130;
+  const nodeH = 40;
+  const gapX = 40;
+  const startX = 30;
+  const mainY = 80;
+  const totalW = startX + nodeCount * (nodeW + gapX);
+
+  const getNodePos = (idx) => ({
+    x: startX + idx * (nodeW + gapX),
+    y: mainY,
+  });
+
   return (
-    <svg
-      width="100%"
-      viewBox="0 0 680 280"
-      className="my-4"
-      style={{ transition: "opacity 0.3s", opacity: visible ? 1 : 0 }}
-    >
-      <defs>
-        <marker
-          id={`arrow-${origin}`}
-          viewBox="0 0 10 10"
-          refX="8"
-          refY="5"
-          markerWidth="6"
-          markerHeight="6"
-          orient="auto-start-reverse"
-        >
-          <path
-            d="M2 1L8 5L2 9"
-            fill="none"
-            stroke={color}
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </marker>
-      </defs>
-
-      {/* Edges */}
-      {data.edges.map(([fromIdx, toIdx], i) => {
-        const from = data.nodes[fromIdx];
-        const to = data.nodes[toIdx];
-
-        // Check if nodes overlap horizontally (vertical connection)
-        const fromRight = from.x + from.w;
-        const toRight = to.x + to.w;
-        const hOverlap = from.x < toRight && to.x < fromRight;
-        // Check if target is far to the left (backward connection)
-        const isBackward = to.x + to.w < from.x - 40;
-
-        let pathD;
-        if (hOverlap && to.y > from.y) {
-          // Vertical: go from bottom-center of source, curve right, to top-center of target
-          const x1 = from.x + from.w / 2 + 20;
-          const y1 = from.y + 36;
-          const x2 = to.x + to.w / 2;
-          const y2 = to.y;
-          const midX = Math.max(fromRight, toRight) + 30;
-          pathD = `M${x1},${y1} C${midX},${y1} ${midX},${y2} ${x2},${y2}`;
-        } else if (isBackward) {
-          // Backward: curve down from source bottom, sweep left to target right
-          const x1 = from.x + from.w / 2;
-          const y1 = from.y + 36;
-          const x2 = to.x + to.w;
-          const y2 = to.y + 18;
-          const dropY = Math.max(from.y, to.y) + 70;
-          pathD = `M${x1},${y1} C${x1},${dropY} ${x2 + 60},${dropY} ${x2},${y2}`;
-        } else {
-          // Normal: right-center to left-center
-          const x1 = fromRight;
-          const y1 = from.y + 18;
-          const x2 = to.x;
-          const y2 = to.y + 18;
-          pathD = `M${x1},${y1} L${x2},${y2}`;
-        }
-
-        return (
-          <path
-            key={`edge-${i}`}
-            d={pathD}
-            stroke={color}
-            strokeWidth="1.5"
-            fill="none"
-            markerEnd={`url(#arrow-${origin})`}
-            opacity={visible ? 0.6 : 0}
-            style={{ transition: `opacity 0.4s ease ${0.1 + i * 0.15}s` }}
-          />
-        );
-      })}
-
-      {/* Nodes */}
-      {data.nodes.map((n, i) => (
-        <g
-          key={n.id}
-          opacity={visible ? (n.skip ? 0.3 : 1) : 0}
-          style={{ transition: `opacity 0.4s ease ${0.05 + i * 0.1}s` }}
-        >
-          <rect
-            x={n.x}
-            y={n.y}
-            width={n.w}
-            height={36}
-            rx={6}
-            fill={n.skip ? "rgba(128,128,128,0.05)" : `${color}18`}
-            stroke={n.skip ? "rgba(128,128,128,0.2)" : color}
-            strokeWidth="0.5"
-            strokeDasharray={n.skip ? "4 3" : undefined}
-          />
-          <text
-            x={n.x + n.w / 2}
-            y={n.y + 18}
-            textAnchor="middle"
-            dominantBaseline="central"
-            fontSize="12"
-            fontWeight="500"
-            fill={n.skip ? "rgba(128,128,128,0.5)" : "var(--color-text-secondary)"}
-            style={{ fontFamily: "var(--font-sans, system-ui)" }}
+    <div className="my-4">
+      <svg
+        width="100%"
+        viewBox={`0 0 ${Math.max(totalW, 680)} 200`}
+        style={{ transition: "opacity 0.3s", opacity: visible ? 1 : 0 }}
+      >
+        <defs>
+          <marker
+            id={`arrow-${origin}`}
+            viewBox="0 0 10 10"
+            refX="9"
+            refY="5"
+            markerWidth="7"
+            markerHeight="7"
+            orient="auto-start-reverse"
           >
-            {n.label}
-          </text>
-        </g>
-      ))}
+            <path d="M1 1L8 5L1 9" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </marker>
+        </defs>
 
-      {/* Time Labels */}
-      {data.timeLabels.map((label, i) => (
-        <text
-          key={`tl-${i}`}
-          x={data.timeXs[i]}
-          y={240}
-          fontSize="10"
-          fill="rgba(128,128,128,0.5)"
-          style={{ fontFamily: "var(--font-mono, monospace)" }}
-        >
-          {label}
-        </text>
-      ))}
-    </svg>
+        {/* Edges */}
+        {data.edges.map(([fromIdx, toIdx], i) => {
+          const from = getNodePos(fromIdx);
+          const to = getNodePos(toIdx);
+          const isStraight = Math.abs(fromIdx - toIdx) === 1;
+          const x1 = from.x + nodeW;
+          const y1 = from.y + nodeH / 2;
+          const x2 = to.x;
+          const y2 = to.y + nodeH / 2;
+
+          let pathD;
+          if (isStraight) {
+            pathD = `M${x1},${y1} L${x2},${y2}`;
+          } else {
+            // 분기: 아래로 우회하는 곡선
+            const midY = mainY + nodeH + 30;
+            pathD = `M${x1},${y1 + 8} C${x1 + 20},${midY} ${x2 - 20},${midY} ${x2},${y2 + 8}`;
+          }
+
+          return (
+            <path
+              key={`edge-${i}`}
+              d={pathD}
+              stroke={color}
+              strokeWidth="1.5"
+              fill="none"
+              markerEnd={`url(#arrow-${origin})`}
+              opacity={visible ? 0.6 : 0}
+              style={{ transition: `opacity 0.4s ease ${0.1 + i * 0.12}s` }}
+            />
+          );
+        })}
+
+        {/* Nodes */}
+        {data.nodes.map((n, i) => {
+          const pos = getNodePos(i);
+          return (
+            <g
+              key={n.id}
+              opacity={visible ? 1 : 0}
+              style={{ transition: `opacity 0.4s ease ${0.05 + i * 0.1}s` }}
+            >
+              <rect
+                x={pos.x}
+                y={pos.y}
+                width={nodeW}
+                height={nodeH}
+                rx={8}
+                fill={`${color}15`}
+                stroke={color}
+                strokeWidth="1"
+              />
+              <text
+                x={pos.x + nodeW / 2}
+                y={pos.y + nodeH / 2}
+                textAnchor="middle"
+                dominantBaseline="central"
+                fontSize="12"
+                fontWeight="500"
+                fill="var(--color-text-secondary)"
+                style={{ fontFamily: "var(--font-sans, system-ui)" }}
+              >
+                {n.label}
+              </text>
+            </g>
+          );
+        })}
+
+        {/* Time Labels */}
+        {data.timeLabels.map((label, i) => {
+          const pos = getNodePos(i);
+          return (
+            <text
+              key={`tl-${i}`}
+              x={pos.x + nodeW / 2}
+              y={pos.y + nodeH + 20}
+              textAnchor="middle"
+              fontSize="10"
+              fill="rgba(128,128,128,0.5)"
+              style={{ fontFamily: "var(--font-mono, monospace)" }}
+            >
+              {label}
+            </text>
+          );
+        })}
+      </svg>
+
+      {/* 스킵된 단계 표시 */}
+      {data.skipped.length > 0 && (
+        <div className="flex items-center gap-2 mt-1 ml-8">
+          <span className="text-[10px] text-[var(--color-text-muted)]">건너뛴 단계:</span>
+          {data.skipped.map((s) => (
+            <span key={s} className="text-[10px] px-2 py-0.5 rounded border border-dashed border-gray-300 text-gray-400">{s}</span>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -304,7 +299,7 @@ function FlowDiagram({ origin }) {
 function OriginBar({ dist }) {
   const colors = [ORIGIN_COLORS.runway, ORIGIN_COLORS.capital, ORIGIN_COLORS.viral, ORIGIN_COLORS.organic];
   return (
-    <div className="flex h-1.5 rounded-full overflow-hidden mt-2.5 bg-[var(--color-bg)]">
+    <div className="flex h-2 rounded-full overflow-hidden mt-3 bg-[var(--color-bg)]">
       {dist.map((pct, i) => (
         <div
           key={i}
@@ -319,11 +314,11 @@ function OriginBar({ dist }) {
 function OriginLegend() {
   const origins = ["runway", "capital", "viral", "organic"];
   return (
-    <div className="flex gap-4 mt-3 flex-wrap">
+    <div className="flex gap-4 mt-4 flex-wrap">
       {origins.map((key) => (
         <span key={key} className="flex items-center gap-1.5 text-[11px] text-[var(--color-text-secondary)]">
           <span
-            className="w-2 h-2 rounded-sm inline-block"
+            className="w-2.5 h-2.5 rounded-sm inline-block"
             style={{ backgroundColor: ORIGIN_COLORS[key] }}
           />
           {ORIGIN_LABELS[key]}
@@ -334,13 +329,14 @@ function OriginLegend() {
 }
 
 /* ── Tab 2: Timeline ── */
-function TimelineSection({ originKey }) {
+function TimelineSection({ originKey, isLast }) {
   const data = timelineData[originKey];
   const color = ORIGIN_COLORS[originKey];
 
   return (
-    <div className="mb-4">
-      <div className="text-xs font-medium mt-4 mb-2" style={{ color }}>
+    <div className={`pb-5 ${!isLast ? "mb-5 border-b border-[var(--color-border)]" : ""}`}>
+      <div className="text-sm font-semibold mt-2 mb-3 flex items-center gap-2" style={{ color }}>
+        <span className="w-3 h-3 rounded-sm inline-block" style={{ backgroundColor: color }} />
         {data.label}
       </div>
       {data.rows.map((row, i) => (
@@ -415,7 +411,6 @@ export default function TrendFlow() {
         {/* Tab 0: Origin Flow Patterns */}
         {activeTab === 0 && (
           <div>
-            {/* Origin selector buttons */}
             <div className="flex gap-2 mb-3">
               {Object.keys(ORIGIN_LABELS).map((key) => (
                 <button
@@ -432,52 +427,55 @@ export default function TrendFlow() {
               ))}
             </div>
 
-            {/* SVG Flow Diagram */}
             <FlowDiagram origin={selectedOrigin} />
 
-            {/* Description */}
             <div className="mt-4 p-4 bg-[var(--color-surface)] rounded-md text-xs leading-relaxed text-[var(--color-text-secondary)]">
               <strong className="text-[var(--color-text-secondary)] font-medium">
                 {flowData[selectedOrigin].desc}
               </strong>
-              {" \u2014 "}
+              {" — "}
               {flowData[selectedOrigin].descText}
             </div>
           </div>
         )}
 
-        {/* Tab 1: Zone Distribution */}
+        {/* Tab 1: Zone Distribution — 2×2 */}
         {activeTab === 1 && (
           <div>
-            {/* Zone cards grid */}
-            <div className="grid grid-cols-4 gap-3 mb-4">
+            <div className="grid grid-cols-2 gap-4 mb-4">
               {zoneData.map((zone, i) => (
                 <button
                   key={i}
                   onClick={() => setSelectedZone(i)}
-                  className={`text-left p-4 rounded-md border transition-all ${
+                  className={`text-left p-5 rounded-lg border transition-all ${
                     selectedZone === i
                       ? "border-[var(--color-primary)] bg-[var(--color-primary)]/5"
-                      : "border-transparent bg-[var(--color-surface)] hover:border-[var(--color-border)]"
+                      : "border-[var(--color-border)] bg-[var(--color-surface)] hover:border-[var(--color-primary)]/30"
                   }`}
                 >
-                  <div className="text-[13px] font-medium mb-1.5">{zone.name}</div>
-                  <div className="text-[11px] text-[var(--color-text-secondary)] leading-relaxed whitespace-pre-line">
+                  <div className="text-sm font-semibold mb-2">{zone.name}</div>
+                  <div className="text-xs text-[var(--color-text-secondary)] leading-relaxed whitespace-pre-line mb-1">
                     {zone.shortDesc}
                   </div>
                   <OriginBar dist={zone.dist} />
+                  <div className="flex gap-3 mt-2">
+                    {zone.dist.map((pct, j) => (
+                      <span key={j} className="text-[10px] text-[var(--color-text-muted)]">
+                        {["R", "C", "V", "O"][j]} {pct}%
+                      </span>
+                    ))}
+                  </div>
                 </button>
               ))}
             </div>
 
             <OriginLegend />
 
-            {/* Zone description */}
             <div className="mt-4 p-4 bg-[var(--color-surface)] rounded-md text-xs leading-relaxed text-[var(--color-text-secondary)]">
               <strong className="text-[var(--color-text-secondary)] font-medium">
                 {zoneData[selectedZone].descTitle}
               </strong>
-              {" \u2014 "}
+              {" — "}
               {zoneData[selectedZone].descText}
               <br /><br />
               <strong className="text-[var(--color-text-secondary)] font-medium">
@@ -496,7 +494,6 @@ export default function TrendFlow() {
               Origin별 시그널 발생 타이밍 비교
             </div>
 
-            {/* Timeline axis labels */}
             <div className="flex items-center gap-0 mb-1 ml-[100px]">
               <div className="flex-1 flex justify-between text-[10px] text-[var(--color-text-muted)] font-mono">
                 <span>런웨이 쇼</span>
@@ -508,12 +505,10 @@ export default function TrendFlow() {
               </div>
             </div>
 
-            {/* Timeline sections */}
-            {["runway", "capital", "viral", "organic"].map((key) => (
-              <TimelineSection key={key} originKey={key} />
+            {["runway", "capital", "viral", "organic"].map((key, i) => (
+              <TimelineSection key={key} originKey={key} isLast={i === 3} />
             ))}
 
-            {/* Key observation note */}
             <div className="mt-4 p-3 bg-[var(--color-surface)] rounded-md text-xs leading-relaxed text-[var(--color-text-secondary)]">
               <strong className="text-[var(--color-text-secondary)] font-medium">
                 핵심 관찰:
