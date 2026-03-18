@@ -66,12 +66,12 @@ const flowData = {
       { id: "runway", x: 40, y: 50, w: 120, label: "런웨이 컬렉션", skip: true },
       { id: "expert", x: 210, y: 50, w: 120, label: "전문가 리포트", skip: true },
       { id: "celeb", x: 380, y: 50, w: 110, label: "셀럽 착용", skip: true },
-      { id: "search", x: 210, y: 130, w: 130, label: "검색량 완만상승", active: true },
-      { id: "market", x: 40, y: 130, w: 130, label: "마켓 점진적 확대", active: true },
-      { id: "demand", x: 540, y: 50, w: 110, label: "소비자 실수요", active: true },
+      { id: "demand", x: 40, y: 130, w: 130, label: "소비자 실수요", active: true },
+      { id: "market", x: 270, y: 130, w: 140, label: "마켓 점진적 확대", active: true },
+      { id: "search", x: 490, y: 130, w: 140, label: "검색량 완만상승", active: true },
     ],
-    // demand→market, market→search
-    edges: [[5,4],[4,3]],
+    // demand→market→search (하단 좌→우 흐름, 겹침 없음)
+    edges: [[3,4],[4,5]],
     desc: "Market-organic",
     descText: "선행 시그널 없이 소비자 수요에서 자연스럽게 성장. 기능성 소재나 실용적 카테고리에서 자주 나타남. FTIB에서는 반복 크롤링으로 상품 수 점진 증가를 감지. 스포츠/아웃도어에서 가장 지배적.",
   },
