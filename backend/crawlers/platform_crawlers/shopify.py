@@ -85,11 +85,11 @@ class ShopifyCrawler(BaseCrawler):
     async def parse_product_card(self, page: Page, element) -> Optional[dict]:
         try:
             s = self._selectors
-            name_el = await element.query_selector(s["name"])
-            price_el = await element.query_selector(s["price"])
-            color_el = await element.query_selector(s["color"])
-            img_el = await element.query_selector(s["image"])
-            link_el = await element.query_selector(s["link"])
+            name_el = await element.query_selector(s["name"]) if s.get("name") else None
+            price_el = await element.query_selector(s["price"]) if s.get("price") else None
+            color_el = await element.query_selector(s["color"]) if s.get("color") else None
+            img_el = await element.query_selector(s["image"]) if s.get("image") else None
+            link_el = await element.query_selector(s["link"]) if s.get("link") else None
 
             name = await name_el.inner_text() if name_el else None
             if not name:

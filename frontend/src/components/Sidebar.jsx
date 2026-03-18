@@ -8,21 +8,21 @@ const BRAND_GROUPS = [
   {
     zoning: "럭셔리 / 컨템포러리",
     groups: [
-      { region: "Global", ids: ["lemaire", "acne_studios"] },
+      { region: "Global", ids: ["lemaire", "acne_studios", "bode"] },
       { region: "Korea", ids: [] },
     ],
   },
   {
     zoning: "스포츠 / 아웃도어",
     groups: [
-      { region: "Global", ids: ["nike", "newbalance", "on_running", "lululemon", "alo"] },
+      { region: "Global", ids: ["nike", "newbalance", "on_running", "lululemon", "alo", "skims"] },
       { region: "Korea", ids: ["descente", "northface", "kolonsport", "fila"] },
     ],
   },
   {
     zoning: "캐주얼 / 스트리트",
     groups: [
-      { region: "Global", ids: ["ralph_lauren", "stussy"] },
+      { region: "Global", ids: ["ralph_lauren", "stussy", "supreme"] },
       { region: "Korea", ids: ["youth", "marithe", "coor", "blankroom", "mardi", "thisisneverthat", "emis"] },
     ],
   },
@@ -46,6 +46,7 @@ const TBA_BRAND_IDS = [
   "hoka", "salomon", "k2", "blackyak", "cos", "uniqlo",
   "carhartt_wip", "captain_sunshine", "comoli", "danton", "auralee", "apresse", "visvim", "kapital",
   "newera", "kangol", "snowpeak",
+  "palace", "goldwin", "rrl",
 ];
 
 // Flatten all known brand IDs for grouping

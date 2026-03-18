@@ -227,6 +227,53 @@ SHOPIFY_BRANDS: dict[str, dict] = {
         "season_id": "2026SS",
     },
     # ami: moved to custom crawler (backend/crawlers/brand_crawlers/ami.py)
+    "bode": {
+        "brand_id": "bode",
+        "base_url": "https://www.bodenewyork.com",
+        "card_selector": ".product-tile, .product-card, .grid__item",
+        "selectors": {
+            "name": ".product-tile__title, .product-card__title, h3 a, .card__heading a",
+            "price": ".product-tile__price, .product-card__price, .price, .price-item",
+            "image": ".product-tile img, .product-card img, .card__media img",
+            "link": "a[href*='/products/']",
+        },
+        "collections": {
+            "mens-outerwear": "outer",
+            "mens-shirts": "inner",
+            "mens-cut-sew": "inner",
+            "mens-knitwear": "inner",
+            "mens-trousers": "bottom",
+            "mens-shorts": "bottom",
+            "mens-shoes": "shoes",
+            "accessories": "acc_etc",
+        },
+        "style_tags": ["american", "artisanal", "luxury"],
+        "currency": "USD",
+        "season_id": "2026SS",
+    },
+    "skims": {
+        "brand_id": "skims",
+        "base_url": "https://skims.com",
+        "card_selector": ".product-card, [class*=ProductCard], .grid__item",
+        "selectors": {
+            "name": ".product-card__title, h3, [class*=title], .card__heading a",
+            "price": ".product-card__price, [class*=price], .price-item",
+            "image": ".product-card img, [class*=ProductCard] img, .card__media img",
+            "link": "a[href*='/products/']",
+        },
+        "collections": {
+            "tops": "inner",
+            "bottoms": "bottom",
+            "bodysuits": "inner",
+            "dresses": "wear_etc",
+            "outerwear": "outer",
+            "loungewear": "inner",
+            "accessories": "acc_etc",
+        },
+        "style_tags": ["bodycon", "athleisure", "contemporary"],
+        "currency": "USD",
+        "season_id": "2026SS",
+    },
     "fila": {
         "brand_id": "fila",
         "base_url": "https://www.fila.co.kr",
@@ -268,7 +315,7 @@ CUSTOM_BRANDS = [
     "newbalance", "asics", "northface", "descente", "nike", "kolonsport",
     "lululemon", "acne_studios", "zara", "hm",
     "maison_kitsune", "ami", "ralph_lauren", "thisisneverthat", "on_running",
-    "nanamica",
+    "nanamica", "supreme",
 ]
 
 
@@ -345,6 +392,10 @@ def get_crawler(brand_id: str):
     if brand_id == "nanamica":
         from backend.crawlers.brand_crawlers.nanamica import NanamicaCrawler
         return NanamicaCrawler()
+
+    if brand_id == "supreme":
+        from backend.crawlers.brand_crawlers.supreme import SupremeCrawler
+        return SupremeCrawler()
 
     raise ValueError(f"Unknown brand: {brand_id}. "
                      f"Available: {list(CAFE24_BRANDS) + list(SHOPIFY_BRANDS) + CUSTOM_BRANDS}")

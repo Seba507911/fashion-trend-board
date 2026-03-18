@@ -193,6 +193,14 @@ INSERT OR IGNORE INTO brands (id, name, name_kr, brand_type, website_url) VALUES
 ('visvim', 'visvim', '비즈빔', 'competitor', 'https://www.visvim.tv/'),
 ('kapital', 'KAPITAL', '캐피탈', 'competitor', 'https://www.kapital.jp/');
 
+INSERT OR IGNORE INTO brands (id, name, name_kr, brand_type, website_url) VALUES
+('bode', 'BODE', '보데', 'competitor', 'https://www.bodenewyork.com/'),
+('skims', 'SKIMS', '스킴스', 'competitor', 'https://skims.com/'),
+('supreme', 'Supreme', '슈프림', 'competitor', 'https://www.supremenewyork.com/'),
+('rrl', 'RRL', 'RRL', 'competitor', 'https://www.ralphlauren.co.kr/ko/rrl/10060'),
+('palace', 'Palace', '팰리스', 'competitor', 'https://www.palaceskateboards.com/'),
+('goldwin', 'Goldwin', '골드윈', 'competitor', 'https://www.goldwin.co.jp/');
+
 INSERT OR IGNORE INTO seasons (id, year, season_code, label, is_current) VALUES
 ('2025SS', 2025, 'SS', '2025 Spring/Summer', 0),
 ('2025FW', 2025, 'FW', '2025 Fall/Winter', 0),
