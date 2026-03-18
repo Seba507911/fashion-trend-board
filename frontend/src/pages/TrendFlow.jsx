@@ -15,59 +15,65 @@ const ORIGIN_LABELS = {
   organic: "Market-organic",
 };
 
-/* ── Static Data — 순서도 스타일 (좌→우 흐름) ── */
+/* ── Static Data — 2행 배치 (위: 주요 흐름, 아래: 보조 채널) ── */
 const flowData = {
   runway: {
     nodes: [
-      { id: "runway", label: "런웨이 컬렉션", active: true },
-      { id: "expert", label: "전문가 리포트", active: true },
-      { id: "celeb", label: "셀럽 착용", active: true },
-      { id: "search", label: "검색량 상승", active: true },
-      { id: "market", label: "마켓 등장", active: true },
+      { id: "runway", x: 40, y: 50, w: 120, label: "런웨이 컬렉션", active: true },
+      { id: "expert", x: 210, y: 50, w: 120, label: "전문가 리포트", active: true },
+      { id: "celeb", x: 380, y: 50, w: 110, label: "셀럽 착용", active: true },
+      { id: "search", x: 380, y: 130, w: 110, label: "검색량 상승", active: true },
+      { id: "market", x: 540, y: 50, w: 110, label: "마켓 등장", active: true },
+      { id: "social", x: 210, y: 130, w: 110, label: "소셜 멘션", skip: true },
+      { id: "campaign", x: 40, y: 130, w: 120, label: "캠페인 런칭", skip: true },
     ],
-    edges: [[0,1],[1,2],[2,3],[3,4]],
-    skipped: [],
+    // runway→expert→celeb→market (상단), celeb→search→market (하단 분기)
+    edges: [[0,1],[1,2],[2,4],[2,3],[3,4]],
     desc: "Runway-led",
-    descText: "런웨이에서 시작하여 전문가→셀럽→검색→마켓 순으로 전파. 시그널이 순차적으로 나타나므로 FTIB가 가장 정확하게 추적 가능. 럭셔리/하이엔드에서 지배적. 전파 딜레이: 평균 6~12개월.",
-    timeLabels: ["T+0", "T+1~2M", "T+3~6M", "T+6~9M", "T+9~12M"],
+    descText: "런웨이에서 시작하여 전문가→셀럽→마켓 순으로 전파. 시그널이 순차적으로 나타나므로 FTIB가 가장 정확하게 추적 가능. 럭셔리/하이엔드에서 지배적. 전파 딜레이: 평균 6~12개월.",
   },
   capital: {
     nodes: [
-      { id: "brand", label: "브랜드 투자 결정", active: true },
-      { id: "celeb", label: "앰배서더 캠페인", active: true },
-      { id: "search", label: "검색량 폭발", active: true },
-      { id: "market", label: "마켓 빠른 반영", active: true },
+      { id: "runway", x: 40, y: 50, w: 120, label: "런웨이 컬렉션", skip: true },
+      { id: "expert", x: 210, y: 50, w: 120, label: "전문가 리포트", skip: true },
+      { id: "celeb", x: 380, y: 50, w: 130, label: "앰배서더 캠페인", active: true },
+      { id: "search", x: 380, y: 130, w: 110, label: "검색량 폭발", active: true },
+      { id: "market", x: 540, y: 90, w: 110, label: "마켓 빠른반영", active: true },
+      { id: "brand", x: 40, y: 130, w: 130, label: "브랜드 투자 결정", active: true },
     ],
-    edges: [[0,1],[1,2],[1,3],[2,3]],
-    skipped: ["런웨이", "전문가"],
+    // brand→celeb (좌하→우상), celeb→search (우상→우하), celeb→market, search→market
+    edges: [[5,2],[2,3],[2,4],[3,4]],
     desc: "Capital-driven",
     descText: "브랜드가 셀럽 앰배서더/광고에 투자하여 의도적으로 확산. 런웨이·전문가 단계를 건너뜀. 캠페인 시점에 검색량 급등. FTIB에서는 \"셀럽이름+브랜드\" 검색량 조합으로 감지 가능.",
-    timeLabels: ["투자 결정", "캠페인 런칭", "T+1~2M", "T+2~4M"],
   },
   viral: {
     nodes: [
-      { id: "social", label: "소셜 밈 발생", active: true },
-      { id: "tiktok", label: "틱톡/릴스 확산", active: true },
-      { id: "search", label: "검색량 급등", active: true },
-      { id: "market", label: "마켓 빠른 소진", active: true },
+      { id: "runway", x: 40, y: 50, w: 120, label: "런웨이 컬렉션", skip: true },
+      { id: "expert", x: 210, y: 50, w: 120, label: "전문가 리포트", skip: true },
+      { id: "celeb", x: 380, y: 50, w: 110, label: "셀럽 착용", skip: true },
+      { id: "search", x: 380, y: 130, w: 110, label: "검색량 급등", active: true },
+      { id: "market", x: 540, y: 90, w: 110, label: "마켓 빠른소진", active: true },
+      { id: "social", x: 40, y: 130, w: 130, label: "소셜 밈 발생", active: true },
+      { id: "tiktok", x: 210, y: 130, w: 120, label: "틱톡/릴스 확산", active: true },
     ],
-    edges: [[0,1],[1,2],[2,3]],
-    skipped: ["런웨이", "전문가", "셀럽"],
+    // social→tiktok→search→market
+    edges: [[5,6],[6,3],[3,4]],
     desc: "Viral / Meme",
     descText: "소셜미디어에서 자연발생한 밈으로 예측 불가하게 확산. 런웨이·전문가·셀럽 시그널이 모두 부재하거나 후행. FTIB에서는 소셜 멘션 모니터링 추가 시 감지 가능. 빠르지만 단명하는 패턴.",
-    timeLabels: ["밈 발생", "1~2주", "T+2~4주", "T+1~2M"],
   },
   organic: {
     nodes: [
-      { id: "demand", label: "소비자 실수요", active: true },
-      { id: "market", label: "마켓 점진 확대", active: true },
-      { id: "search", label: "검색량 완만 상승", active: true },
+      { id: "runway", x: 40, y: 50, w: 120, label: "런웨이 컬렉션", skip: true },
+      { id: "expert", x: 210, y: 50, w: 120, label: "전문가 리포트", skip: true },
+      { id: "celeb", x: 380, y: 50, w: 110, label: "셀럽 착용", skip: true },
+      { id: "search", x: 210, y: 130, w: 130, label: "검색량 완만상승", active: true },
+      { id: "market", x: 40, y: 130, w: 130, label: "마켓 점진적 확대", active: true },
+      { id: "demand", x: 540, y: 50, w: 110, label: "소비자 실수요", active: true },
     ],
-    edges: [[0,1],[1,2]],
-    skipped: ["런웨이", "전문가", "셀럽"],
+    // demand→market, market→search
+    edges: [[5,4],[4,3]],
     desc: "Market-organic",
     descText: "선행 시그널 없이 소비자 수요에서 자연스럽게 성장. 기능성 소재나 실용적 카테고리에서 자주 나타남. FTIB에서는 반복 크롤링으로 상품 수 점진 증가를 감지. 스포츠/아웃도어에서 가장 지배적.",
-    timeLabels: ["지속 수요", "점진 성장", "후행 감지"],
   },
 };
 
@@ -148,12 +154,12 @@ const timelineData = {
   },
 };
 
-/* ── Tab 0: 순서도 스타일 Flow Diagram ── */
+/* ── Tab 0: 2행 배치 Flow Diagram (이전 레이아웃 + 깔끔한 화살표) ── */
 function FlowDiagram({ origin }) {
   const data = flowData[origin];
   const color = ORIGIN_COLORS[origin];
   const [visible, setVisible] = useState(false);
-  const nodeCount = data.nodes.length;
+  const nodeH = 36;
 
   useEffect(() => {
     setVisible(false);
@@ -161,137 +167,108 @@ function FlowDiagram({ origin }) {
     return () => clearTimeout(t);
   }, [origin]);
 
-  // 노드를 좌→우 일직선으로 배치
-  const nodeW = 130;
-  const nodeH = 40;
-  const gapX = 40;
-  const startX = 30;
-  const mainY = 80;
-  const totalW = startX + nodeCount * (nodeW + gapX);
+  // 두 노드 간 연결점 계산
+  function getEdgePath(from, to) {
+    const fCx = from.x + from.w / 2;
+    const fCy = from.y + nodeH / 2;
+    const tCx = to.x + to.w / 2;
+    const tCy = to.y + nodeH / 2;
+    const fR = from.x + from.w;
+    const tL = to.x;
 
-  const getNodePos = (idx) => ({
-    x: startX + idx * (nodeW + gapX),
-    y: mainY,
-  });
+    // 같은 행, 좌→우: 오른쪽 중심 → 왼쪽 중심
+    if (Math.abs(fCy - tCy) < 20 && fR < tL) {
+      return `M${fR},${fCy} L${tL},${tCy}`;
+    }
+    // 위→아래 (같은 열 근처): 하단 중심 → 상단 중심, 부드러운 S커브
+    if (tCy > fCy && Math.abs(fCx - tCx) < from.w) {
+      return `M${fCx},${from.y + nodeH} C${fCx},${from.y + nodeH + 25} ${tCx},${to.y - 25} ${tCx},${to.y}`;
+    }
+    // 좌하→우상 대각선: 부드러운 베지어
+    if (fCy > tCy) {
+      return `M${fR},${fCy} C${fR + 30},${fCy} ${tL - 30},${tCy} ${tL},${tCy}`;
+    }
+    // 우상→좌하 (역방향): 오른쪽 하단 → 왼쪽 상단
+    if (tCx < fCx) {
+      return `M${fCx},${from.y + nodeH} C${fCx},${from.y + nodeH + 40} ${tCx + to.w},${tCy} ${to.x + to.w},${tCy}`;
+    }
+    // 기본: 대각선 베지어
+    return `M${fR},${fCy} C${fR + 40},${fCy} ${tL - 40},${tCy} ${tL},${tCy}`;
+  }
 
   return (
-    <div className="my-4">
-      <svg
-        width="100%"
-        viewBox={`0 0 ${Math.max(totalW, 680)} 200`}
-        style={{ transition: "opacity 0.3s", opacity: visible ? 1 : 0 }}
-      >
-        <defs>
-          <marker
-            id={`arrow-${origin}`}
-            viewBox="0 0 10 10"
-            refX="9"
-            refY="5"
-            markerWidth="7"
-            markerHeight="7"
-            orient="auto-start-reverse"
+    <svg
+      width="100%"
+      viewBox="0 0 700 210"
+      className="my-4"
+      style={{ transition: "opacity 0.3s", opacity: visible ? 1 : 0 }}
+    >
+      <defs>
+        <marker
+          id={`arrow-${origin}`}
+          viewBox="0 0 10 10"
+          refX="9"
+          refY="5"
+          markerWidth="7"
+          markerHeight="7"
+          orient="auto-start-reverse"
+        >
+          <path d="M1 1.5L7.5 5L1 8.5" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </marker>
+      </defs>
+
+      {/* Edges */}
+      {data.edges.map(([fromIdx, toIdx], i) => {
+        const from = data.nodes[fromIdx];
+        const to = data.nodes[toIdx];
+        const pathD = getEdgePath(from, to);
+        return (
+          <path
+            key={`edge-${i}`}
+            d={pathD}
+            stroke={color}
+            strokeWidth="1.5"
+            fill="none"
+            markerEnd={`url(#arrow-${origin})`}
+            opacity={visible ? 0.55 : 0}
+            style={{ transition: `opacity 0.4s ease ${0.1 + i * 0.12}s` }}
+          />
+        );
+      })}
+
+      {/* Nodes */}
+      {data.nodes.map((n, i) => (
+        <g
+          key={n.id}
+          opacity={visible ? (n.skip ? 0.25 : 1) : 0}
+          style={{ transition: `opacity 0.4s ease ${0.05 + i * 0.08}s` }}
+        >
+          <rect
+            x={n.x}
+            y={n.y}
+            width={n.w}
+            height={nodeH}
+            rx={8}
+            fill={n.skip ? "rgba(128,128,128,0.04)" : `${color}12`}
+            stroke={n.skip ? "rgba(128,128,128,0.2)" : color}
+            strokeWidth={n.skip ? "0.5" : "1"}
+            strokeDasharray={n.skip ? "4 3" : undefined}
+          />
+          <text
+            x={n.x + n.w / 2}
+            y={n.y + nodeH / 2}
+            textAnchor="middle"
+            dominantBaseline="central"
+            fontSize="12"
+            fontWeight="500"
+            fill={n.skip ? "rgba(128,128,128,0.45)" : "var(--color-text-secondary)"}
+            style={{ fontFamily: "var(--font-sans, system-ui)" }}
           >
-            <path d="M1 1L8 5L1 9" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          </marker>
-        </defs>
-
-        {/* Edges */}
-        {data.edges.map(([fromIdx, toIdx], i) => {
-          const from = getNodePos(fromIdx);
-          const to = getNodePos(toIdx);
-          const isStraight = Math.abs(fromIdx - toIdx) === 1;
-          const x1 = from.x + nodeW;
-          const y1 = from.y + nodeH / 2;
-          const x2 = to.x;
-          const y2 = to.y + nodeH / 2;
-
-          let pathD;
-          if (isStraight) {
-            pathD = `M${x1},${y1} L${x2},${y2}`;
-          } else {
-            // 분기: 아래로 우회하는 곡선
-            const midY = mainY + nodeH + 30;
-            pathD = `M${x1},${y1 + 8} C${x1 + 20},${midY} ${x2 - 20},${midY} ${x2},${y2 + 8}`;
-          }
-
-          return (
-            <path
-              key={`edge-${i}`}
-              d={pathD}
-              stroke={color}
-              strokeWidth="1.5"
-              fill="none"
-              markerEnd={`url(#arrow-${origin})`}
-              opacity={visible ? 0.6 : 0}
-              style={{ transition: `opacity 0.4s ease ${0.1 + i * 0.12}s` }}
-            />
-          );
-        })}
-
-        {/* Nodes */}
-        {data.nodes.map((n, i) => {
-          const pos = getNodePos(i);
-          return (
-            <g
-              key={n.id}
-              opacity={visible ? 1 : 0}
-              style={{ transition: `opacity 0.4s ease ${0.05 + i * 0.1}s` }}
-            >
-              <rect
-                x={pos.x}
-                y={pos.y}
-                width={nodeW}
-                height={nodeH}
-                rx={8}
-                fill={`${color}15`}
-                stroke={color}
-                strokeWidth="1"
-              />
-              <text
-                x={pos.x + nodeW / 2}
-                y={pos.y + nodeH / 2}
-                textAnchor="middle"
-                dominantBaseline="central"
-                fontSize="12"
-                fontWeight="500"
-                fill="var(--color-text-secondary)"
-                style={{ fontFamily: "var(--font-sans, system-ui)" }}
-              >
-                {n.label}
-              </text>
-            </g>
-          );
-        })}
-
-        {/* Time Labels */}
-        {data.timeLabels.map((label, i) => {
-          const pos = getNodePos(i);
-          return (
-            <text
-              key={`tl-${i}`}
-              x={pos.x + nodeW / 2}
-              y={pos.y + nodeH + 20}
-              textAnchor="middle"
-              fontSize="10"
-              fill="rgba(128,128,128,0.5)"
-              style={{ fontFamily: "var(--font-mono, monospace)" }}
-            >
-              {label}
-            </text>
-          );
-        })}
-      </svg>
-
-      {/* 스킵된 단계 표시 */}
-      {data.skipped.length > 0 && (
-        <div className="flex items-center gap-2 mt-1 ml-8">
-          <span className="text-[10px] text-[var(--color-text-muted)]">건너뛴 단계:</span>
-          {data.skipped.map((s) => (
-            <span key={s} className="text-[10px] px-2 py-0.5 rounded border border-dashed border-gray-300 text-gray-400">{s}</span>
-          ))}
-        </div>
-      )}
-    </div>
+            {n.label}
+          </text>
+        </g>
+      ))}
+    </svg>
   );
 }
 
