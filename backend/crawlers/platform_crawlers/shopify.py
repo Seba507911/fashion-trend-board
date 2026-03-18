@@ -111,7 +111,24 @@ class ShopifyCrawler(BaseCrawler):
             if color_el:
                 color = (await color_el.inner_text()).strip()
 
-            img_url = await img_el.get_attribute("src") if img_el else None
+            img_url = None
+            if img_el:
+                img_url = await img_el.get_attribute("src")
+                if not img_url:
+                    img_url = await img_el.get_attribute("data-src")
+                if not img_url:
+                    img_url = await img_el.get_attribute("srcset")
+                    if img_url:
+                        img_url = img_url.split(",")[0].strip().split(" ")[0]
+            # Also try <source> inside <picture>
+            if not img_url:
+                source_el = await element.query_selector("picture source[srcset]")
+                if source_el:
+                    srcset = await source_el.get_attribute("srcset")
+                    if srcset:
+                        img_url = srcset.split(",")[-1].strip().split(" ")[0]
+            if img_url and img_url.startswith("//"):
+                img_url = "https:" + img_url
             if img_url and "_320x" in img_url:
                 img_url = img_url.replace("_320x", "_600x")
 
