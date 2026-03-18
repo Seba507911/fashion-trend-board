@@ -16,10 +16,14 @@ export default function ProductBoard({ selectedBrand }) {
     keyword: keywordParam,
   });
 
-  const subCategories = categories.filter((c) => c.parent_id);
-
   // 카테고리 표시 순서
   const CATEGORY_ORDER = ["outer", "inner", "bottom", "wear_etc", "headwear", "bag", "shoes", "acc_etc"];
+
+  const subCategories = categories.filter((c) => c.parent_id).sort((a, b) => {
+    const ia = CATEGORY_ORDER.indexOf(a.id);
+    const ib = CATEGORY_ORDER.indexOf(b.id);
+    return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
+  });
 
   // 카테고리별 그룹핑
   const grouped = {};
