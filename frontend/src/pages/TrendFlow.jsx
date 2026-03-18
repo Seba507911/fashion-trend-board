@@ -188,11 +188,9 @@ function FlowDiagram({ origin }) {
     if (fCy > tCy) {
       return `M${fR},${fCy} C${fR + 30},${fCy} ${tL - 30},${tCy} ${tL},${tCy}`;
     }
-    // 우상→좌하 (역방향): 사이에 노드가 있으면 상단으로 우회
+    // 우상→좌하 (역방향): 직선 연결
     if (tCx < fCx) {
-      // 상단을 통해 우회: from 좌측 → 위로 올라가 → to 상단으로 내려옴
-      const topY = Math.min(from.y, to.y) - 25;
-      return `M${from.x},${fCy} C${from.x - 30},${fCy} ${from.x - 30},${topY} ${fCx - 60},${topY} L${tCx + 60},${topY} C${to.x + to.w + 30},${topY} ${to.x + to.w + 30},${tCy} ${to.x + to.w},${tCy}`;
+      return `M${from.x},${fCy} L${to.x + to.w},${tCy}`;
     }
     // 기본: 대각선 베지어
     return `M${fR},${fCy} C${fR + 40},${fCy} ${tL - 40},${tCy} ${tL},${tCy}`;
