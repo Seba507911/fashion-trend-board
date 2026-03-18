@@ -28,3 +28,10 @@ export function useCategories() {
     queryFn: () => api.get("/products/categories").then((r) => r.data),
   });
 }
+
+export function useTrendChips(season = "26SS") {
+  return useQuery({
+    queryKey: ["trend-chips", season],
+    queryFn: () => api.get("/trendflow-check/trend-chips", { params: { season } }).then((r) => r.data),
+  });
+}

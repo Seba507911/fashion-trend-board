@@ -401,3 +401,59 @@ async def get_keyword_detail(
         "total_market_matches": sum(brand_dist.values()),
         "sample_products": matched_products,
     }
+
+
+@router.get("/trend-chips")
+async def get_trend_chips(
+    season: str = Query(default="26SS"),
+    db: aiosqlite.Connection = Depends(get_db),
+):
+    """Brand Board용 트렌드 키워드 칩 — 런웨이 VLM Top 키워드 + 마켓 매칭 수."""
+
+    db_season = SEASON_MAP.get(season, "spring-summer-2026")
+
+    # VLM 키워드 추출
+    cursor = await db.execute(
+        """
+        SELECT v.dominant_colors, v.key_materials, v.overall_silhouette, v.items
+        FROM vlm_labels v
+        JOIN runway_looks r ON v.source_id = r.id
+        WHERE r.season = ?
+        """,
+        (db_season,),
+    )
+    vlm_rows = await cursor.fetchall()
+    if not vlm_rows:
+        return {"chips": [], "season": season}
+
+    by_cat = _extract_keywords_from_vlm(vlm_rows)
+
+    # 마켓 상품 텍스트
+    prod_cursor = await db.execute(
+        "SELECT product_name, colors, materials, style_tags, category_id "
+        "FROM products WHERE is_active = 1"
+    )
+    products = await prod_cursor.fetchall()
+    blobs = [_build_product_text(p) for p in products]
+
+    # 카테고리별 Top 키워드 + 마켓 매칭 수
+    chips = []
+    for cat in ["color", "material", "silhouette"]:
+        for kw, runway_count in by_cat[cat].most_common(8):
+            market_count = sum(1 for b in blobs if _match_keyword_in_product(kw, b))
+            chips.append({
+                "keyword": kw,
+                "category": cat,
+                "runway_count": runway_count,
+                "market_count": market_count,
+            })
+
+    # Confidence 순 정렬 (runway + market)
+    chips.sort(key=lambda c: c["runway_count"] + c["market_count"], reverse=True)
+
+    return {
+        "chips": chips[:20],
+        "season": season,
+        "vlm_looks": len(vlm_rows),
+        "total_products": len(products),
+    }
