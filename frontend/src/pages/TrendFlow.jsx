@@ -66,14 +66,12 @@ const flowData = {
       { id: "runway", x: 40, y: 50, w: 120, label: "런웨이 컬렉션", skip: true },
       { id: "expert", x: 210, y: 50, w: 120, label: "전문가 리포트", skip: true },
       { id: "celeb", x: 380, y: 50, w: 110, label: "셀럽 착용", skip: true },
-      { id: "search", x: 210, y: 130, w: 130, label: "검색량 완만상승", active: true },
-      { id: "market", x: 40, y: 130, w: 130, label: "마켓 점진적 확대", active: true },
+      { id: "search", x: 300, y: 140, w: 130, label: "검색량 완만상승", active: true },
+      { id: "market", x: 120, y: 140, w: 140, label: "마켓 점진적 확대", active: true },
       { id: "demand", x: 540, y: 50, w: 110, label: "소비자 실수요", active: true },
     ],
-    // demand→market (우회), market→search
-    edges: [[5,4],[4,3]],
-    // demand→market은 커스텀 경로 필요 (검색량 노드 위로 우회)
-    customEdges: true,
+    // demand→market, demand→search, market↔search (양방향)
+    edges: [[5,4],[5,3],[4,3]],
     desc: "Market-organic",
     descText: "선행 시그널 없이 소비자 수요에서 자연스럽게 성장. 기능성 소재나 실용적 카테고리에서 자주 나타남. FTIB에서는 반복 크롤링으로 상품 수 점진 증가를 감지. 스포츠/아웃도어에서 가장 지배적.",
   },
@@ -226,6 +224,10 @@ function FlowDiagram({ origin }) {
         const from = data.nodes[fromIdx];
         const to = data.nodes[toIdx];
         const pathD = getEdgePath(from, to);
+        // 같은 행 + 양쪽 다 active = 양방향 화살표
+        const bothActive = from.active && to.active;
+        const sameRow = Math.abs(from.y - to.y) < 20;
+        const biDir = bothActive && sameRow && Math.abs(from.x - to.x) < 300;
         return (
           <path
             key={`edge-${i}`}
@@ -234,6 +236,7 @@ function FlowDiagram({ origin }) {
             strokeWidth="1.5"
             fill="none"
             markerEnd={`url(#arrow-${origin})`}
+            markerStart={biDir ? `url(#arrow-${origin})` : undefined}
             opacity={visible ? 0.55 : 0}
             style={{ transition: `opacity 0.4s ease ${0.1 + i * 0.12}s` }}
           />
