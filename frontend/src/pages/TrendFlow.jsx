@@ -74,6 +74,41 @@ const flowData = {
     edges: [[5,4],[4,3]],
     desc: "Market-organic",
     descText: "선행 시그널 없이 소비자 수요에서 자연스럽게 성장. 기능성 소재나 실용적 카테고리에서 자주 나타남. FTIB에서는 반복 크롤링으로 상품 수 점진 증가를 감지. 스포츠/아웃도어에서 가장 지배적.",
+    subtypes: [
+      {
+        id: "lifestyle",
+        label: "Lifestyle-shift",
+        color: "#059669",
+        icon: "🏃",
+        desc: "라이프스타일 변화가 수요를 만드는 패턴",
+        detail: "캠핑 붐 → 고프코어, 러닝 인구 증가 → 러닝화 일상화, 자전거 출퇴근 → 테크웨어. 변화가 점진적이고, 일단 정착되면 쉽게 사라지지 않는다. 수요 곡선이 완만하게 상승 후 유지.",
+        curve: "완만 상승 → 유지",
+        monitor: "라이프스타일 외부 데이터 (스포츠 참여율, 캠핑장 예약, 러닝앱 사용자 추이)",
+        examples: "고프코어, 러닝코어, 테니스코어, 발레코어",
+      },
+      {
+        id: "necessity",
+        label: "Necessity-driven",
+        color: "#2563eb",
+        icon: "🌡️",
+        desc: "외부 환경이 구매를 강제하는 패턴",
+        detail: "한파 → 롱패딩, 폭염 → 냉감소재, 미세먼지 → 마스크 패션화. 계절/환경에 직접 연동되어 예측이 상대적으로 쉽지만 일시적일 수 있다. 환경 조건 종료 시 수요도 정상화.",
+        curve: "환경 연동 상승 → 조건 해소 시 하락",
+        monitor: "기상 데이터, 환경 지표 (미세먼지, 자외선 등)",
+        examples: "롱패딩, 냉감소재, UV 차단 의류",
+      },
+      {
+        id: "event",
+        label: "Event-triggered",
+        color: "#DC2626",
+        icon: "⚡",
+        desc: "예측 불가 외부 충격이 소비 패턴을 급변시키는 패턴",
+        detail: "코로나 → 스웨트셋업/라운지웨어. 마켓 볼륨이 점진적이 아닌 급격히 치솟는 형태. 이벤트 종료 후 일부는 영구 정착(재택근무 → 컴포트웨어), 일부는 소멸하는 이중 궤적.",
+        curve: "급상승 → 이벤트 종료 후 분기 (정착 or 소멸)",
+        monitor: "이벤트 발생 후 마켓 반응 속도 빠른 감지가 핵심 (볼륨 급증 탐지)",
+        examples: "라운지웨어, 컴포트웨어, 홈트레이닝복",
+      },
+    ],
   },
 };
 
@@ -413,6 +448,53 @@ export default function TrendFlow() {
               {" — "}
               {flowData[selectedOrigin].descText}
             </div>
+
+            {/* Market-organic 서브타입 */}
+            {flowData[selectedOrigin].subtypes && (
+              <div className="mt-6">
+                <h3 className="text-sm font-semibold text-[var(--color-text)] mb-3">
+                  Market-organic 서브타입
+                  <span className="font-normal text-[var(--color-text-muted)] ml-2 text-xs">
+                    — 발생 동인별 세분화
+                  </span>
+                </h3>
+                <div className="grid grid-cols-3 gap-3">
+                  {flowData[selectedOrigin].subtypes.map((sub) => (
+                    <div
+                      key={sub.id}
+                      className="rounded-lg border border-[var(--color-border)] p-4 hover:border-[var(--color-primary)]/30 transition-all"
+                    >
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-base">{sub.icon}</span>
+                        <span className="text-[13px] font-semibold" style={{ color: sub.color }}>
+                          {sub.label}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-[var(--color-text-secondary)] font-medium mb-2">
+                        {sub.desc}
+                      </p>
+                      <p className="text-[11px] text-[var(--color-text-muted)] leading-relaxed mb-3">
+                        {sub.detail}
+                      </p>
+                      <div className="space-y-1.5">
+                        <div className="flex items-start gap-1.5">
+                          <span className="text-[10px] text-[var(--color-text-muted)] shrink-0 font-medium w-[52px]">수요 곡선</span>
+                          <span className="text-[10px] text-[var(--color-text-secondary)]">{sub.curve}</span>
+                        </div>
+                        <div className="flex items-start gap-1.5">
+                          <span className="text-[10px] text-[var(--color-text-muted)] shrink-0 font-medium w-[52px]">모니터링</span>
+                          <span className="text-[10px] text-[var(--color-text-secondary)]">{sub.monitor}</span>
+                        </div>
+                        <div className="flex items-start gap-1.5">
+                          <span className="text-[10px] text-[var(--color-text-muted)] shrink-0 font-medium w-[52px]">사례</span>
+                          <span className="text-[10px] text-[var(--color-text-secondary)]">{sub.examples}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
