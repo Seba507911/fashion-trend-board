@@ -116,6 +116,7 @@ CAFE24_BRANDS: dict[str, dict] = {
     "dunst": {
         "brand_id": "dunst",
         "base_url": "https://dunststudio.com",
+        "card_selector": "li.xans-record-",
         "categories": {
             "outer": ["29"],
             "inner": ["30", "31"],
@@ -130,6 +131,7 @@ CAFE24_BRANDS: dict[str, dict] = {
     "amomento": {
         "brand_id": "amomento",
         "base_url": "https://www.shopamomento.com",
+        "card_selector": "li.xans-record-",
         "categories": {
             "outer": ["125"],
             "inner": ["129", "131"],
