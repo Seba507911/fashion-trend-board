@@ -106,9 +106,14 @@ class Cafe24Crawler(BaseCrawler):
                     const nameSpan = li.querySelector('.name span[style], .name > span:not(.supplier):not(.icon):not(.srn-icon)');
                     if (nameSpan) result.name = nameSpan.innerText.trim();
                 }
-                // href fallback: thumb-box > a
+                // Name fallback: img alt attribute (DEPOUND 등)
+                if (!result.name) {
+                    const imgWithAlt = li.querySelector('img[alt]');
+                    if (imgWithAlt && imgWithAlt.alt.length > 2) result.name = imgWithAlt.alt.trim();
+                }
+                // href fallback: thumb-box > a, prdImg > a
                 if (!result.href) {
-                    const thumbLink = li.querySelector('.thumb-box a[href*="product"], a[href*="product_no"]');
+                    const thumbLink = li.querySelector('.thumb-box a[href*="product"], .prdImg a[href*="product"], a[href*="product_no"]');
                     if (thumbLink) result.href = thumbLink.getAttribute('href');
                 }
                 // productNo fallback: data-no attribute
