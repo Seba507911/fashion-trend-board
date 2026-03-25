@@ -69,6 +69,24 @@ DESIGNERS = {
     "junya-watanabe": {"name": "Junya Watanabe", "slug": "junya-watanabe"},
     "mame-kurogouchi": {"name": "Mame Kurogouchi", "slug": "mame-kurogouchi"},
     "thom-browne": {"name": "Thom Browne", "slug": "thom-browne"},
+    # ── Tier 4: 떠오르는 / 영향력 있는 ──
+    "coperni": {"name": "Coperni", "slug": "coperni"},
+    "wales-bonner": {"name": "Wales Bonner", "slug": "wales-bonner"},
+    "jacquemus": {"name": "Jacquemus", "slug": "jacquemus"},
+    "marine-serre": {"name": "Marine Serre", "slug": "marine-serre"},
+    "amiri": {"name": "Amiri", "slug": "amiri"},
+    "off-white": {"name": "Off-White", "slug": "off-white"},
+    "fear-of-god": {"name": "Fear of God", "slug": "fear-of-god"},
+    "jw-anderson": {"name": "JW Anderson", "slug": "jw-anderson"},
+    "peter-do": {"name": "Peter Do", "slug": "peter-do"},
+    "rokh": {"name": "Rokh", "slug": "rokh"},
+    # ── Tier 5: 한국/아시아 ──
+    "wooyoungmi": {"name": "Wooyoungmi", "slug": "wooyoungmi"},
+    "munn": {"name": "Münn", "slug": "munn"},
+    "kimhekim": {"name": "Kimhekim", "slug": "kimhekim"},
+    "kenzo": {"name": "Kenzo", "slug": "kenzo"},
+    "yohji-yamamoto": {"name": "Yohji Yamamoto", "slug": "yohji-yamamoto"},
+    "undercover": {"name": "Undercover", "slug": "undercover"},
 }
 
 # 시즌 목록 (최신 순)
