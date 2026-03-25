@@ -78,7 +78,7 @@ export default function KeywordDetailPanel({ data, season, onClose }) {
             {data.brands.map((b) => (
               <button
                 key={b.brand}
-                onClick={() => navigate(`/?keyword=${encodeURIComponent(data.keyword)}`)}
+                onClick={() => navigate(`/market?keyword=${encodeURIComponent(data.keyword)}`)}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[var(--color-border)] bg-white text-xs text-[var(--color-text-secondary)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] transition-all"
               >
                 {b.brand}
@@ -98,7 +98,7 @@ export default function KeywordDetailPanel({ data, season, onClose }) {
               런웨이 룩 보기
             </button>
             <button
-              onClick={() => navigate(`/?keyword=${encodeURIComponent(data.keyword)}`)}
+              onClick={() => navigate(`/market?keyword=${encodeURIComponent(data.keyword)}`)}
               className="text-[11px] px-3 py-1.5 rounded border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] transition-all"
             >
               마켓 상품 보기

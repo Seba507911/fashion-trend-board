@@ -8,6 +8,7 @@ import Runway from "./pages/Runway";
 import TrendFlow from "./pages/TrendFlow";
 import TrendFlowCheck from "./pages/TrendFlowCheck";
 import VlmViewer from "./pages/VlmViewer";
+import ProjectBriefing from "./pages/ProjectBriefing";
 
 export default function App() {
   const [selectedBrand, setSelectedBrand] = useState(null);
@@ -17,7 +18,8 @@ export default function App() {
       <div className="flex min-h-screen">
         <Sidebar selectedBrand={selectedBrand} onBrandSelect={setSelectedBrand} />
         <Routes>
-          <Route path="/" element={<ProductBoard selectedBrand={selectedBrand} />} />
+          <Route path="/" element={<ProjectBriefing />} />
+          <Route path="/market" element={<ProductBoard selectedBrand={selectedBrand} />} />
           <Route path="/trend" element={<TrendAnalysis />} />
           <Route path="/graph" element={<GraphView />} />
           <Route path="/runway" element={<Runway />} />

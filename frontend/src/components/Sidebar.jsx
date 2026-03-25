@@ -62,11 +62,12 @@ export default function Sidebar({ selectedBrand, onBrandSelect }) {
   const [expandedZoning, setExpandedZoning] = useState(null);
 
   const navItems = [
+    { id: "briefing", label: "Project Briefing", path: "/" },
     { id: "trend-flow", label: "Trend Flow", path: "/flow" },
     { id: "trend-flow-check", label: "Trend Flow check(Test)", path: "/flow-check" },
-    { id: "runway", label: "Runway", path: "/runway" },
-    { id: "vlm-viewer", label: "Runway(VLM Test)", path: "/vlm" },
-    { id: "market-brand-board", label: "Market Brand Board", path: "/" },
+    { id: "runway", label: "Runway", path: "/runway", bold: true },
+    { id: "vlm-viewer", label: "Runway(VLM Test)", path: "/vlm", bold: true },
+    { id: "market-brand-board", label: "Market Brand Board", path: "/market", bold: true },
     { id: "trend-analysis", label: "Trend Analysis", path: "/trend" },
     { id: "graph-view", label: "Graph View", path: "/graph" },
   ];
@@ -127,15 +128,17 @@ export default function Sidebar({ selectedBrand, onBrandSelect }) {
               onClick={() => navigate(item.path)}
               className={`w-full text-left px-2.5 py-2 text-[13px] rounded-sm flex items-center gap-2.5 ${
                 isActive(item.path)
-                  ? "bg-[var(--color-primary)]/8 text-[var(--color-primary)] font-medium border-l-2 border-[var(--color-primary)]"
-                  : "text-[var(--color-text-secondary)] hover:bg-black/3"
+                  ? "bg-[var(--color-primary)]/8 text-[var(--color-primary)] font-semibold border-l-2 border-[var(--color-primary)]"
+                  : item.bold
+                    ? "text-[var(--color-text)] font-semibold hover:bg-black/3"
+                    : "text-[var(--color-text-secondary)] hover:bg-black/3"
               }`}
             >
               {item.label}
             </button>
 
             {/* Brand Board 하위: 조닝별 브랜드 계층 */}
-            {item.id === "market-brand-board" && isActive("/") && (
+            {item.id === "market-brand-board" && isActive("/market") && (
               <div className="flex flex-col gap-0 mt-1">
                 {/* All Brands */}
                 <button
