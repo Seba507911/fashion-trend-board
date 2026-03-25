@@ -1,82 +1,86 @@
-"""Human Made 크롤러. Shopify JP, [class*=tile] 기반."""
+"""Human Made 크롤러. Shopify /products.json API 직접 호출."""
 from __future__ import annotations
-import asyncio, re
+import json, re, time, requests
 from backend.crawlers.base_crawler import BaseCrawler
+from html import unescape
 
 BASE_URL = "https://humanmade.jp"
-CATEGORIES = {
-    "outer": [f"{BASE_URL}/collections/outerwear"],
-    "inner": [f"{BASE_URL}/collections/tops", f"{BASE_URL}/collections/knit"],
-    "bottom": [f"{BASE_URL}/collections/bottoms"],
-    "headwear": [f"{BASE_URL}/collections/headwear"],
-    "bag": [f"{BASE_URL}/collections/bags"],
-    "acc_etc": [f"{BASE_URL}/collections/accessories"],
-}
 
 class HumanMadeCrawler(BaseCrawler):
     def __init__(self): super().__init__("human_made")
-    async def get_product_list_urls(self, season=None): return [u for urls in CATEGORIES.values() for u in urls]
-    def get_card_selector(self): return "[class*=tile]"
-    def _url_to_category(self, url):
-        for c, urls in CATEGORIES.items():
-            for u in urls:
-                if u == url: return c
+    async def get_product_list_urls(self, season=None): return []
+    def get_card_selector(self): return ""
+
+    def _strip_html(self, html):
+        if not html: return ""
+        return re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", unescape(html))).strip()[:500]
+
+    def _category_from_type(self, ptype, tags):
+        pt = (ptype or "").lower()
+        t = set(tag.lower() for tag in (tags or []))
+        if pt in ("outerwear","jackets","coats") or t & {"outerwear"}: return "outer"
+        if pt in ("tops","t-shirts","shirts","knitwear","knit","sweatshirts") or t & {"tops","knit"}: return "inner"
+        if pt in ("bottoms","pants","shorts","trousers") or t & {"bottoms"}: return "bottom"
+        if pt in ("headwear","caps","hats") or t & {"headwear"}: return "headwear"
+        if pt in ("bags",) or t & {"bags"}: return "bag"
+        if pt in ("accessories",) or t & {"accessories"}: return "acc_etc"
         return None
 
     async def crawl(self, season=None, max_pages=10, dry_run=False, fetch_details=False):
-        from playwright.async_api import async_playwright
         products, seen = [], set()
-        async with async_playwright() as p:
-            browser = await p.chromium.launch(headless=True)
-            page = await (await browser.new_context(user_agent="Mozilla/5.0", viewport={"width":1440,"height":900}, locale="ja-JP")).new_page()
+        page = 1
+        while page <= max_pages:
+            url = f"{BASE_URL}/products.json?limit=250&page={page}"
+            self.logger.info(f"Fetching page {page}: {url}")
             try:
-                for i, url in enumerate((await self.get_product_list_urls())[:max_pages]):
-                    self.logger.info(f"Crawling {i+1}: {url}")
-                    cat = self._url_to_category(url)
-                    try:
-                        await page.goto(url, wait_until="domcontentloaded", timeout=25000)
-                        await asyncio.sleep(8)
-                        for _ in range(5):
-                            await page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
-                            await asyncio.sleep(1.5)
-                        items = await page.evaluate("""() => {
-                            const tiles = document.querySelectorAll('[class*="tile"]');
-                            const seen = new Set();
-                            return Array.from(tiles).map(tile => {
-                                const link = tile.querySelector('a[href*="/products/"]');
-                                if (!link) return null;
-                                const href = link.getAttribute('href') || '';
-                                const slug = href.split('/products/')[1]?.split('?')[0];
-                                if (!slug || seen.has(slug)) return null;
-                                seen.add(slug);
-                                const img = tile.querySelector('img');
-                                const text = tile.innerText.trim();
-                                const lines = text.split('\\n').map(l=>l.trim()).filter(l=>l.length>1);
-                                let name='', price='';
-                                for (const l of lines) {
-                                    if (l.match(/¥|円|\\d{2,3},\\d{3}/)) {price=l; continue;}
-                                    if (l === 'SOLD OUT' || l === 'NEW') continue;
-                                    if (!name && l.length > 2) name = l;
-                                }
-                                return {slug, href, name: name||slug, price, img: img?(img.src||''):''};
-                            }).filter(x=>x);
-                        }""")
-                        for item in items:
-                            pid = self.make_product_id(item["slug"][:40])
-                            if pid in seen: continue
-                            seen.add(pid)
-                            ps = re.sub(r"[^\d]", "", item.get("price",""))
-                            raw = {"id":pid,"product_name":item["name"],"product_name_kr":item["name"],
-                                "price":int(ps) if ps else 0,"sale_price":None,"currency":"JPY",
-                                "category_id":cat,"season_id":"2026SS","colors":[],
-                                "thumbnail_url":item["img"],"image_urls":[item["img"]] if item["img"] else [],
-                                "product_url":BASE_URL+item["href"] if not item["href"].startswith("http") else item["href"],
-                                "style_tags":["japanese","street","graphic"]}
-                            products.append(self.normalize_product(raw))
-                        self.logger.info(f"Found {len(items)}, total unique: {len(products)}")
-                        await asyncio.sleep(2)
-                    except Exception as e: self.logger.error(f"Failed: {url} - {e}")
-            finally: await browser.close()
+                resp = requests.get(url, timeout=15, headers={"User-Agent": "Mozilla/5.0"})
+                data = resp.json().get("products", [])
+            except Exception as e:
+                self.logger.error(f"API error: {e}")
+                break
+            if not data: break
+
+            for p in data:
+                handle = p.get("handle", "")
+                pid = self.make_product_id(handle[:40])
+                if pid in seen: continue
+                seen.add(pid)
+
+                name = p.get("title", "")
+                desc = self._strip_html(p.get("body_html", ""))
+                ptype = p.get("product_type", "")
+                tags = p.get("tags", [])
+                cat = self._category_from_type(ptype, tags)
+                materials = re.findall(r"\d+%\s*[A-Za-z]+|[A-Za-z]+\s*\d+%", desc)
+
+                variants = p.get("variants", [])
+                price = 0; sizes = []; colors = set()
+                for v in variants:
+                    vp = float(v.get("price", 0) or 0)
+                    if vp > 0 and price == 0: price = int(vp)
+                    o1 = v.get("option1", ""); o2 = v.get("option2", "")
+                    if o1 and o1 not in sizes: sizes.append(o1)
+                    if o2: colors.add(o2)
+
+                images = p.get("images", [])
+                img = images[0].get("src", "") if images else ""
+
+                raw = {
+                    "id": pid, "product_name": name, "product_name_kr": name,
+                    "price": price, "sale_price": None, "currency": "JPY",
+                    "category_id": cat, "season_id": "2026SS",
+                    "colors": list(colors), "materials": materials[:5],
+                    "sizes": sizes, "description": desc,
+                    "thumbnail_url": img, "image_urls": [i.get("src","") for i in images[:5]],
+                    "product_url": f"{BASE_URL}/products/{handle}",
+                    "style_tags": ["japanese", "street", "graphic"],
+                }
+                products.append(self.normalize_product(raw))
+
+            self.logger.info(f"Page {page}: {len(data)} products, total unique: {len(products)}")
+            page += 1
+            time.sleep(1)
+
         self.logger.info(f"Total: {len(products)}")
         return products
 
