@@ -8,14 +8,14 @@ const BRAND_GROUPS = [
   {
     zoning: "럭셔리 / 컨템포러리",
     groups: [
-      { region: "Global", ids: ["lemaire", "acne_studios", "bode"] },
+      { region: "Global", ids: ["lemaire", "acne_studios", "bode", "nanushka", "toteme", "therow"] },
       { region: "Korea", ids: [] },
     ],
   },
   {
     zoning: "스포츠 / 아웃도어",
     groups: [
-      { region: "Global", ids: ["nike", "newbalance", "on_running", "lululemon", "alo", "skims"] },
+      { region: "Global", ids: ["nike", "newbalance", "on_running", "lululemon", "alo", "skims", "patagonia"] },
       { region: "Korea", ids: ["descente", "northface", "kolonsport", "fila"] },
     ],
   },
@@ -23,7 +23,7 @@ const BRAND_GROUPS = [
     zoning: "캐주얼 / 스트리트",
     groups: [
       { region: "Global", ids: ["ralph_lauren", "stussy", "supreme"] },
-      { region: "Korea", ids: ["youth", "marithe", "coor", "blankroom", "mardi", "thisisneverthat", "emis"] },
+      { region: "Korea", ids: ["youth", "marithe", "coor", "blankroom", "mardi", "thisisneverthat", "emis", "depound"] },
     ],
   },
   {

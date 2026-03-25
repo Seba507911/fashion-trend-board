@@ -241,97 +241,8 @@ SHOPIFY_BRANDS: dict[str, dict] = {
         "currency": "USD",
         "season_id": "2026SS",
     },
-    # ami, bode, skims: moved to custom crawlers
-    "depound": {
-        "brand_id": "depound",
-        "base_url": "https://depound.com",
-        "card_selector": "li.item.xans-record-",
-        "categories": {
-            "bag": ["100", "101"],
-            "acc_etc": ["117", "131", "132", "133", "134", "137"],
-        },
-        "style_tags": ["minimal", "accessories", "bag"],
-        "season_id": "2026SS",
-        "currency": "KRW",
-    },
-    "nanushka": {
-        "brand_id": "nanushka",
-        "base_url": "https://nanushka.com",
-        "card_selector": ".product-card, .grid__item",
-        "selectors": {
-            "name": ".product-card__title, .card__heading a, h3 a",
-            "price": ".product-card__price, .price, .price-item",
-            "image": ".product-card img, .card__media img",
-            "link": "a[href*='/products/']",
-        },
-        "collections": {
-            "fall-winter-2025-womenswear": "inner",
-            "fall-winter-2025-menswear": "inner",
-            "bags": "bag",
-            "all-accessories": "acc_etc",
-            "eyewear": "acc_etc",
-        },
-        "style_tags": ["sustainable", "contemporary", "luxury"],
-        "currency": "USD",
-        "season_id": "2026SS",
-    },
-    "toteme": {
-        "brand_id": "toteme",
-        "base_url": "https://www.toteme-studio.com",
-        "card_selector": ".product-card, .grid__item",
-        "selectors": {
-            "name": ".product-card__title, .card__heading a, h3 a",
-            "price": ".product-card__price, .price, .price-item",
-            "image": ".product-card img, .card__media img",
-            "link": "a[href*='/products/']",
-        },
-        "collections": {
-            "blazers": "outer",
-            "coats": "outer",
-            "jackets": "outer",
-            "knitwear": "inner",
-            "t-shirts-tops": "inner",
-            "shirts": "inner",
-            "trousers": "bottom",
-            "denim": "bottom",
-            "skirts": "bottom",
-            "dresses": "wear_etc",
-            "bags": "bag",
-            "shoes": "shoes",
-        },
-        "style_tags": ["scandi", "minimal", "contemporary"],
-        "currency": "EUR",
-        "season_id": "2026SS",
-    },
-    "therow": {
-        "brand_id": "therow",
-        "base_url": "https://www.therow.com",
-        "card_selector": ".product-card, .grid__item",
-        "selectors": {
-            "name": ".product-card__title, .card__heading a, h3 a",
-            "price": ".product-card__price, .price, .price-item",
-            "image": ".product-card img, .card__media img",
-            "link": "a[href*='/products/']",
-        },
-        "collections": {
-            "men-coats-outerwear": "outer",
-            "men-knitwear": "inner",
-            "men-tops": "inner",
-            "men-shirts": "inner",
-            "men-pants": "bottom",
-            "men-denim": "bottom",
-            "men-shoes": "shoes",
-            "women-coats-outerwear": "outer",
-            "women-knitwear": "inner",
-            "women-tops": "inner",
-            "women-pants": "bottom",
-            "women-dresses": "wear_etc",
-            "handbags-new-arrivals": "bag",
-        },
-        "style_tags": ["ultra-luxury", "minimal", "quiet-luxury"],
-        "currency": "USD",
-        "season_id": "2026SS",
-    },
+    # ami, bode, skims, depound: moved to custom crawlers
+    # nanushka, toteme, therow: moved to custom crawlers (Shopify JSON API)
     "fila": {
         "brand_id": "fila",
         "base_url": "https://www.fila.co.kr",
@@ -374,7 +285,7 @@ CUSTOM_BRANDS = [
     "lululemon", "acne_studios", "zara", "hm",
     "maison_kitsune", "ami", "ralph_lauren", "thisisneverthat", "on_running",
     "nanamica", "supreme", "bode", "skims",
-    "nanushka", "patagonia", "human_made", "depound",
+    "nanushka", "patagonia", "human_made", "depound", "toteme", "therow",
 ]
 
 
@@ -479,6 +390,14 @@ def get_crawler(brand_id: str):
     if brand_id == "depound":
         from backend.crawlers.brand_crawlers.depound import DepoundCrawler
         return DepoundCrawler()
+
+    if brand_id == "toteme":
+        from backend.crawlers.brand_crawlers.toteme import TotemeCrawler
+        return TotemeCrawler()
+
+    if brand_id == "therow":
+        from backend.crawlers.brand_crawlers.therow import TheRowCrawler
+        return TheRowCrawler()
 
     raise ValueError(f"Unknown brand: {brand_id}. "
                      f"Available: {list(CAFE24_BRANDS) + list(SHOPIFY_BRANDS) + CUSTOM_BRANDS}")

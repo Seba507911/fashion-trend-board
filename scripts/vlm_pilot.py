@@ -26,6 +26,10 @@ from io import BytesIO
 from pathlib import Path
 
 import requests
+from dotenv import load_dotenv
+
+# Load .env from project root
+load_dotenv(Path(__file__).parent.parent / ".env")
 
 DB_PATH = Path(__file__).parent.parent / "backend" / "db" / "ftib.db"
 
