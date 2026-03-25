@@ -374,6 +374,7 @@ CUSTOM_BRANDS = [
     "lululemon", "acne_studios", "zara", "hm",
     "maison_kitsune", "ami", "ralph_lauren", "thisisneverthat", "on_running",
     "nanamica", "supreme", "bode", "skims",
+    "nanushka", "patagonia", "human_made",
 ]
 
 
@@ -462,6 +463,18 @@ def get_crawler(brand_id: str):
     if brand_id == "skims":
         from backend.crawlers.brand_crawlers.skims import SkimsCrawler
         return SkimsCrawler()
+
+    if brand_id == "nanushka":
+        from backend.crawlers.brand_crawlers.nanushka import NanushkaCrawler
+        return NanushkaCrawler()
+
+    if brand_id == "patagonia":
+        from backend.crawlers.brand_crawlers.patagonia import PatagoniaCrawler
+        return PatagoniaCrawler()
+
+    if brand_id == "human_made":
+        from backend.crawlers.brand_crawlers.human_made import HumanMadeCrawler
+        return HumanMadeCrawler()
 
     raise ValueError(f"Unknown brand: {brand_id}. "
                      f"Available: {list(CAFE24_BRANDS) + list(SHOPIFY_BRANDS) + CUSTOM_BRANDS}")
