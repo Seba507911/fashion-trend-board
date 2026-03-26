@@ -199,7 +199,8 @@ INSERT OR IGNORE INTO brands (id, name, name_kr, brand_type, website_url) VALUES
 ('supreme', 'Supreme', '슈프림', 'competitor', 'https://www.supremenewyork.com/'),
 ('rrl', 'RRL', 'RRL', 'competitor', 'https://www.ralphlauren.co.kr/ko/rrl/10060'),
 ('palace', 'Palace', '팰리스', 'competitor', 'https://www.palaceskateboards.com/'),
-('goldwin', 'Goldwin', '골드윈', 'competitor', 'https://www.goldwin.co.jp/');
+('goldwin', 'Goldwin', '골드윈', 'competitor', 'https://www.goldwin.co.jp/'),
+('covernat', 'COVERNAT', '커버낫', 'competitor', 'https://covernat.net/');
 
 INSERT OR IGNORE INTO seasons (id, year, season_code, label, is_current) VALUES
 ('2025SS', 2025, 'SS', '2025 Spring/Summer', 0),

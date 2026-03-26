@@ -21,17 +21,25 @@ CATEGORY_URLS = {
     "inner": [
         f"{BASE_URL}/ko-kr/c/womens-tops/",
         f"{BASE_URL}/ko-kr/c/mens-tops/",
+        f"{BASE_URL}/ko-kr/c/womens-long-sleeve-shirts/",
+        f"{BASE_URL}/ko-kr/c/mens-hoodies-sweatshirts/",
     ],
     "outer": [
         f"{BASE_URL}/ko-kr/c/jackets-outerwear/",
+        f"{BASE_URL}/ko-kr/c/mens-coats-and-jackets/",
     ],
     "bottom": [
         f"{BASE_URL}/ko-kr/c/womens-leggings/",
         f"{BASE_URL}/ko-kr/c/womens-pants/",
+        f"{BASE_URL}/ko-kr/c/womens-shorts/",
         f"{BASE_URL}/ko-kr/c/mens-pants/",
+        f"{BASE_URL}/ko-kr/c/mens-shorts/",
     ],
     "wear_etc": [
         f"{BASE_URL}/ko-kr/c/skirts-dresses-rompers/",
+    ],
+    "bag": [
+        f"{BASE_URL}/ko-kr/c/bags/",
     ],
     "acc_etc": [
         f"{BASE_URL}/ko-kr/c/accessories/",
@@ -88,7 +96,7 @@ class LululemonCrawler(BaseCrawler):
                         await asyncio.sleep(5)
 
                         # Scroll to load more
-                        for _ in range(5):
+                        for _ in range(10):
                             await page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
                             await asyncio.sleep(2)
 

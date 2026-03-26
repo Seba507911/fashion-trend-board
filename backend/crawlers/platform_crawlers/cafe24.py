@@ -71,29 +71,31 @@ class Cafe24Crawler(BaseCrawler):
                 result.productNo = (li.id || '').replace('anchorBoxId_', '');
 
                 // 대표 이미지 — 품절 오버레이가 아닌 실제 상품 이미지 찾기
-                const allImgs = li.querySelectorAll('.swiper-slide-active img, .swiper-slide:first-child img, .thumb img, .prdImg img, img.ThumbImage, .thumbnail img');
+                const allImgs = li.querySelectorAll('.swiper-slide-active img, .swiper-slide:first-child img, .thumb img, .prdImg img, img.ThumbImage, .thumbnail img, .thumb-box img');
                 result.imgSrc = '';
                 for (const img of allImgs) {
-                    const src = img.getAttribute('src') || img.getAttribute('data-src') || '';
+                    const src = img.getAttribute('ec-data-src') || img.getAttribute('src') || img.getAttribute('data-src') || '';
                     if (src && !src.includes('ico_product_soldout') &&
                         !src.includes('btn_wish') &&
-                        !src.includes('echosting.cafe24.com/design/skin')) {
+                        !src.includes('echosting.cafe24.com/design/skin') &&
+                        !src.startsWith('data:image/')) {
                         result.imgSrc = src;
                         break;
                     }
                 }
 
-                const imgs = li.querySelectorAll('.swiper-slide img, .thumb img, img.ThumbImage, .thumbnail img');
+                const imgs = li.querySelectorAll('.swiper-slide img, .thumb img, img.ThumbImage, .thumbnail img, .thumb-box img');
                 result.imageUrls = [];
                 imgs.forEach(i => {
-                    const src = i.getAttribute('src') || i.getAttribute('data-src') || '';
+                    const src = i.getAttribute('ec-data-src') || i.getAttribute('src') || i.getAttribute('data-src') || '';
                     // 품절 오버레이/위시버튼 등 UI 이미지 필터링
                     if (src && !result.imageUrls.includes(src) &&
                         !src.includes('ico_product_soldout') &&
                         !src.includes('btn_wish') &&
                         !src.includes('ico_soldout') &&
                         !src.includes('btn_cart') &&
-                        !src.includes('echosting.cafe24.com/design/skin')) {
+                        !src.includes('echosting.cafe24.com/design/skin') &&
+                        !src.startsWith('data:image/')) {
                         result.imageUrls.push(src);
                     }
                 });
@@ -152,11 +154,14 @@ class Cafe24Crawler(BaseCrawler):
 
             sale_price = None
             price_texts = card_data.get("priceTexts", [])
-            if len(price_texts) >= 2:
+            if price_texts:
                 first = int(re.sub(r"[^\d]", "", price_texts[0]) or 0)
-                second = int(re.sub(r"[^\d]", "", price_texts[1]) or 0)
-                if second < first:
-                    sale_price = second
+                if not price and first > 0:
+                    price = first
+                if len(price_texts) >= 2:
+                    second = int(re.sub(r"[^\d]", "", price_texts[1]) or 0)
+                    if second < first:
+                        sale_price = second
 
             img_url = card_data.get("imgSrc", "")
             image_urls = card_data.get("imageUrls", [])

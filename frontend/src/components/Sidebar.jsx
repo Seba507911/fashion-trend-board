@@ -8,7 +8,7 @@ const BRAND_GROUPS = [
   {
     zoning: "럭셔리 / 컨템포러리",
     groups: [
-      { region: "Global", ids: ["lemaire", "acne_studios", "bode", "nanushka", "toteme", "therow"] },
+      { region: "Global", ids: ["lemaire", "acne_studios", "bode", "nanushka", "toteme", "therow", "ami"] },
       { region: "Korea", ids: [] },
     ],
   },
@@ -23,7 +23,7 @@ const BRAND_GROUPS = [
     zoning: "캐주얼 / 스트리트",
     groups: [
       { region: "Global", ids: ["ralph_lauren", "stussy", "supreme"] },
-      { region: "Korea", ids: ["youth", "marithe", "coor", "blankroom", "mardi", "thisisneverthat", "emis", "depound"] },
+      { region: "Korea", ids: ["youth", "marithe", "coor", "blankroom", "mardi", "thisisneverthat", "emis", "depound", "covernat"] },
     ],
   },
   {
@@ -42,7 +42,7 @@ const BRAND_GROUPS = [
 
 /* TBA: registered but not yet collected */
 const TBA_BRAND_IDS = [
-  "jacquemus", "ami", "maison_kitsune", "wooyoungmi", "ader_error", "dunst", "amomento", "recto",
+  "jacquemus", "maison_kitsune", "wooyoungmi", "ader_error", "dunst", "amomento", "recto",
   "hoka", "salomon", "k2", "blackyak", "cos", "uniqlo",
   "carhartt_wip", "captain_sunshine", "comoli", "danton", "auralee", "apresse", "visvim", "kapital",
   "newera", "kangol", "snowpeak",

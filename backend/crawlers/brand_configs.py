@@ -143,6 +143,24 @@ CAFE24_BRANDS: dict[str, dict] = {
         "season_id": "2026SS",
         "currency": "KRW",
     },
+    "covernat": {
+        "brand_id": "covernat",
+        "base_url": "https://covernat.net",
+        "card_selector": "li[id*=anchorBoxId]",
+        "categories": {
+            "outer": ["2044", "2074"],
+            "inner": ["3794", "3804"],
+            "bottom": ["2049", "2079"],
+            "wear_etc": ["2078"],
+            "headwear": ["2051", "2082"],
+            "bag": ["2050", "2081"],
+            "shoes": ["2212", "3459"],
+            "acc_etc": ["3011", "3013", "2053", "2083"],
+        },
+        "style_tags": ["street", "casual", "workwear"],
+        "season_id": "2026SS",
+        "currency": "KRW",
+    },
 }
 
 
@@ -344,8 +362,8 @@ def get_crawler(brand_id: str):
         return MaisonKitsuneCrawler()
 
     if brand_id == "ami":
-        from backend.crawlers.brand_crawlers.ami import AmiCrawler
-        return AmiCrawler()
+        from backend.crawlers.brand_crawlers.ami_paris import AmiParisCrawler
+        return AmiParisCrawler()
 
     if brand_id == "ralph_lauren":
         from backend.crawlers.brand_crawlers.ralph_lauren import RalphLaurenCrawler

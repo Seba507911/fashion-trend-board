@@ -16,28 +16,35 @@ BASE_URL = "https://www2.hm.com"
 
 CATEGORY_URLS = {
     "outer": [
-        f"{BASE_URL}/ko_kr/ladies/new-arrivals/jackets-and-coats.html",
-        f"{BASE_URL}/ko_kr/men/new-arrivals/jackets-and-coats.html",
+        f"{BASE_URL}/ko_kr/ladies/shop-by-product/jackets-and-coats.html",
+        f"{BASE_URL}/ko_kr/men/shop-by-product/jackets-and-coats.html",
     ],
     "inner": [
-        f"{BASE_URL}/ko_kr/ladies/new-arrivals/tops.html",
-        f"{BASE_URL}/ko_kr/men/new-arrivals/t-shirts-and-tops.html",
-        f"{BASE_URL}/ko_kr/ladies/new-arrivals/knitwear.html",
+        f"{BASE_URL}/ko_kr/ladies/shop-by-product/tops.html",
+        f"{BASE_URL}/ko_kr/ladies/shop-by-product/knitwear.html",
+        f"{BASE_URL}/ko_kr/ladies/shop-by-product/shirts-and-blouses.html",
+        f"{BASE_URL}/ko_kr/men/shop-by-product/t-shirts-and-tops.html",
+        f"{BASE_URL}/ko_kr/men/shop-by-product/shirts.html",
+        f"{BASE_URL}/ko_kr/men/shop-by-product/hoodies-and-sweatshirts.html",
     ],
     "bottom": [
-        f"{BASE_URL}/ko_kr/ladies/new-arrivals/trousers.html",
-        f"{BASE_URL}/ko_kr/ladies/new-arrivals/jeans.html",
-        f"{BASE_URL}/ko_kr/men/new-arrivals/trousers.html",
+        f"{BASE_URL}/ko_kr/ladies/shop-by-product/trousers.html",
+        f"{BASE_URL}/ko_kr/ladies/shop-by-product/jeans.html",
+        f"{BASE_URL}/ko_kr/ladies/shop-by-product/shorts.html",
+        f"{BASE_URL}/ko_kr/men/shop-by-product/trousers.html",
+        f"{BASE_URL}/ko_kr/men/shop-by-product/jeans.html",
     ],
     "wear_etc": [
-        f"{BASE_URL}/ko_kr/ladies/new-arrivals/dresses.html",
+        f"{BASE_URL}/ko_kr/ladies/shop-by-product/dresses.html",
+        f"{BASE_URL}/ko_kr/ladies/shop-by-product/skirts.html",
     ],
     "shoes": [
-        f"{BASE_URL}/ko_kr/ladies/new-arrivals/shoes.html",
-        f"{BASE_URL}/ko_kr/men/new-arrivals/shoes.html",
+        f"{BASE_URL}/ko_kr/ladies/shop-by-product/shoes.html",
+        f"{BASE_URL}/ko_kr/men/shop-by-product/shoes.html",
     ],
     "acc_etc": [
-        f"{BASE_URL}/ko_kr/ladies/new-arrivals/accessories.html",
+        f"{BASE_URL}/ko_kr/ladies/shop-by-product/accessories.html",
+        f"{BASE_URL}/ko_kr/men/shop-by-product/accessories.html",
     ],
 }
 
@@ -91,10 +98,18 @@ class HMCrawler(BaseCrawler):
                         await page.goto(url, wait_until="domcontentloaded", timeout=30000)
                         await asyncio.sleep(8)
 
-                        # Scroll to load more
-                        for _ in range(5):
+                        # Scroll to load more (increased for full category pages)
+                        for _ in range(12):
                             await page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
                             await asyncio.sleep(2)
+                            # Click "Load more" button if present
+                            try:
+                                btn = await page.query_selector('button.load-more-btn, button[data-load-more], a.load-more-heading-btn')
+                                if btn:
+                                    await btn.click()
+                                    await asyncio.sleep(3)
+                            except Exception:
+                                pass
 
                         items = await page.evaluate("""() => {
                             const results = [];
