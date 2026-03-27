@@ -9,6 +9,7 @@ import TrendFlow from "./pages/TrendFlow";
 import TrendFlowCheck from "./pages/TrendFlowCheck";
 import VlmViewer from "./pages/VlmViewer";
 import ProjectBriefing from "./pages/ProjectBriefing";
+import ExpertReview from "./pages/ExpertReview";
 
 export default function App() {
   const [selectedBrand, setSelectedBrand] = useState(null);
@@ -25,6 +26,7 @@ export default function App() {
           <Route path="/runway" element={<Runway />} />
           <Route path="/flow" element={<TrendFlow />} />
           <Route path="/flow-check" element={<TrendFlowCheck />} />
+          <Route path="/expert" element={<ExpertReview />} />
           <Route path="/vlm" element={<VlmViewer />} />
         </Routes>
       </div>

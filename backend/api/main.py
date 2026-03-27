@@ -2,7 +2,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from backend.api.routes import brands, products, analysis, runway, trendflow, trendflow_check, vlm
+from backend.api.routes import brands, products, analysis, runway, trendflow, trendflow_check, vlm, expert
 
 app = FastAPI(title="FTIB API", version="0.1.0")
 
@@ -21,6 +21,7 @@ app.include_router(runway.router, prefix="/api/runway", tags=["runway"])
 app.include_router(trendflow.router, prefix="/api/trendflow", tags=["trendflow"])
 app.include_router(trendflow_check.router, prefix="/api/trendflow-check", tags=["trendflow-check"])
 app.include_router(vlm.router, prefix="/api/vlm", tags=["vlm"])
+app.include_router(expert.router)
 
 
 @app.get("/api/health")
