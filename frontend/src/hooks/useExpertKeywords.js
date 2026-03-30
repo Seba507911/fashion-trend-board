@@ -43,3 +43,33 @@ export function useExpertReview() {
     },
   });
 }
+
+// ─── Section-level Reviews ──────────────────────────────────
+
+export function useSectionReviews(season) {
+  return useQuery({
+    queryKey: ["expert", "section-reviews", season],
+    queryFn: () =>
+      api
+        .get("/expert/section-reviews", { params: { season } })
+        .then((r) => r.data),
+  });
+}
+
+export function useSectionReview() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ sectionId, rating, comment, reviewer, season }) =>
+      api
+        .post(`/expert/section/${encodeURIComponent(sectionId)}/review`, {
+          rating,
+          comment,
+          reviewer,
+          season,
+        })
+        .then((r) => r.data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["expert", "section-reviews"] });
+    },
+  });
+}

@@ -133,3 +133,33 @@ async def post_expert_review(keyword: str, body: ReviewBody):
         "reviewer": body.reviewer,
     }
     return {"ok": True, "keyword": keyword, "review_status": body.evaluation}
+
+
+# ─── Section-level Reviews ───────────────────────────────────
+
+_SECTION_REVIEWS: dict[str, dict] = {}
+
+
+class SectionReviewBody(BaseModel):
+    rating: str  # "fit", "uncertain", "off"
+    comment: Optional[str] = None
+    reviewer: Optional[str] = None
+    season: str = "26SS"
+
+
+@router.get("/section-reviews")
+async def get_section_reviews(season: str = Query("26SS")):
+    suffix = f"_{season}"
+    reviews = {k: v for k, v in _SECTION_REVIEWS.items() if k.endswith(suffix)}
+    return {"reviews": reviews}
+
+
+@router.post("/section/{section_id}/review")
+async def post_section_review(section_id: str, body: SectionReviewBody):
+    key = f"{section_id}_{body.season}"
+    _SECTION_REVIEWS[key] = {
+        "rating": body.rating,
+        "comment": body.comment,
+        "reviewer": body.reviewer,
+    }
+    return {"ok": True, "section_id": section_id, "rating": body.rating}
