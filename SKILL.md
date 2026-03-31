@@ -422,7 +422,7 @@ ftib/
 │   ├── runway_crawl/
 │   ├── vlm/
 │   └── backtest/
-└── data/ftib.db
+└── data/                    ← JSON 교환용 (vlm/, celeb/, imports/, exports/)
 ```
 
 ## Trend Flow 탭 컴포넌트 구조
