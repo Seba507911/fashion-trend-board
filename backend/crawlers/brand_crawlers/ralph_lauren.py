@@ -81,10 +81,17 @@ class RalphLaurenCrawler(BaseCrawler):
                     cat = self._url_to_category(url)
                     try:
                         await page.goto(url, wait_until="domcontentloaded", timeout=30000)
-                        await asyncio.sleep(8)
-                        for _ in range(5):
+                        await asyncio.sleep(10)
+                        # DemandWare lazy-loads ~12-24 products per scroll batch
+                        # Need 20+ scrolls to reach 300+ products per category
+                        prev_height = 0
+                        for scroll_i in range(25):
                             await page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
-                            await asyncio.sleep(2)
+                            await asyncio.sleep(2.5)
+                            curr_height = await page.evaluate("document.body.scrollHeight")
+                            if curr_height == prev_height:
+                                break  # No more content to load
+                            prev_height = curr_height
                         items = await page.evaluate("""() => {
                             return Array.from(document.querySelectorAll('.product-tile')).map(tile => {
                                 const link = tile.querySelector('a[href*=".html"]');

@@ -5,9 +5,23 @@ from backend.crawlers.base_crawler import BaseCrawler
 
 BASE_URL = "https://depound.com"
 CATEGORIES = {
-    "bag": [f"{BASE_URL}/product/list.html?cate_no=100", f"{BASE_URL}/product/list.html?cate_no=101"],
-    "acc_etc": [f"{BASE_URL}/product/list.html?cate_no=117", f"{BASE_URL}/product/list.html?cate_no=131",
-                f"{BASE_URL}/product/list.html?cate_no=132", f"{BASE_URL}/product/list.html?cate_no=134"],
+    "outer": [f"{BASE_URL}/product/list.html?cate_no=93"],
+    "inner": [f"{BASE_URL}/product/list.html?cate_no=94",     # KNIT
+              f"{BASE_URL}/product/list.html?cate_no=234",    # SHIRTS
+              f"{BASE_URL}/product/list.html?cate_no=235"],   # T-SHIRTS
+    "bottom": [f"{BASE_URL}/product/list.html?cate_no=95",    # PANTS
+               f"{BASE_URL}/product/list.html?cate_no=233"],  # SKIRT
+    "wear_etc": [f"{BASE_URL}/product/list.html?cate_no=96"], # DRESS
+    "bag": [f"{BASE_URL}/product/list.html?cate_no=133",      # SHOULDER
+            f"{BASE_URL}/product/list.html?cate_no=134",      # TOTE
+            f"{BASE_URL}/product/list.html?cate_no=205",      # BACKPACK
+            f"{BASE_URL}/product/list.html?cate_no=101"],     # POUCH
+    "shoes": [f"{BASE_URL}/product/list.html?cate_no=397"],
+    "headwear": [f"{BASE_URL}/product/list.html?cate_no=238"],
+    "acc_etc": [f"{BASE_URL}/product/list.html?cate_no=237",  # HAIR ACC
+                f"{BASE_URL}/product/list.html?cate_no=239",  # SOCKS
+                f"{BASE_URL}/product/list.html?cate_no=241",  # ETC
+                f"{BASE_URL}/product/list.html?cate_no=242"], # KEYRING
 }
 
 class DepoundCrawler(BaseCrawler):
@@ -20,7 +34,7 @@ class DepoundCrawler(BaseCrawler):
                 if u == url: return c
         return None
 
-    async def crawl(self, season=None, max_pages=8, dry_run=False, fetch_details=False):
+    async def crawl(self, season=None, max_pages=20, dry_run=False, fetch_details=False):
         from playwright.async_api import async_playwright
         products, seen = [], set()
         async with async_playwright() as p:

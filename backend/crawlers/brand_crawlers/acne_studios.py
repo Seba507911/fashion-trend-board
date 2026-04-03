@@ -97,12 +97,17 @@ class AcneStudiosCrawler(BaseCrawler):
 
                     try:
                         await page.goto(url, wait_until="domcontentloaded", timeout=30000)
-                        await asyncio.sleep(5)
+                        await asyncio.sleep(8)
 
-                        # Scroll to load all
-                        for _ in range(5):
+                        # Scroll to load all — increase iterations for full catalog
+                        prev_height = 0
+                        for _ in range(20):
                             await page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
-                            await asyncio.sleep(2)
+                            await asyncio.sleep(3)
+                            curr_height = await page.evaluate("document.body.scrollHeight")
+                            if curr_height == prev_height:
+                                break
+                            prev_height = curr_height
 
                         items = await page.evaluate("""() => {
                             const results = [];

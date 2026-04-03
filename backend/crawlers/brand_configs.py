@@ -306,9 +306,41 @@ CUSTOM_BRANDS = [
     "nanushka", "patagonia", "human_made", "depound", "toteme", "therow",
 ]
 
+# Registry: brand_id → (module_path, class_name)
+# Adding new custom brands: just add an entry here + create the crawler file.
+CUSTOM_CRAWLER_REGISTRY: dict[str, tuple[str, str]] = {
+    "newbalance": ("backend.crawlers.brand_crawlers.newbalance", "NewBalanceCrawler"),
+    "asics": ("backend.crawlers.brand_crawlers.asics", "AsicsCrawler"),
+    "northface": ("backend.crawlers.brand_crawlers.northface", "NorthFaceCrawler"),
+    "descente": ("backend.crawlers.brand_crawlers.descente", "DescenteCrawler"),
+    "nike": ("backend.crawlers.brand_crawlers.nike", "NikeCrawler"),
+    "kolonsport": ("backend.crawlers.brand_crawlers.kolonsport", "KolonSportCrawler"),
+    "lululemon": ("backend.crawlers.brand_crawlers.lululemon", "LululemonCrawler"),
+    "acne_studios": ("backend.crawlers.brand_crawlers.acne_studios", "AcneStudiosCrawler"),
+    "zara": ("backend.crawlers.brand_crawlers.zara", "ZaraCrawler"),
+    "hm": ("backend.crawlers.brand_crawlers.hm", "HMCrawler"),
+    "maison_kitsune": ("backend.crawlers.brand_crawlers.maison_kitsune", "MaisonKitsuneCrawler"),
+    "ami": ("backend.crawlers.brand_crawlers.ami_paris", "AmiParisCrawler"),
+    "ralph_lauren": ("backend.crawlers.brand_crawlers.ralph_lauren", "RalphLaurenCrawler"),
+    "thisisneverthat": ("backend.crawlers.brand_crawlers.thisisneverthat", "ThisisneverthatCrawler"),
+    "on_running": ("backend.crawlers.brand_crawlers.on_running", "OnRunningCrawler"),
+    "nanamica": ("backend.crawlers.brand_crawlers.nanamica", "NanamicaCrawler"),
+    "supreme": ("backend.crawlers.brand_crawlers.supreme", "SupremeCrawler"),
+    "bode": ("backend.crawlers.brand_crawlers.bode", "BodeCrawler"),
+    "skims": ("backend.crawlers.brand_crawlers.skims", "SkimsCrawler"),
+    "nanushka": ("backend.crawlers.brand_crawlers.nanushka", "NanushkaCrawler"),
+    "patagonia": ("backend.crawlers.brand_crawlers.patagonia", "PatagoniaCrawler"),
+    "human_made": ("backend.crawlers.brand_crawlers.human_made", "HumanMadeCrawler"),
+    "depound": ("backend.crawlers.brand_crawlers.depound", "DepoundCrawler"),
+    "toteme": ("backend.crawlers.brand_crawlers.toteme", "TotemeCrawler"),
+    "therow": ("backend.crawlers.brand_crawlers.therow", "TheRowCrawler"),
+}
+
 
 def get_crawler(brand_id: str):
     """브랜드 ID로 적절한 크롤러 인스턴스를 반환."""
+    import importlib
+
     if brand_id in CAFE24_BRANDS:
         from backend.crawlers.platform_crawlers.cafe24 import Cafe24Crawler
         return Cafe24Crawler(CAFE24_BRANDS[brand_id])
@@ -317,108 +349,13 @@ def get_crawler(brand_id: str):
         from backend.crawlers.platform_crawlers.shopify import ShopifyCrawler
         return ShopifyCrawler(SHOPIFY_BRANDS[brand_id])
 
-    if brand_id == "newbalance":
-        from backend.crawlers.brand_crawlers.newbalance import NewBalanceCrawler
-        return NewBalanceCrawler()
+    if brand_id in CUSTOM_CRAWLER_REGISTRY:
+        mod_path, cls_name = CUSTOM_CRAWLER_REGISTRY[brand_id]
+        mod = importlib.import_module(mod_path)
+        return getattr(mod, cls_name)()
 
-    if brand_id == "asics":
-        from backend.crawlers.brand_crawlers.asics import AsicsCrawler
-        return AsicsCrawler()
-
-    if brand_id == "northface":
-        from backend.crawlers.brand_crawlers.northface import NorthFaceCrawler
-        return NorthFaceCrawler()
-
-    if brand_id == "descente":
-        from backend.crawlers.brand_crawlers.descente import DescenteCrawler
-        return DescenteCrawler()
-
-    if brand_id == "nike":
-        from backend.crawlers.brand_crawlers.nike import NikeCrawler
-        return NikeCrawler()
-
-    if brand_id == "kolonsport":
-        from backend.crawlers.brand_crawlers.kolonsport import KolonSportCrawler
-        return KolonSportCrawler()
-
-    if brand_id == "lululemon":
-        from backend.crawlers.brand_crawlers.lululemon import LululemonCrawler
-        return LululemonCrawler()
-
-    if brand_id == "acne_studios":
-        from backend.crawlers.brand_crawlers.acne_studios import AcneStudiosCrawler
-        return AcneStudiosCrawler()
-
-    if brand_id == "zara":
-        from backend.crawlers.brand_crawlers.zara import ZaraCrawler
-        return ZaraCrawler()
-
-    if brand_id == "hm":
-        from backend.crawlers.brand_crawlers.hm import HMCrawler
-        return HMCrawler()
-
-    if brand_id == "maison_kitsune":
-        from backend.crawlers.brand_crawlers.maison_kitsune import MaisonKitsuneCrawler
-        return MaisonKitsuneCrawler()
-
-    if brand_id == "ami":
-        from backend.crawlers.brand_crawlers.ami_paris import AmiParisCrawler
-        return AmiParisCrawler()
-
-    if brand_id == "ralph_lauren":
-        from backend.crawlers.brand_crawlers.ralph_lauren import RalphLaurenCrawler
-        return RalphLaurenCrawler()
-
-    if brand_id == "thisisneverthat":
-        from backend.crawlers.brand_crawlers.thisisneverthat import ThisisneverthatCrawler
-        return ThisisneverthatCrawler()
-
-    if brand_id == "on_running":
-        from backend.crawlers.brand_crawlers.on_running import OnRunningCrawler
-        return OnRunningCrawler()
-
-    if brand_id == "nanamica":
-        from backend.crawlers.brand_crawlers.nanamica import NanamicaCrawler
-        return NanamicaCrawler()
-
-    if brand_id == "supreme":
-        from backend.crawlers.brand_crawlers.supreme import SupremeCrawler
-        return SupremeCrawler()
-
-    if brand_id == "bode":
-        from backend.crawlers.brand_crawlers.bode import BodeCrawler
-        return BodeCrawler()
-
-    if brand_id == "skims":
-        from backend.crawlers.brand_crawlers.skims import SkimsCrawler
-        return SkimsCrawler()
-
-    if brand_id == "nanushka":
-        from backend.crawlers.brand_crawlers.nanushka import NanushkaCrawler
-        return NanushkaCrawler()
-
-    if brand_id == "patagonia":
-        from backend.crawlers.brand_crawlers.patagonia import PatagoniaCrawler
-        return PatagoniaCrawler()
-
-    if brand_id == "human_made":
-        from backend.crawlers.brand_crawlers.human_made import HumanMadeCrawler
-        return HumanMadeCrawler()
-
-    if brand_id == "depound":
-        from backend.crawlers.brand_crawlers.depound import DepoundCrawler
-        return DepoundCrawler()
-
-    if brand_id == "toteme":
-        from backend.crawlers.brand_crawlers.toteme import TotemeCrawler
-        return TotemeCrawler()
-
-    if brand_id == "therow":
-        from backend.crawlers.brand_crawlers.therow import TheRowCrawler
-        return TheRowCrawler()
-
-    raise ValueError(f"Unknown brand: {brand_id}. "
-                     f"Available: {list(CAFE24_BRANDS) + list(SHOPIFY_BRANDS) + CUSTOM_BRANDS}")
+    all_brands = list(CAFE24_BRANDS) + list(SHOPIFY_BRANDS) + list(CUSTOM_CRAWLER_REGISTRY)
+    raise ValueError(f"Unknown brand: {brand_id}. Available: {all_brands}")
 
 
 def list_brands() -> dict[str, str]:

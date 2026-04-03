@@ -5,10 +5,34 @@ from backend.crawlers.base_crawler import BaseCrawler
 
 BASE_URL = "https://www.patagonia.co.kr"
 CATEGORIES = {
-    "outer": [f"{BASE_URL}/shop/womens-jackets-vests", f"{BASE_URL}/shop/mens-jackets-vests"],
-    "inner": [f"{BASE_URL}/shop/womens-tops", f"{BASE_URL}/shop/mens-tops"],
-    "bottom": [f"{BASE_URL}/shop/womens-pants-jeans-shorts", f"{BASE_URL}/shop/mens-pants-jeans-shorts"],
-    "acc_etc": [f"{BASE_URL}/shop/luggage-bags-packs"],
+    "outer": [
+        f"{BASE_URL}/shop/womens-jackets-vests",
+        f"{BASE_URL}/shop/mens-jackets-vests",
+        f"{BASE_URL}/shop/womens-fleece",
+        f"{BASE_URL}/shop/mens-fleece",
+    ],
+    "inner": [
+        f"{BASE_URL}/shop/womens-tops",
+        f"{BASE_URL}/shop/mens-tops",
+        f"{BASE_URL}/shop/womens-shirts",
+        f"{BASE_URL}/shop/mens-shirts",
+        f"{BASE_URL}/shop/womens-sweaters-hoodies",
+        f"{BASE_URL}/shop/mens-sweaters-hoodies",
+    ],
+    "bottom": [
+        f"{BASE_URL}/shop/womens-pants-jeans-shorts",
+        f"{BASE_URL}/shop/mens-pants-jeans-shorts",
+        f"{BASE_URL}/shop/womens-skirts-dresses",
+    ],
+    "wear_etc": [
+        f"{BASE_URL}/shop/womens-baselayers",
+        f"{BASE_URL}/shop/mens-baselayers",
+    ],
+    "headwear": [f"{BASE_URL}/shop/hats"],
+    "bag": [f"{BASE_URL}/shop/luggage-bags-packs"],
+    "acc_etc": [
+        f"{BASE_URL}/shop/gloves-scarves-neck-gaiters",
+    ],
 }
 
 class PatagoniaCrawler(BaseCrawler):
