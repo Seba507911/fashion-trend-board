@@ -387,43 +387,48 @@ def calculate_confidence(
 ```
 ftib/
 ├── backend/
-│   ├── main.py
-│   ├── database.py
-│   ├── routers/
-│   │   ├── runway.py
-│   │   ├── market.py
-│   │   ├── trendflow.py        ← Origin 기반 재설계
-│   │   ├── analysis.py
-│   │   └── graph.py
-│   ├── models/schemas.py
-│   └── utils/
-│       ├── synonym_map.py
-│       ├── keyword_classifier.py
-│       ├── origin_classifier.py  ← 신규: Origin 자동 분류
-│       └── confidence.py
-├── frontend/src/
-│   ├── pages/
-│   │   ├── MarketBrandBoard.jsx
-│   │   ├── Runway.jsx
-│   │   ├── TrendFlow.jsx        ← Origin 기반 재설계
-│   │   ├── TrendAnalysis.jsx
-│   │   └── GraphView.jsx
-│   └── components/trendflow/
-│       ├── OriginFlowView.jsx    ← 신규: Origin별 시그널 플로우
-│       ├── ZoneDistribution.jsx  ← 신규: 조닝별 Origin 분포
-│       ├── TimelineComparison.jsx ← 신규: 통합 타임라인
-│       ├── KeywordList.jsx
-│       ├── KeywordDetailPanel.jsx
-│       ├── ExpertReportInput.jsx
-│       ├── CelebrityTracker.jsx
-│       └── ManualCorrectionUI.jsx
-├── scripts/
+│   ├── api/
+│   │   ├── main.py                  ← FastAPI 앱 + 라우터 등록
+│   │   └── routes/
+│   │       ├── brands.py, products.py, runway.py
+│   │       ├── trendflow.py, trendflow_check.py
+│   │       ├── analysis.py, vlm.py
 │   ├── crawlers/
-│   ├── runway_crawl/
-│   ├── vlm/
-│   └── backtest/
-└── data/                    ← JSON 교환용 (vlm/, celeb/, imports/, exports/)
+│   │   ├── base_crawler.py, brand_configs.py
+│   │   ├── platform_crawlers/       ← cafe24.py, shopify.py
+│   │   └── brand_crawlers/          ← nike.py, zara.py 등
+│   └── db/
+│       ├── database.py              ← DDL + SEED_DATA
+│       └── ftib.db                  ← SQLite DB
+├── frontend/src/
+│   ├── pages/                       ← Runway, TrendFlow, TrendFlowCheck 등
+│   ├── components/
+│   │   ├── ProductBoard.jsx, Sidebar.jsx
+│   │   └── trendflow/              ← KeywordCard, MatrixView 등
+│   └── hooks/, utils/
+├── scripts/
+│   ├── run_crawl.py                 ← 마켓 크롤링 실행
+│   ├── crawl_tagwalk.py             ← TagWalk 런웨이 크롤러 (direct URL)
+│   ├── recrawl_look_search.py       ← TagWalk look/search 패턴 재수집
+│   ├── validate_runway_data.py      ← 런웨이 데이터 교차 검증 + 정리
+│   └── vlm_pilot.py                 ← VLM 라벨링 (Claude Vision Sonnet)
+└── data/                            ← JSON 교환용
 ```
+
+## TagWalk 런웨이 크롤러 — 주의사항 ⚠️
+
+TagWalk은 두 가지 URL 패턴이 있으며, 브랜드마다 동작이 다름:
+
+```
+패턴 1 (direct):  /en/collection/{type}/{slug}/{season}
+패턴 2 (search):  /en/look/search?type={type}&season={season}&designer={slug}&city=paris
+```
+
+**알려진 slug 불일치**: `dior` → `christian-dior`, `lemaire` → 여성 없음(남성만)
+**302 리다이렉트 = 홈페이지 → 쓰레기 데이터 수집 위험** (정확히 26개 = junk 의심)
+
+**방어 로직**: `allow_redirects=False`, 홈페이지 title 감지, junk URL 필터, slug 파일명 검증
+**검증**: `python scripts/validate_runway_data.py` → 리포트 + `--fix` 정리 + `--recrawl` 재수집
 
 ## Trend Flow 탭 컴포넌트 구조
 

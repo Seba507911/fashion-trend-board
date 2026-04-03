@@ -482,7 +482,10 @@ ftib/
 │   ├── utils/formatPrice.js          ← KRW, USD, EUR, JPY 포맷
 │   └── styles/index.css
 ├── scripts/
-│   ├── run_crawl.py                  ← 크롤링 실행 + DB 저장
+│   ├── run_crawl.py                  ← 마켓 크롤링 실행 + DB 저장
+│   ├── crawl_tagwalk.py              ← TagWalk 런웨이 크롤러 (direct URL)
+│   ├── recrawl_look_search.py        ← TagWalk look/search 패턴 재수집
+│   ├── validate_runway_data.py       ← 런웨이 데이터 교차 검증 + 정리
 │   └── vlm_pilot.py                  ← VLM 라벨링 (Claude Vision Sonnet)
 ├── CLAUDE.md                         ← 이 파일
 ├── BRAND_CRAWL_LIST.md               ← 크롤링 대상 브랜드 관리
@@ -499,21 +502,58 @@ ftib/
 └── wear_etc (기타의류)          └── acc_etc (기타용품)
 ```
 
-## 데이터 현황 (2026-03-18)
+## 데이터 현황 (2026-04-02)
 
-- **마켓 상품**: 6,812개 (23개 브랜드)
-- **런웨이 룩**: 10,930개 (38 디자이너, 6시즌)
-- **VLM 라벨**: 진행 중 (목표 10,930개)
+- **마켓 상품**: 11,368개 (35개 브랜드)
+- **런웨이 룩**: 12,036개 (54 디자이너, 6시즌)
+  - ⚠️ 58개 디자이너-시즌 조합 (1,508 looks)이 junk 의심 → `validate_runway_data.py`로 정리 필요
+- **VLM 라벨**: 11,255개
 - **관리 문서**: BRAND_CRAWL_LIST.md (수집 현황 + 우선순위)
 
 ## 크롤러 아키텍처
 
+### 마켓 크롤러
 - **Cafe24**: config dict만 추가 (marithe, coor, youth, blankroom, mardi, emis, dunst)
 - **Shopify**: config dict만 추가 (alo, lemaire, stussy, fila)
 - **Custom (Playwright)**: 브랜드별 크롤러 파일 (nike, northface, descente, zara 등)
 - **Stealth**: playwright-stealth로 WAF 우회 (Zara, H&M, On Running, Ralph Lauren)
 - **API 인터셉트**: Zara — 페이지 로드 시 /category/{id}/products?ajax=true 캡처
 - **Apollo GraphQL**: Kolon Sport — __NEXT_DATA__ apolloState 파싱
+
+### TagWalk 런웨이 크롤러 — 주의사항 ⚠️
+
+TagWalk은 두 가지 URL 패턴이 있으며, 브랜드마다 동작이 다름:
+
+```
+패턴 1 (direct):  /en/collection/{type}/{slug}/{season}
+패턴 2 (search):  /en/look/search?type={type}&season={season}&designer={slug}&city=paris
+```
+
+**알려진 문제**:
+- `dior` → 실제 slug `christian-dior` (패턴 1에서 불일치)
+- `lemaire` → 패턴 1 전체 302, 패턴 2에서 남성(man)만 가용 (여성 2024~2026 없음)
+- `celine` → 패턴 1은 FW2026만 200, 패턴 2에서 SS2026+FW2026 가용
+- `ferragamo` → 전 시즌 302 (TagWalk slug 불일치 또는 미등록)
+- 다수 브랜드: FW2026 시즌에서 302 (쇼 미개최 또는 TagWalk 미등록)
+
+**302 리다이렉트 = 홈페이지 → 쓰레기 데이터 수집 위험**:
+- 크롤러가 302를 따라가면 홈페이지의 무관한 이미지(다른 브랜드, 앱스토어 배지, SNS 아이콘)를 수집
+- 정확히 26개인 데이터 = 홈페이지 junk 의심 (20개 추천 이미지 + 6개 UI 아이콘)
+
+**방어 로직** (crawl_tagwalk.py에 적용 완료):
+- `allow_redirects=False` — 302 감지 시 즉시 skip
+- 홈페이지 title 감지 ("discover", "search engine" 포함 시 skip)
+- junk URL 필터 (badge, icon, facebook, instagram 등)
+- fallback 스크래퍼에서 디자이너 slug가 파일명에 포함된 이미지만 수집
+
+**검증/수정 스크립트**:
+```bash
+python scripts/validate_runway_data.py                # 로컬 DB 검증 리포트
+python scripts/validate_runway_data.py --fix           # 문제 데이터 삭제
+python scripts/validate_runway_data.py --fix --recrawl # 삭제 후 재수집 시도
+python scripts/validate_runway_data.py --check-remote  # TagWalk 실제 접속 확인
+python scripts/recrawl_look_search.py                  # look/search 패턴으로 재수집
+```
 
 ## 페이지 구조 (7 pages)
 

@@ -51,7 +51,9 @@ async def list_designers(db: aiosqlite.Connection = Depends(get_db)):
     """런웨이 디자이너 목록 (룩 수 포함)."""
     cursor = await db.execute("""
         SELECT designer_slug, designer, COUNT(*) as look_count,
-               GROUP_CONCAT(DISTINCT season) as seasons
+               GROUP_CONCAT(DISTINCT season) as seasons,
+               GROUP_CONCAT(DISTINCT show_name) as show_names,
+               GROUP_CONCAT(DISTINCT collection_type) as collection_types
         FROM runway_looks
         GROUP BY designer_slug
         ORDER BY designer
@@ -64,7 +66,7 @@ async def list_designers(db: aiosqlite.Connection = Depends(get_db)):
 async def list_seasons(db: aiosqlite.Connection = Depends(get_db)):
     """사용 가능한 시즌 목록."""
     cursor = await db.execute("""
-        SELECT DISTINCT season, season_label
+        SELECT DISTINCT season, season_label, season_shortname
         FROM runway_looks
         ORDER BY season DESC
     """)
