@@ -121,6 +121,48 @@ CREATE INDEX IF NOT EXISTS idx_runway_designer ON runway_looks(designer_slug);
 CREATE INDEX IF NOT EXISTS idx_runway_season ON runway_looks(season);
 CREATE INDEX IF NOT EXISTS idx_runway_designer_season ON runway_looks(designer_slug, season);
 
+-- Vogue Runway: 쇼 메타데이터
+CREATE TABLE IF NOT EXISTS vogue_shows (
+    id TEXT PRIMARY KEY,
+    designer TEXT NOT NULL,
+    designer_slug TEXT NOT NULL,
+    season_slug TEXT NOT NULL,
+    season TEXT NOT NULL,
+    season_label TEXT,
+    show_name TEXT NOT NULL,
+    collection_type TEXT NOT NULL,
+    city TEXT,
+    show_date TEXT,
+    review_url TEXT,
+    total_looks INTEGER DEFAULT 0,
+    total_details INTEGER DEFAULT 0,
+    crawled_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_vogue_shows_designer ON vogue_shows(designer_slug);
+CREATE INDEX IF NOT EXISTS idx_vogue_shows_season ON vogue_shows(season);
+
+-- Vogue Runway: 개별 이미지 (프론트/디테일/백스테이지)
+CREATE TABLE IF NOT EXISTS vogue_runway_images (
+    id TEXT PRIMARY KEY,
+    show_id TEXT NOT NULL REFERENCES vogue_shows(id),
+    designer TEXT NOT NULL,
+    designer_slug TEXT NOT NULL,
+    season TEXT NOT NULL,
+    image_type TEXT NOT NULL,
+    look_number INTEGER,
+    image_url TEXT NOT NULL,
+    image_url_md TEXT,
+    thumbnail_url TEXT,
+    source_url TEXT,
+    alt_text TEXT,
+    crawled_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_vogue_images_show ON vogue_runway_images(show_id);
+CREATE INDEX IF NOT EXISTS idx_vogue_images_designer_season ON vogue_runway_images(designer_slug, season);
+CREATE INDEX IF NOT EXISTS idx_vogue_images_type ON vogue_runway_images(image_type);
+
 CREATE INDEX IF NOT EXISTS idx_products_brand ON products(brand_id);
 CREATE INDEX IF NOT EXISTS idx_products_season ON products(season_id);
 CREATE INDEX IF NOT EXISTS idx_products_category ON products(category_id);

@@ -67,6 +67,7 @@ export default function Sidebar({ selectedBrand, onBrandSelect }) {
     { id: "trend-flow-check", label: "Trend Flow check(Test)", path: "/flow-check" },
     { id: "expert-review", label: "Expert Review", path: "/expert", bold: true },
     { id: "runway", label: "Runway", path: "/runway", bold: true },
+    { id: "vogue-runway", label: "Vogue Runway", path: "/vogue", bold: true },
     { id: "vlm-viewer", label: "Runway(VLM Test)", path: "/vlm", bold: true },
     { id: "market-brand-board", label: "Market Brand Board", path: "/market", bold: true },
     { id: "trend-analysis", label: "Trend Analysis", path: "/trend" },
