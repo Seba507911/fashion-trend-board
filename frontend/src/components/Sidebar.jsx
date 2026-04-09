@@ -61,17 +61,28 @@ export default function Sidebar({ selectedBrand, onBrandSelect }) {
   const navigate = useNavigate();
   const [expandedZoning, setExpandedZoning] = useState(null);
 
-  const navItems = [
+  const [showEtc, setShowEtc] = useState(false);
+  const [showArchive, setShowArchive] = useState(false);
+
+  const mainItems = [
     { id: "briefing", label: "Project Briefing", path: "/" },
-    { id: "trend-flow", label: "Trend Flow", path: "/flow" },
-    { id: "trend-flow-check", label: "Trend Flow check(Test)", path: "/flow-check" },
-    { id: "expert-review", label: "Expert Review", path: "/expert", bold: true },
+    { id: "trend-flow", label: "Trend Flow", path: "/flow", bold: true },
+    { id: "expert-review", label: "Expert Review", path: "/expert" },
     { id: "runway", label: "Runway", path: "/runway", bold: true },
-    { id: "vogue-runway", label: "Vogue Runway", path: "/vogue", bold: true },
-    { id: "vlm-viewer", label: "Runway(VLM Test)", path: "/vlm", bold: true },
     { id: "market-brand-board", label: "Market Brand Board", path: "/market", bold: true },
+  ];
+
+  const etcItems = [
     { id: "trend-analysis", label: "Trend Analysis", path: "/trend" },
     { id: "graph-view", label: "Graph View", path: "/graph" },
+  ];
+
+  const archiveItems = [
+    { id: "arc-trend-flow", label: "Trend Flow (Origin 4-type)", path: "/archive/flow" },
+    { id: "arc-trend-flow-check", label: "Trend Flow Check", path: "/archive/flow-check" },
+    { id: "arc-runway-tagwalk", label: "Runway (TagWalk only)", path: "/archive/runway-tagwalk" },
+    { id: "arc-vogue-runway", label: "Vogue Runway (standalone)", path: "/archive/vogue" },
+    { id: "arc-vlm-viewer", label: "VLM Viewer (standalone)", path: "/archive/vlm" },
   ];
 
   const isActive = (path) => location.pathname === path;
@@ -124,7 +135,7 @@ export default function Sidebar({ selectedBrand, onBrandSelect }) {
           DASHBOARD
         </span>
 
-        {navItems.map((item) => (
+        {mainItems.map((item) => (
           <div key={item.id}>
             <button
               onClick={() => navigate(item.path)}
@@ -238,6 +249,50 @@ export default function Sidebar({ selectedBrand, onBrandSelect }) {
               </div>
             )}
           </div>
+        ))}
+
+        {/* ETC Section */}
+        <button
+          onClick={() => setShowEtc(!showEtc)}
+          className="w-full text-left px-2.5 py-2 mt-3 text-[10px] font-semibold tracking-[1.5px] text-[var(--color-text-muted)] flex items-center gap-1.5 hover:text-[var(--color-text-secondary)]"
+        >
+          <span className="text-[9px]">{showEtc ? "▾" : "▸"}</span>
+          ETC
+        </button>
+        {showEtc && etcItems.map((item) => (
+          <button
+            key={item.id}
+            onClick={() => navigate(item.path)}
+            className={`w-full text-left px-2.5 py-1.5 pl-5 text-[12px] rounded-sm ${
+              isActive(item.path)
+                ? "bg-[var(--color-primary)]/8 text-[var(--color-primary)] font-medium"
+                : "text-[var(--color-text-muted)] hover:bg-black/3"
+            }`}
+          >
+            {item.label}
+          </button>
+        ))}
+
+        {/* Archive Section */}
+        <button
+          onClick={() => setShowArchive(!showArchive)}
+          className="w-full text-left px-2.5 py-2 mt-1 text-[10px] font-semibold tracking-[1.5px] text-[var(--color-text-muted)] flex items-center gap-1.5 hover:text-[var(--color-text-secondary)]"
+        >
+          <span className="text-[9px]">{showArchive ? "▾" : "▸"}</span>
+          ARCHIVE
+        </button>
+        {showArchive && archiveItems.map((item) => (
+          <button
+            key={item.id}
+            onClick={() => navigate(item.path)}
+            className={`w-full text-left px-2.5 py-1.5 pl-5 text-[11px] rounded-sm ${
+              isActive(item.path)
+                ? "bg-[var(--color-primary)]/8 text-[var(--color-primary)] font-medium"
+                : "text-[var(--color-text-muted)] hover:bg-black/3 opacity-60"
+            }`}
+          >
+            {item.label}
+          </button>
         ))}
       </nav>
     </aside>

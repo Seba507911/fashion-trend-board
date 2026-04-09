@@ -1,133 +1,114 @@
 /* ── 프로젝트 데이터 ── */
 const PROJECT = {
   title: "Fashion Trend Intelligence Board",
-  subtitle: "패션 트렌드 전파를 데이터 기반으로 추적하는 대시보드",
-  version: "v1.0",
-  lastUpdate: "2026-03-25",
+  subtitle: "Runway-led 트렌드 전파를 데이터 기반으로 추적·검증하는 대시보드",
+  version: "v2.0",
+  lastUpdate: "2026-04-09",
 };
 
 const HYPOTHESIS = {
-  core: "런웨이 시그널 → 전문가 리포트 → 셀럽 채택 → 마켓 확산 → 다음 시즌 예측",
-  description: "패션 트렌드의 전파 경로를 5단계 파이프라인으로 정량화할 수 있다는 가설을 데이터로 검증합니다.",
+  core: "런웨이 시그널 → 셀럽 / 인플루언서 → 디자이너 브랜드 → 일반 SNS",
+  description: "하이엔드 런웨이에서 시작된 트렌드 키워드가 셀럽·인플루언서 착용 → 소규모 디자이너 브랜드 상품화 → 일반인 구매·착용 SNS 확산으로 이어지는 전파 경로를 시간축으로 정량 추적합니다.",
   origins: [
-    { type: "Runway-led", flow: "런웨이 → 전문가 → 셀럽 → 검색 → 마켓", delay: "6~12개월", color: "#3266ad", zoning: "럭셔리" },
-    { type: "Capital-driven", flow: "브랜드 투자 → 캠페인 → 검색 폭발 → 마켓", delay: "1~3개월", color: "#8B5CF6", zoning: "스포츠/캐주얼" },
-    { type: "Viral / Meme", flow: "소셜 밈 → 틱톡 확산 → 검색 급등 → 마켓 소진", delay: "1~4주", color: "#D97706", zoning: "스트리트" },
-    { type: "Market-organic", flow: "소비자 수요 → 마켓 점진 확대 → 검색 완만 상승", delay: "점진적", color: "#059669", zoning: "아웃도어" },
+    { type: "Runway-led", flow: "런웨이 → 셀럽 → 디자이너 브랜드 → 일반 SNS", delay: "3~6개월", color: "#3266ad", zoning: "핵심 검증 대상" },
+  ],
+  archived: [
+    { type: "Capital-driven", flow: "브랜드 투자 → 캠페인 → 검색 폭발 → 마켓", note: "상품개발 시점과 비교해 의미 낮음 → 참고용", color: "#8B5CF6" },
+    { type: "Viral / Meme", flow: "소셜 밈 → 틱톡 확산 → 검색 급등 → 마켓 소진", note: "예측·대응이 불가한 구조 → 참고용", color: "#D97706" },
+    { type: "Market-organic", flow: "소비자 수요 → 마켓 점진 확대", note: "향후 별도 프로젝트에서 디벨롭 예정", color: "#059669" },
   ],
 };
 
 const DATA_STATS = [
-  { label: "마켓 상품", value: "7,542", sub: "28개 브랜드" },
-  { label: "런웨이 룩", value: "10,930", sub: "38 디자이너 × 6시즌" },
-  { label: "VLM 라벨", value: "10,631", sub: "97.3% 완료" },
-  { label: "대시보드", value: "8 pages", sub: "Production 배포" },
+  { label: "런웨이", value: "61,401", sub: "TagWalk 13,882 + Vogue 47,519" },
+  { label: "마켓 상품", value: "11,565", sub: "35개 브랜드" },
+  { label: "VLM 라벨", value: "10,094", sub: "AI 이미지 분석" },
+  { label: "전문가 키워드", value: "101", sub: "WGSN 26SS 분석" },
 ];
 
 const PAGES = [
+  {
+    name: "Trend Flow",
+    path: "/flow",
+    status: "live",
+    highlight: true,
+    description: "Runway-led 트렌드 전파 흐름을 모니터링합니다. 런웨이 → 셀럽 → SNS → 디자이너 브랜드.",
+    features: ["Runway-led 전파 타임라인", "키워드별 전파 단계 추적", "검증 진행 상황 대시보드"],
+  },
   {
     name: "Runway",
     path: "/runway",
     status: "live",
     highlight: true,
-    description: "38명 디자이너의 10,930개 런웨이 룩을 시즌/태그별로 탐색합니다.",
-    features: ["디자이너별 룩 그리드", "시즌/태그 필터", "Trend Flow 크로스 링크"],
+    description: "TagWalk + Vogue Runway + VLM 분석을 3개 탭으로 통합한 런웨이 데이터 허브.",
+    features: ["TagWalk 13,882 룩", "Vogue 47,519 이미지 (디테일 포함)", "VLM AI 라벨 분석"],
   },
   {
-    name: "Runway VLM Test",
-    path: "/vlm",
-    status: "beta",
-    highlight: true,
-    description: "Claude Vision으로 라벨링된 런웨이 룩의 아이템, 실루엣, 컬러, 소재를 시각화합니다.",
-    features: ["VLM 라벨 필터링", "아이템별 속성 표시", "10,631개 라벨 완료"],
+    name: "Expert Review",
+    path: "/expert",
+    status: "live",
+    description: "WGSN 26SS 리포트 기반 101개 키워드 요약. 참고용 데이터.",
+    features: ["키워드 카테고리 분포 차트", "Pool A/B 분류", "Tier별 키워드 요약"],
   },
   {
     name: "Market Brand Board",
     path: "/market",
     status: "live",
     highlight: true,
-    description: "28개 브랜드의 마켓 상품을 조닝별로 탐색하고, 런웨이 트렌드 키워드로 필터링합니다.",
-    features: ["조닝별 브랜드 하이어라키", "Runway Trend Keywords 칩 필터", "카테고리 8 중분류"],
-  },
-  {
-    name: "Trend Flow",
-    path: "/flow",
-    status: "live",
-    description: "트렌드가 어디에서 시작되어 어떤 경로로 전파되는지 분석하는 Origin 프레임워크입니다.",
-    features: ["Origin 4타입 순서도", "조닝별 Origin 분포", "Market-organic 서브타입"],
-  },
-  {
-    name: "Trend Flow check (Test)",
-    path: "/flow-check",
-    status: "pending",
-    description: "VLM + 마켓 매칭 기반 4단계 drill-down 키워드 대시보드. 키워드 체계 정리 후 고도화 예정.",
-    features: ["시즌/조닝 필터", "카드/매트릭스/타임라인 뷰", "키워드 표준화 후 재구성 예정"],
-  },
-  {
-    name: "Trend Analysis",
-    path: "/trend",
-    status: "live",
-    description: "마켓 + VLM 데이터 기반의 컬러/소재/실루엣 트렌드 분석입니다.",
-    features: ["KPI 카드", "컬러 버블 차트", "브랜드×소재 히트맵"],
-  },
-  {
-    name: "Graph View",
-    path: "/graph",
-    status: "pending",
-    description: "브랜드-소재-컬러-카테고리 관계를 그래프로 시각화. 키워드 체계 정리 후 다양한 관점으로 재구성 예정.",
-    features: ["VLM/Market 모드", "노드 관계 탐색", "키워드 표준화 후 고도화 예정"],
+    description: "35개 브랜드의 마켓 상품을 조닝별로 탐색합니다. 디자이너 브랜드 중심 검증 예정.",
+    features: ["조닝별 브랜드 하이어라키", "카테고리 8 중분류", "디자이너 브랜드 검증 대상"],
   },
 ];
 
 const KEYWORD_STANDARD = {
-  title: "키워드 체계 표준화 (4월 핵심 과제)",
-  description: "런웨이, 마켓, 본사 기준의 키워드를 통합하여 일관된 분석 기반을 마련합니다.",
+  title: "검증 방향 전환 — 왜 디자이너 브랜드인가?",
+  description: "매스 브랜드(Nike, Zara 등)는 생산 리드타임 6~12개월 + 조직 의사결정 느림으로 트렌드 검증에 부적합. 소규모 디자이너 브랜드가 하이엔드 트렌드를 빠르게 재해석하는 실제 전파 경로를 추적합니다.",
   streams: [
     {
-      label: "런웨이 VLM 키워드",
-      source: "Claude Vision 자동 라벨링",
-      lang: "영문",
-      example: "navy, leather, oversized, structured",
-      status: "완료 (10,631 라벨)",
+      label: "런웨이 키워드 (AI + 쇼노트)",
+      source: "VLM 이미지 분석 + 디자이너 쇼 노트 교차",
+      lang: "영문/한글",
+      example: "오픈백 가방, 뾰족한 토 구두, 시어 드레스",
+      status: "세분화 진행 중",
       color: "#3266ad",
     },
     {
-      label: "마켓 브랜드 키워드",
-      source: "크롤링 메타데이터 (상품명, 컬러, 소재)",
-      lang: "한글/영문 혼재",
-      example: "네이비, 가죽, 오버핏, (19)NVY",
-      status: "수집 완료, 정규화 필요",
-      color: "#D97706",
+      label: "셀럽/인플루언서 착용",
+      source: "SNS 모니터링 + 수동 검증",
+      lang: "-",
+      example: "셀럽 A의 레더 재킷, 인플루언서 B의 시스루 룩",
+      status: "팀 동료 분석 중",
+      color: "#8B5CF6",
     },
     {
-      label: "본사 관리 키워드",
-      source: "현업 라벨링 기준 (타 팀 협의 필요)",
-      lang: "한글 기준",
-      example: "네이비, 레더, 오버사이즈, 스트럭처드",
-      status: "진행 예정",
+      label: "디자이너 브랜드 상품화",
+      source: "국내 캐주얼/스트리트 브랜드 크롤링",
+      lang: "한글",
+      example: "Youth, Coor, Mardi, Blankroom 등",
+      status: "기존 데이터 활용 + 검증 대상 재정의",
       color: "#059669",
     },
   ],
-  goal: "3가지 키워드 체계를 동의어 매핑 사전으로 연결 → Trend Flow check, Graph View 등 고도화 기반 마련",
+  goal: "런웨이 키워드가 셀럽 → SNS → 디자이너 브랜드로 전파되는 시간축 타임라인을 구축",
 };
 
 const TIMELINE = [
-  { phase: "Phase 1", period: "3/11 ~ 3/23", label: "데이터 수집 + VLM", status: "done",
-    items: ["28개 브랜드 크롤링 (7,542 상품)", "10,930 런웨이 룩 수집", "VLM 전체 라벨링 완료", "8개 대시보드 페이지 구현 + 배포"] },
-  { phase: "Phase 2", period: "3/24 ~ 4/11", label: "전문가 리포트 + 크롤링 확장", status: "active",
-    items: ["NotebookLM WGSN 리포트 분석 (시즌 예측 + 디자이너 의도)", "키워드 체계 표준화 (VLM × 마켓 × 본사 기준)", "Hyperbrowser 도입 → WAF 차단 브랜드 재시도", "Tagwalk 프리미엄 리포트 교차 검증"] },
-  { phase: "Phase 3", period: "4/14 ~ 4/25", label: "종합 분석", status: "upcoming",
-    items: ["전문가 예측 × 런웨이 VLM × 마켓 데이터 상관관계 분석", "Trend Flow / Graph View 키워드 기반 고도화"] },
-  { phase: "Phase 4", period: "5월", label: "마켓드리븐 정량화", status: "upcoming",
-    items: ["Market-organic 자생 트렌드 정량 지표 설계", "예측 검증 프레임워크 (Pool A/B 사후 검증)"] },
+  { phase: "Phase 1", period: "3/11 ~ 4/8", label: "데이터 수집 인프라", status: "done",
+    items: ["35개 브랜드 마켓 크롤링 (11,565 상품)", "TagWalk 13,882 + Vogue 47,519 런웨이 이미지", "VLM 라벨링 10,094개 완료", "WGSN 101 키워드 분석 완료"] },
+  { phase: "Phase 2", period: "4/9 ~ 진행중", label: "Runway-led 검증 전환", status: "active",
+    items: ["핵심 가설 Runway-led 전파로 집중", "팀 동료 정성 분석 (26SS 33브랜드 교차검증)", "셀럽/인플루언서 풀 설정 및 수집 방법 정의", "검증 대상: 매스 브랜드 → 디자이너 브랜드로 전환"] },
+  { phase: "Phase 3", period: "4~5월", label: "전파 타임라인 증명", status: "upcoming",
+    items: ["핵심 트렌드 5~10개 사례 기반 시간축 추적", "런웨이 → 셀럽 → SNS → 디자이너 브랜드 전파 정량화", "VLM 키워드 세분화 (범용 → 구체적 아이템/디테일)"] },
+  { phase: "Phase 4", period: "5~6월", label: "대시보드 고도화", status: "upcoming",
+    items: ["Trend Flow 실데이터 타임라인 대시보드", "셀럽/인플루언서 모니터링 통합", "디자이너 브랜드 중심 마켓 검증 뷰"] },
 ];
 
 const VERIFICATION = [
-  { step: "1", title: "런웨이 시그널 수집", status: "done", detail: "10,930 룩, VLM 라벨 10,631개 완료" },
-  { step: "2", title: "전문가 리포트 분석", status: "active", detail: "WGSN 4개 리포트 NotebookLM 분석 중" },
-  { step: "3", title: "키워드 표준화", status: "active", detail: "VLM × 마켓 × 본사 기준 통합 진행 중" },
-  { step: "4", title: "종합 상관관계", status: "upcoming", detail: "4/18 목표 — 전문가×런웨이×마켓 교차" },
-  { step: "5", title: "마켓드리븐 정량화", status: "upcoming", detail: "5월 — Market-organic 자생 트렌드 발견" },
+  { step: "1", title: "런웨이 데이터 수집", status: "done", detail: "TagWalk 13,882 + Vogue 47,519 이미지 (디테일 샷 포함)" },
+  { step: "2", title: "AI + 전문가 키워드 추출", status: "done", detail: "VLM 10,094 라벨 + WGSN 101 키워드" },
+  { step: "3", title: "셀럽/인플루언서 전파 확인", status: "active", detail: "팀 동료 정성 분석 진행 중 → 셀럽 풀 설정 예정" },
+  { step: "4", title: "일반 SNS 확산 모니터링", status: "upcoming", detail: "인스타/틱톡/샤오홍수 — 타 팀 수집 데이터 연계 예정" },
+  { step: "5", title: "디자이너 브랜드 마켓 검증", status: "upcoming", detail: "소규모 디자이너 브랜드에서 트렌드 상품화 확인" },
 ];
 
 /* ── 컴포넌트 ── */
@@ -197,19 +178,41 @@ export default function ProjectBriefing() {
             </div>
             <p className="text-xs text-[var(--color-text-secondary)] mt-3">{HYPOTHESIS.description}</p>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          {/* Runway-led 핵심 검증 */}
+          <div className="mb-4">
             {HYPOTHESIS.origins.map((o) => (
-              <div key={o.type} className="border border-[var(--color-border)] rounded-lg p-4">
+              <div key={o.type} className="border-2 border-[#3266ad]/30 bg-[#3266ad]/5 rounded-lg p-5">
                 <div className="flex items-center gap-2 mb-2">
                   <span className="w-3 h-3 rounded-full" style={{ backgroundColor: o.color }} />
-                  <span className="text-sm font-semibold" style={{ color: o.color }}>{o.type}</span>
-                  <span className="text-[10px] text-[var(--color-text-muted)] ml-auto">{o.zoning}</span>
+                  <span className="text-sm font-bold" style={{ color: o.color }}>{o.type}</span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 font-semibold ml-2">{o.zoning}</span>
                 </div>
-                <p className="text-[11px] text-[var(--color-text-secondary)]">{o.flow}</p>
+                <p className="text-[12px] text-[var(--color-text-secondary)]">{o.flow}</p>
                 <p className="text-[10px] text-[var(--color-text-muted)] mt-1">전파 딜레이: {o.delay}</p>
               </div>
             ))}
           </div>
+
+          {/* Archived origins — 접이식 */}
+          {HYPOTHESIS.archived && (
+            <details className="text-[11px]">
+              <summary className="text-[var(--color-text-muted)] cursor-pointer hover:text-[var(--color-text-secondary)] mb-2">
+                기타 Origin 타입 (참고용) ▸
+              </summary>
+              <div className="grid grid-cols-3 gap-2 opacity-60">
+                {HYPOTHESIS.archived.map((o) => (
+                  <div key={o.type} className="border border-[var(--color-border)] rounded-lg p-3">
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: o.color }} />
+                      <span className="text-[11px] font-semibold" style={{ color: o.color }}>{o.type}</span>
+                    </div>
+                    <p className="text-[10px] text-[var(--color-text-muted)]">{o.flow}</p>
+                    <p className="text-[9px] text-[var(--color-text-muted)] mt-1 italic">{o.note}</p>
+                  </div>
+                ))}
+              </div>
+            </details>
+          )}
         </section>
 
         {/* Verification Progress */}
@@ -256,7 +259,7 @@ export default function ProjectBriefing() {
                   <div><span className="text-[var(--color-text-muted)]">소스:</span> <span className="text-[var(--color-text-secondary)]">{s.source}</span></div>
                   <div><span className="text-[var(--color-text-muted)]">언어:</span> <span className="text-[var(--color-text-secondary)]">{s.lang}</span></div>
                   <div><span className="text-[var(--color-text-muted)]">예시:</span> <span className="font-mono text-[10px] text-[var(--color-text-secondary)]">{s.example}</span></div>
-                  <Badge status={s.status === "완료 (10,631 라벨)" ? "done" : s.status === "진행 예정" ? "upcoming" : "partial"} />
+                  <Badge status={s.status.includes("완료") ? "done" : s.status.includes("진행") ? "active" : "upcoming"} />
                 </div>
               </div>
             ))}

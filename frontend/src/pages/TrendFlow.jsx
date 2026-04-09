@@ -1,585 +1,232 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
-/* ── Color Constants ── */
-const ORIGIN_COLORS = {
-  runway: "#3266ad",
-  capital: "#8B5CF6",
-  viral: "#D97706",
-  organic: "#059669",
-};
+/* ── Runway-led 전파 플로우 ── */
 
-const ORIGIN_LABELS = {
-  runway: "Runway-led",
-  capital: "Capital-driven",
-  viral: "Viral / Meme",
-  organic: "Market-organic",
-};
-
-/* ── Static Data — 2행 배치 (위: 주요 흐름, 아래: 보조 채널) ── */
-const flowData = {
-  runway: {
-    nodes: [
-      { id: "runway", x: 40, y: 50, w: 120, label: "런웨이 컬렉션", active: true },
-      { id: "expert", x: 210, y: 50, w: 120, label: "전문가 리포트", active: true },
-      { id: "celeb", x: 380, y: 50, w: 110, label: "셀럽 착용", active: true },
-      { id: "search", x: 380, y: 130, w: 110, label: "검색량 상승", active: true },
-      { id: "market", x: 540, y: 50, w: 110, label: "마켓 등장", active: true },
-      { id: "social", x: 210, y: 130, w: 110, label: "소셜 멘션", skip: true },
-      { id: "campaign", x: 40, y: 130, w: 120, label: "캠페인 런칭", skip: true },
-    ],
-    // runway→expert→celeb→market (상단), celeb→search→market (하단 분기)
-    edges: [[0,1],[1,2],[2,4],[2,3],[3,4]],
-    desc: "Runway-led",
-    descText: "런웨이에서 시작하여 전문가→셀럽→마켓 순으로 전파. 시그널이 순차적으로 나타나므로 FTIB가 가장 정확하게 추적 가능. 럭셔리/하이엔드에서 지배적. 전파 딜레이: 평균 6~12개월.",
-  },
-  capital: {
-    nodes: [
-      { id: "runway", x: 40, y: 50, w: 120, label: "런웨이 컬렉션", skip: true },
-      { id: "expert", x: 210, y: 50, w: 120, label: "전문가 리포트", skip: true },
-      { id: "celeb", x: 380, y: 50, w: 130, label: "앰배서더 캠페인", active: true },
-      { id: "search", x: 380, y: 130, w: 110, label: "검색량 폭발", active: true },
-      { id: "market", x: 540, y: 90, w: 110, label: "마켓 빠른반영", active: true },
-      { id: "brand", x: 40, y: 130, w: 130, label: "브랜드 투자 결정", active: true },
-    ],
-    // brand→celeb (좌하→우상), celeb→search (우상→우하), celeb→market, search→market
-    edges: [[5,2],[2,3],[2,4],[3,4]],
-    desc: "Capital-driven",
-    descText: "브랜드가 셀럽 앰배서더/광고에 투자하여 의도적으로 확산. 런웨이·전문가 단계를 건너뜀. 캠페인 시점에 검색량 급등. FTIB에서는 \"셀럽이름+브랜드\" 검색량 조합으로 감지 가능.",
-  },
-  viral: {
-    nodes: [
-      { id: "runway", x: 40, y: 50, w: 120, label: "런웨이 컬렉션", skip: true },
-      { id: "expert", x: 210, y: 50, w: 120, label: "전문가 리포트", skip: true },
-      { id: "celeb", x: 380, y: 50, w: 110, label: "셀럽 착용", skip: true },
-      { id: "search", x: 380, y: 130, w: 110, label: "검색량 급등", active: true },
-      { id: "market", x: 540, y: 90, w: 110, label: "마켓 빠른소진", active: true },
-      { id: "social", x: 40, y: 130, w: 130, label: "소셜 밈 발생", active: true },
-      { id: "tiktok", x: 210, y: 130, w: 120, label: "틱톡/릴스 확산", active: true },
-    ],
-    // social→tiktok→search→market
-    edges: [[5,6],[6,3],[3,4]],
-    desc: "Viral / Meme",
-    descText: "소셜미디어에서 자연발생한 밈으로 예측 불가하게 확산. 런웨이·전문가·셀럽 시그널이 모두 부재하거나 후행. FTIB에서는 소셜 멘션 모니터링 추가 시 감지 가능. 빠르지만 단명하는 패턴.",
-  },
-  organic: {
-    nodes: [
-      { id: "runway", x: 40, y: 50, w: 120, label: "런웨이 컬렉션", skip: true },
-      { id: "expert", x: 210, y: 50, w: 120, label: "전문가 리포트", skip: true },
-      { id: "celeb", x: 380, y: 50, w: 110, label: "셀럽 착용", skip: true },
-      { id: "search", x: 210, y: 130, w: 130, label: "검색량 완만상승", active: true },
-      { id: "market", x: 40, y: 130, w: 130, label: "마켓 점진적 확대", active: true },
-      { id: "demand", x: 540, y: 50, w: 110, label: "소비자 실수요", active: true },
-    ],
-    // demand→market, market→search
-    edges: [[5,4],[4,3]],
-    desc: "Market-organic",
-    descText: "선행 시그널 없이 소비자 수요에서 자연스럽게 성장. 기능성 소재나 실용적 카테고리에서 자주 나타남. FTIB에서는 반복 크롤링으로 상품 수 점진 증가를 감지. 스포츠/아웃도어에서 가장 지배적.",
-    subtypes: [
-      {
-        id: "lifestyle",
-        label: "Lifestyle-shift",
-        color: "#059669",
-        icon: "🏃",
-        desc: "라이프스타일 변화가 수요를 만드는 패턴",
-        detail: "캠핑 붐 → 고프코어, 러닝 인구 증가 → 러닝화 일상화, 자전거 출퇴근 → 테크웨어. 변화가 점진적이고, 일단 정착되면 쉽게 사라지지 않는다. 수요 곡선이 완만하게 상승 후 유지.",
-        curve: "완만 상승 → 유지",
-        monitor: "라이프스타일 외부 데이터 (스포츠 참여율, 캠핑장 예약, 러닝앱 사용자 추이)",
-        examples: "고프코어, 러닝코어, 테니스코어, 발레코어",
-      },
-      {
-        id: "necessity",
-        label: "Necessity-driven",
-        color: "#2563eb",
-        icon: "🌡️",
-        desc: "외부 환경이 구매를 강제하는 패턴",
-        detail: "한파 → 롱패딩, 폭염 → 냉감소재, 미세먼지 → 마스크 패션화. 계절/환경에 직접 연동되어 예측이 상대적으로 쉽지만 일시적일 수 있다. 환경 조건 종료 시 수요도 정상화.",
-        curve: "환경 연동 상승 → 조건 해소 시 하락",
-        monitor: "기상 데이터, 환경 지표 (미세먼지, 자외선 등)",
-        examples: "롱패딩, 냉감소재, UV 차단 의류",
-      },
-      {
-        id: "event",
-        label: "Event-triggered",
-        color: "#DC2626",
-        icon: "⚡",
-        desc: "예측 불가 외부 충격이 소비 패턴을 급변시키는 패턴",
-        detail: "코로나 → 스웨트셋업/라운지웨어. 마켓 볼륨이 점진적이 아닌 급격히 치솟는 형태. 이벤트 종료 후 일부는 영구 정착(재택근무 → 컴포트웨어), 일부는 소멸하는 이중 궤적.",
-        curve: "급상승 → 이벤트 종료 후 분기 (정착 or 소멸)",
-        monitor: "이벤트 발생 후 마켓 반응 속도 빠른 감지가 핵심 (볼륨 급증 탐지)",
-        examples: "라운지웨어, 컴포트웨어, 홈트레이닝복",
-      },
-    ],
-  },
-};
-
-const zoneData = [
+const FLOW_STEPS = [
   {
-    name: "럭셔리 / 하이엔드",
-    shortDesc: "Lemaire, Prada, Chanel 등\n런웨이 직접 반영",
-    dist: [60, 25, 10, 5],
-    descTitle: "럭셔리 / 하이엔드",
-    descText: "Runway-led 60%로 지배적. 런웨이 시그널이 가장 직접적으로 반영되며, 같은 시즌 내에 마켓 등장. Capital-driven(앰배서더)이 25%로 보조. FTIB 핵심 추적 영역.",
-    monitorPoint: "런웨이 태그 → WGSN/Tagwalk 교차 → 마켓 매칭. 풀 A 키워드 위주 추적.",
+    id: "runway",
+    label: "런웨이 시그널",
+    status: "done",
+    color: "#3266ad",
+    detail: "하이엔드 디자이너 런웨이에서 키워드/아이템 추출",
+    data: "TagWalk 13,882 + Vogue 47,519 이미지",
+    sub: "AI 이미지 분석 + 쇼 노트 교차 검증으로 트렌드 키워드 도출",
   },
   {
-    name: "스포츠 / 아웃도어",
-    shortDesc: "Nike, Descente, NorthFace\n기획 리드타임 김",
-    dist: [15, 30, 15, 40],
-    descTitle: "스포츠 / 아웃도어",
-    descText: "Market-organic 40%로 지배적. 기능성·실용성 수요가 자체적으로 성장. Capital-driven(선수/모델 앰배서더) 30%. 기획 리드타임이 길어 런웨이 영향은 간접적(15%).",
-    monitorPoint: "마켓 상품 수 점진 변화 + 앰배서더 캠페인 감지. 반복 크롤링이 핵심.",
+    id: "celeb",
+    label: "셀럽 / 인플루언서",
+    status: "active",
+    color: "#8B5CF6",
+    detail: "런웨이 트렌드를 착용하는 셀럽·인플루언서 모니터링",
+    data: "셀럽 풀 설정 진행 중",
+    sub: "엠배서더 구분, 착용 시점 기록, 영향력 분류 (Top / Mid / Micro)",
   },
   {
-    name: "캐주얼 / 스트리트",
-    shortDesc: "MLB, Youth, Marithe\n빠른 사이클",
-    dist: [20, 30, 35, 15],
-    descTitle: "캐주얼 / 스트리트",
-    descText: "Viral/Meme 35%와 Capital-driven 30%가 지배적. SNS 밈에서 시작되는 트렌드가 많고, 셀럽 착용 효과가 큼. 사이클이 빨라 Runway-led는 20%에 불과.",
-    monitorPoint: "소셜 멘션 + 셀럽 검색량 스파이크가 핵심 시그널. 틱톡/인스타 해시태그 추적 필요.",
+    id: "designer",
+    label: "디자이너 브랜드",
+    status: "upcoming",
+    color: "#059669",
+    detail: "소규모 디자이너 브랜드에서 트렌드 상품화 확인",
+    data: "국내 캐주얼/스트리트 브랜드 중심",
+    sub: "런웨이를 직접 참조해 자기 해석으로 빠르게 상품화. 일반인이 구매 가능한 상품의 공급원.",
   },
   {
-    name: "SPA / 매스",
-    shortDesc: "Zara, H&M, 무신사\n모든 Origin 팔로우",
-    dist: [25, 20, 30, 25],
-    descTitle: "SPA / 매스",
-    descText: "모든 Origin을 빠르게 팔로우(각 20~30%). 반응 속도가 핵심 — Zara는 2~4개월 내 런웨이 트렌드를 상품화. 무신사 입점 브랜드도 유사 패턴.",
-    monitorPoint: "4가지 Origin 시그널 중 어느 것이든 감지되면 마켓 반영까지 가장 짧은 딜레이. 마켓 반복 크롤링으로 \"누가 먼저 반영했는가\" 추적.",
+    id: "sns",
+    label: "일반 SNS 확산",
+    status: "upcoming",
+    color: "#D97706",
+    detail: "인스타그램/틱톡/샤오홍수에서 일반인 착용 확산 모니터링",
+    data: "타 팀 SNS 수집 데이터 연계 예정",
+    sub: "디자이너 브랜드 상품 출시 후 구매·착용한 일반인의 #OOTD 확산으로 대중화 확인.",
   },
 ];
 
-const timelineData = {
-  runway: {
-    label: "Runway-led",
-    rows: [
-      { label: "런웨이", left: 0, width: 8, opacity: 1, text: "●" },
-      { label: "전문가", left: 5, width: 15, opacity: 0.7, text: "리포트" },
-      { label: "셀럽", left: 25, width: 20, opacity: 0.55, text: "착용" },
-      { label: "검색량", left: 30, width: 35, opacity: 0.4, text: "상승" },
-      { label: "마켓", left: 40, width: 45, opacity: 0.3, text: "상품 등장" },
-    ],
-  },
-  capital: {
-    label: "Capital-driven",
-    rows: [
-      { label: "런웨이", left: 0, width: 5, opacity: 0.2, text: "약" },
-      { label: "전문가", left: 5, width: 8, opacity: 0.2, text: "약" },
-      { label: "캠페인", left: 20, width: 10, opacity: 1, text: "런칭!" },
-      { label: "검색량", left: 22, width: 30, opacity: 0.6, text: "폭발" },
-      { label: "마켓", left: 25, width: 40, opacity: 0.35, text: "빠른 반영" },
-    ],
-  },
-  viral: {
-    label: "Viral / Meme",
-    rows: [
-      { label: "런웨이", left: 0, width: 3, opacity: 0.15, text: "—" },
-      { label: "전문가", left: 0, width: 3, opacity: 0.15, text: "—" },
-      { label: "소셜", left: 35, width: 12, opacity: 1, text: "밈 발생!" },
-      { label: "검색량", left: 40, width: 20, opacity: 0.6, text: "급등" },
-      { label: "마켓", left: 45, width: 25, opacity: 0.35, text: "빠른 소진" },
-    ],
-  },
-  organic: {
-    label: "Market-organic",
-    rows: [
-      { label: "런웨이", left: 0, width: 3, opacity: 0.15, text: "—" },
-      { label: "전문가", left: 0, width: 3, opacity: 0.15, text: "—" },
-      { label: "검색량", left: 10, width: 70, opacity: 0.25, text: "완만한 상승" },
-      { label: "마켓", left: 5, width: 80, opacity: 0.35, text: "점진적 확대" },
-    ],
-  },
+const STATUS_STYLE = {
+  done: { bg: "bg-emerald-500", text: "text-white", label: "완료" },
+  active: { bg: "bg-blue-500", text: "text-white", label: "진행 중" },
+  upcoming: { bg: "bg-gray-200", text: "text-gray-500", label: "예정" },
 };
 
-/* ── Tab 0: 2행 배치 Flow Diagram (이전 레이아웃 + 깔끔한 화살표) ── */
-function FlowDiagram({ origin }) {
-  const data = flowData[origin];
-  const color = ORIGIN_COLORS[origin];
-  const [visible, setVisible] = useState(false);
-  const nodeH = 36;
+const WHY_NOT_MASS = [
+  { factor: "의사결정 속도", mass: "대조직, 다층 승인", designer: "소수 인력, 빠른 결정" },
+  { factor: "생산 리드타임", mass: "6~12개월 (벤더 의뢰)", designer: "1~3개월 (자체/소규모)" },
+  { factor: "트렌드 반영", mass: "1~2시즌 지연, 간혹 오해석", designer: "실시간~1시즌, 자기 해석" },
+  { factor: "데이터 의미", mass: "생산 사이클 결과", designer: "실제 트렌드 수용/감도" },
+];
 
-  useEffect(() => {
-    setVisible(false);
-    const t = setTimeout(() => setVisible(true), 50);
-    return () => clearTimeout(t);
-  }, [origin]);
+const SAMPLE_KEYWORDS = [
+  { keyword: "레더", runway: "22/33 브랜드", status: "셀럽 검증 중", propagation: 75 },
+  { keyword: "시어/트랜스루선트", runway: "20/33 브랜드", status: "셀럽 검증 중", propagation: 65 },
+  { keyword: "크롭탑", runway: "19/33 브랜드", status: "SNS 확산 확인", propagation: 80 },
+  { keyword: "러플/볼륨", runway: "17/33 브랜드", status: "셀럽 검증 중", propagation: 55 },
+  { keyword: "워크웨어", runway: "15/33 브랜드", status: "대기", propagation: 40 },
+  { keyword: "오픈백 가방", runway: "AI 감지", status: "마켓 출현 확인", propagation: 70 },
+  { keyword: "뾰족한 토 구두", runway: "AI 감지", status: "마켓 출현 확인", propagation: 60 },
+];
 
-  // 두 노드 간 연결점 계산
-  function getEdgePath(from, to) {
-    const fCx = from.x + from.w / 2;
-    const fCy = from.y + nodeH / 2;
-    const tCx = to.x + to.w / 2;
-    const tCy = to.y + nodeH / 2;
-    const fR = from.x + from.w;
-    const tL = to.x;
-
-    // 같은 행, 좌→우: 오른쪽 중심 → 왼쪽 중심
-    if (Math.abs(fCy - tCy) < 20 && fR < tL) {
-      return `M${fR},${fCy} L${tL},${tCy}`;
-    }
-    // 위→아래 (같은 열 근처): 하단 중심 → 상단 중심, 부드러운 S커브
-    if (tCy > fCy && Math.abs(fCx - tCx) < from.w) {
-      return `M${fCx},${from.y + nodeH} C${fCx},${from.y + nodeH + 25} ${tCx},${to.y - 25} ${tCx},${to.y}`;
-    }
-    // 좌하→우상 대각선: 부드러운 베지어
-    if (fCy > tCy) {
-      return `M${fR},${fCy} C${fR + 30},${fCy} ${tL - 30},${tCy} ${tL},${tCy}`;
-    }
-    // 우상→좌하 (역방향): 직선 연결
-    if (tCx < fCx) {
-      return `M${from.x},${fCy} L${to.x + to.w},${tCy}`;
-    }
-    // 기본: 대각선 베지어
-    return `M${fR},${fCy} C${fR + 40},${fCy} ${tL - 40},${tCy} ${tL},${tCy}`;
-  }
-
+function FlowDiagram() {
   return (
-    <svg
-      width="100%"
-      viewBox="0 0 700 210"
-      className="my-4"
-      style={{ transition: "opacity 0.3s", opacity: visible ? 1 : 0 }}
-    >
-      <defs>
-        <marker
-          id={`arrow-${origin}`}
-          viewBox="0 0 10 10"
-          refX="9"
-          refY="5"
-          markerWidth="7"
-          markerHeight="7"
-          orient="auto-start-reverse"
-        >
-          <path d="M1 1.5L7.5 5L1 8.5" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        </marker>
-      </defs>
-
-      {/* Edges */}
-      {data.edges.map(([fromIdx, toIdx], i) => {
-        const from = data.nodes[fromIdx];
-        const to = data.nodes[toIdx];
-        const pathD = getEdgePath(from, to);
+    <div className="flex items-stretch gap-0 mb-8">
+      {FLOW_STEPS.map((step, i) => {
+        const st = STATUS_STYLE[step.status];
         return (
-          <path
-            key={`edge-${i}`}
-            d={pathD}
-            stroke={color}
-            strokeWidth="1.5"
-            fill="none"
-            markerEnd={`url(#arrow-${origin})`}
-            opacity={visible ? 0.55 : 0}
-            style={{ transition: `opacity 0.4s ease ${0.1 + i * 0.12}s` }}
-          />
-        );
-      })}
-
-      {/* Nodes */}
-      {data.nodes.map((n, i) => (
-        <g
-          key={n.id}
-          opacity={visible ? (n.skip ? 0.25 : 1) : 0}
-          style={{ transition: `opacity 0.4s ease ${0.05 + i * 0.08}s` }}
-        >
-          <rect
-            x={n.x}
-            y={n.y}
-            width={n.w}
-            height={nodeH}
-            rx={8}
-            fill={n.skip ? "rgba(128,128,128,0.04)" : `${color}12`}
-            stroke={n.skip ? "rgba(128,128,128,0.2)" : color}
-            strokeWidth={n.skip ? "0.5" : "1"}
-            strokeDasharray={n.skip ? "4 3" : undefined}
-          />
-          <text
-            x={n.x + n.w / 2}
-            y={n.y + nodeH / 2}
-            textAnchor="middle"
-            dominantBaseline="central"
-            fontSize="12"
-            fontWeight="500"
-            fill={n.skip ? "rgba(128,128,128,0.45)" : "var(--color-text-secondary)"}
-            style={{ fontFamily: "var(--font-sans, system-ui)" }}
-          >
-            {n.label}
-          </text>
-        </g>
-      ))}
-    </svg>
-  );
-}
-
-/* ── Tab 1: Zone Cards ── */
-function OriginBar({ dist }) {
-  const colors = [ORIGIN_COLORS.runway, ORIGIN_COLORS.capital, ORIGIN_COLORS.viral, ORIGIN_COLORS.organic];
-  return (
-    <div className="flex h-2 rounded-full overflow-hidden mt-3 bg-[var(--color-bg)]">
-      {dist.map((pct, i) => (
-        <div
-          key={i}
-          className="h-full transition-all duration-400"
-          style={{ width: `${pct}%`, backgroundColor: colors[i] }}
-        />
-      ))}
-    </div>
-  );
-}
-
-function OriginLegend() {
-  const origins = ["runway", "capital", "viral", "organic"];
-  return (
-    <div className="flex gap-4 mt-4 flex-wrap">
-      {origins.map((key) => (
-        <span key={key} className="flex items-center gap-1.5 text-[11px] text-[var(--color-text-secondary)]">
-          <span
-            className="w-2.5 h-2.5 rounded-sm inline-block"
-            style={{ backgroundColor: ORIGIN_COLORS[key] }}
-          />
-          {ORIGIN_LABELS[key]}
-        </span>
-      ))}
-    </div>
-  );
-}
-
-/* ── Tab 2: Timeline ── */
-function TimelineSection({ originKey, isLast }) {
-  const data = timelineData[originKey];
-  const color = ORIGIN_COLORS[originKey];
-
-  return (
-    <div className={`pb-5 ${!isLast ? "mb-5 border-b border-[var(--color-border)]" : ""}`}>
-      <div className="text-sm font-semibold mt-2 mb-3 flex items-center gap-2" style={{ color }}>
-        <span className="w-3 h-3 rounded-sm inline-block" style={{ backgroundColor: color }} />
-        {data.label}
-      </div>
-      {data.rows.map((row, i) => (
-        <div key={i} className="flex items-center gap-0 my-1.5 relative">
-          <div className="w-[100px] text-xs text-[var(--color-text-secondary)] shrink-0 font-medium">
-            {row.label}
-          </div>
-          <div className="flex-1 h-7 relative bg-[var(--color-surface)] rounded overflow-hidden">
-            <div
-              className="absolute h-full rounded flex items-center px-2 text-[10px] font-medium text-white whitespace-nowrap transition-all duration-500"
-              style={{
-                left: `${row.left}%`,
-                width: `${row.width}%`,
-                backgroundColor: color,
-                opacity: row.opacity,
-              }}
-            >
-              {row.text}
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-/* ── Main Page ── */
-export default function TrendFlow() {
-  const [activeTab, setActiveTab] = useState(0);
-  const [selectedOrigin, setSelectedOrigin] = useState("runway");
-  const [selectedZone, setSelectedZone] = useState(0);
-
-  const tabs = [
-    "Origin별 시그널 플로우",
-    "조닝별 Origin 분포",
-    "통합 타임라인 비교",
-  ];
-
-  return (
-    <main className="flex-1 flex flex-col overflow-hidden bg-[var(--color-bg)]">
-      {/* Sticky Header + Tabs */}
-      <div className="shrink-0 bg-[var(--color-bg)] border-b border-[var(--color-border)] px-8 pt-6">
-        <div className="max-w-[1100px] mx-auto">
-          <h1 className="font-['Lora'] text-xl font-semibold tracking-wide mb-1">
-            Trend Origin Flow Framework
-          </h1>
-          <p className="text-sm text-[var(--color-text-secondary)] mb-4">
-            트렌드가 어디에서 시작되어 어떤 경로로 전파되는지 분석하는 프레임워크
-          </p>
-
-          <div className="flex gap-0">
-            {tabs.map((label, i) => (
-              <button
-                key={i}
-                onClick={() => setActiveTab(i)}
-                className={`px-5 py-2.5 text-[13px] font-medium border-b-2 transition-all bg-transparent ${
-                  activeTab === i
-                    ? "text-[var(--color-primary)] border-[var(--color-primary)]"
-                    : "text-[var(--color-text-secondary)] border-transparent hover:text-[var(--color-text-secondary)]"
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Scrollable Content */}
-      <div className="flex-1 overflow-y-auto px-8 py-6">
-      <div className="max-w-[1100px] mx-auto">
-        {/* Tab 0: Origin Flow Patterns */}
-        {activeTab === 0 && (
-          <div>
-            <div className="flex gap-2 mb-3">
-              {Object.keys(ORIGIN_LABELS).map((key) => (
-                <button
-                  key={key}
-                  onClick={() => setSelectedOrigin(key)}
-                  className={`px-3.5 py-1.5 text-xs rounded-md border transition-all ${
-                    selectedOrigin === key
-                      ? "border-[var(--color-primary)] bg-[var(--color-primary)]/8 text-[var(--color-primary)] font-medium"
-                      : "border-[var(--color-border)] bg-[var(--color-bg)] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface)]"
-                  }`}
-                >
-                  {ORIGIN_LABELS[key]}
-                </button>
-              ))}
-            </div>
-
-            <FlowDiagram origin={selectedOrigin} />
-
-            <div className="mt-4 p-4 bg-[var(--color-surface)] rounded-md text-xs leading-relaxed text-[var(--color-text-secondary)]">
-              <strong className="text-[var(--color-text-secondary)] font-medium">
-                {flowData[selectedOrigin].desc}
-              </strong>
-              {" — "}
-              {flowData[selectedOrigin].descText}
-            </div>
-
-            {/* Market-organic 서브타입 */}
-            {flowData[selectedOrigin].subtypes && (
-              <div className="mt-6">
-                <h3 className="text-sm font-semibold text-[var(--color-text)] mb-3">
-                  Market-organic 서브타입
-                  <span className="font-normal text-[var(--color-text-muted)] ml-2 text-xs">
-                    — 발생 동인별 세분화
-                  </span>
-                </h3>
-                <div className="grid grid-cols-3 gap-3">
-                  {flowData[selectedOrigin].subtypes.map((sub) => (
-                    <div
-                      key={sub.id}
-                      className="rounded-lg border border-[var(--color-border)] p-4 hover:border-[var(--color-primary)]/30 transition-all"
-                    >
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="text-base">{sub.icon}</span>
-                        <span className="text-[13px] font-semibold" style={{ color: sub.color }}>
-                          {sub.label}
-                        </span>
-                      </div>
-                      <p className="text-[11px] text-[var(--color-text-secondary)] font-medium mb-2">
-                        {sub.desc}
-                      </p>
-                      <p className="text-[11px] text-[var(--color-text-muted)] leading-relaxed mb-3">
-                        {sub.detail}
-                      </p>
-                      <div className="space-y-1.5">
-                        <div className="flex items-start gap-1.5">
-                          <span className="text-[10px] text-[var(--color-text-muted)] shrink-0 font-medium w-[52px]">수요 곡선</span>
-                          <span className="text-[10px] text-[var(--color-text-secondary)]">{sub.curve}</span>
-                        </div>
-                        <div className="flex items-start gap-1.5">
-                          <span className="text-[10px] text-[var(--color-text-muted)] shrink-0 font-medium w-[52px]">모니터링</span>
-                          <span className="text-[10px] text-[var(--color-text-secondary)]">{sub.monitor}</span>
-                        </div>
-                        <div className="flex items-start gap-1.5">
-                          <span className="text-[10px] text-[var(--color-text-muted)] shrink-0 font-medium w-[52px]">사례</span>
-                          <span className="text-[10px] text-[var(--color-text-secondary)]">{sub.examples}</span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+          <div key={step.id} className="flex-1 flex items-center">
+            <div className={`flex-1 border rounded-xl p-5 ${
+              step.status === "done" ? "border-emerald-300 bg-emerald-50/50" :
+              step.status === "active" ? "border-blue-300 bg-blue-50/50" :
+              "border-[var(--color-border)] bg-white"
+            }`}>
+              <div className="flex items-center gap-2 mb-2">
+                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold ${st.bg} ${st.text}`}>
+                  {step.status === "done" ? "✓" : i + 1}
                 </div>
+                <span className="text-sm font-bold" style={{ color: step.color }}>{step.label}</span>
               </div>
+              <p className="text-xs text-[var(--color-text-secondary)] mb-1">{step.detail}</p>
+              <p className="text-[10px] text-[var(--color-text-muted)]">{step.data}</p>
+            </div>
+            {i < FLOW_STEPS.length - 1 && (
+              <div className="text-[var(--color-text-muted)] px-2 text-lg shrink-0">→</div>
             )}
           </div>
-        )}
+        );
+      })}
+    </div>
+  );
+}
 
-        {/* Tab 1: Zone Distribution — 2×2 */}
-        {activeTab === 1 && (
-          <div>
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              {zoneData.map((zone, i) => (
-                <button
-                  key={i}
-                  onClick={() => setSelectedZone(i)}
-                  className={`text-left p-5 rounded-lg border transition-all ${
-                    selectedZone === i
-                      ? "border-[var(--color-primary)] bg-[var(--color-primary)]/5"
-                      : "border-[var(--color-border)] bg-[var(--color-surface)] hover:border-[var(--color-primary)]/30"
-                  }`}
-                >
-                  <div className="text-sm font-semibold mb-2">{zone.name}</div>
-                  <div className="text-xs text-[var(--color-text-secondary)] leading-relaxed whitespace-pre-line mb-1">
-                    {zone.shortDesc}
-                  </div>
-                  <OriginBar dist={zone.dist} />
-                  <div className="flex gap-3 mt-2">
-                    {zone.dist.map((pct, j) => (
-                      <span key={j} className="text-[10px] text-[var(--color-text-muted)]">
-                        {["R", "C", "V", "O"][j]} {pct}%
-                      </span>
-                    ))}
-                  </div>
-                </button>
-              ))}
-            </div>
+export default function TrendFlow() {
+  const [expandWhy, setExpandWhy] = useState(false);
 
-            <OriginLegend />
+  return (
+    <main className="flex-1 overflow-y-auto bg-[var(--color-bg)]">
+      <div className="max-w-[1100px] mx-auto px-8 py-10">
 
-            <div className="mt-4 p-4 bg-[var(--color-surface)] rounded-md text-xs leading-relaxed text-[var(--color-text-secondary)]">
-              <strong className="text-[var(--color-text-secondary)] font-medium">
-                {zoneData[selectedZone].descTitle}
-              </strong>
-              {" — "}
-              {zoneData[selectedZone].descText}
-              <br /><br />
-              <strong className="text-[var(--color-text-secondary)] font-medium">
-                모니터링 포인트:
-              </strong>
-              {" "}
-              {zoneData[selectedZone].monitorPoint}
-            </div>
-          </div>
-        )}
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="font-['Lora'] text-xl font-semibold tracking-wide">Trend Flow</h1>
+          <p className="text-sm text-[var(--color-text-secondary)] mt-1">
+            Runway-led 트렌드 전파 모니터링 — 런웨이 → 셀럽 → 디자이너 브랜드 → 일반 SNS
+          </p>
+        </div>
 
-        {/* Tab 2: Timeline Comparison */}
-        {activeTab === 2 && (
-          <div>
-            <div className="text-sm font-medium mb-3">
-              Origin별 시그널 발생 타이밍 비교
-            </div>
+        {/* Flow Diagram */}
+        <FlowDiagram />
 
-            <div className="flex items-center gap-0 mb-1 ml-[100px]">
-              <div className="flex-1 flex justify-between text-[10px] text-[var(--color-text-muted)] font-mono">
-                <span>런웨이 쇼</span>
-                <span>+2개월</span>
-                <span>+4개월</span>
-                <span>+6개월</span>
-                <span>+9개월</span>
-                <span>+12개월</span>
+        {/* Detailed Steps */}
+        <div className="grid grid-cols-2 gap-4 mb-8">
+          {FLOW_STEPS.map((step) => (
+            <div key={step.id} className="bg-white border border-[var(--color-border)] rounded-lg p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="w-3 h-3 rounded-full" style={{ backgroundColor: step.color }} />
+                <span className="text-sm font-semibold" style={{ color: step.color }}>{step.label}</span>
+                <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ml-auto ${
+                  step.status === "done" ? "bg-emerald-100 text-emerald-700" :
+                  step.status === "active" ? "bg-blue-100 text-blue-700" :
+                  "bg-gray-100 text-gray-500"
+                }`}>
+                  {STATUS_STYLE[step.status].label}
+                </span>
               </div>
+              <p className="text-xs text-[var(--color-text-secondary)] leading-relaxed">{step.sub}</p>
             </div>
+          ))}
+        </div>
 
-            {["runway", "capital", "viral", "organic"].map((key, i) => (
-              <TimelineSection key={key} originKey={key} isLast={i === 3} />
-            ))}
-
-            <div className="mt-4 p-3 bg-[var(--color-surface)] rounded-md text-xs leading-relaxed text-[var(--color-text-secondary)]">
-              <strong className="text-[var(--color-text-secondary)] font-medium">
-                핵심 관찰:
-              </strong>
-              {" "}
-              Runway-led는 시그널이 순차적으로 나타나 예측 가능. Capital-driven은 캠페인 시점에 급등. Viral은 예측 불가하지만 소셜→검색 순서가 명확. Market-organic은 선행 시그널 없이 점진적 — FTIB의 반복 크롤링으로 감지 가능.
+        {/* Why Designer Brands */}
+        <div className="bg-white border border-[var(--color-border)] rounded-lg p-5 mb-8">
+          <button
+            onClick={() => setExpandWhy(!expandWhy)}
+            className="w-full text-left flex items-center justify-between"
+          >
+            <h3 className="text-sm font-semibold text-[var(--color-text)]">
+              왜 매스 브랜드가 아닌 디자이너 브랜드인가?
+            </h3>
+            <span className="text-xs text-[var(--color-text-muted)]">{expandWhy ? "▴" : "▾"}</span>
+          </button>
+          {expandWhy && (
+            <div className="mt-4">
+              <p className="text-xs text-[var(--color-text-secondary)] mb-3">
+                매스 브랜드(Nike, Zara 등)는 생산 리드타임과 조직 구조 문제로 트렌드 전파 검증에 부적합합니다.
+                소규모 디자이너 브랜드가 하이엔드 트렌드를 빠르게 재해석하는 실제 전파 경로를 추적합니다.
+              </p>
+              <table className="w-full text-xs border-collapse">
+                <thead>
+                  <tr className="border-b border-[var(--color-border)]">
+                    <th className="text-left py-2 text-[var(--color-text-muted)]">요인</th>
+                    <th className="text-center py-2 text-red-400">매스 브랜드</th>
+                    <th className="text-center py-2 text-emerald-600">디자이너 브랜드</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {WHY_NOT_MASS.map((row) => (
+                    <tr key={row.factor} className="border-b border-[var(--color-border)]/50">
+                      <td className="py-2 font-medium text-[var(--color-text)]">{row.factor}</td>
+                      <td className="py-2 text-center text-[var(--color-text-muted)]">{row.mass}</td>
+                      <td className="py-2 text-center text-[var(--color-text-secondary)]">{row.designer}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
-        <div className="h-8" />
-      </div>
+        {/* Keyword Tracking Table */}
+        <div className="bg-white border border-[var(--color-border)] rounded-lg p-5">
+          <h3 className="text-sm font-semibold text-[var(--color-text)] mb-4">
+            26SS 핵심 키워드 전파 현황
+          </h3>
+          <p className="text-xs text-[var(--color-text-muted)] mb-4">
+            팀 동료 정성 분석 기반 — 정량 데이터 연동 진행 중
+          </p>
+          <table className="w-full text-xs border-collapse">
+            <thead>
+              <tr className="border-b border-[var(--color-border)]">
+                <th className="text-left py-2.5 text-[var(--color-text-muted)]">키워드</th>
+                <th className="text-center py-2.5 text-[var(--color-text-muted)]">런웨이</th>
+                <th className="text-center py-2.5 text-[var(--color-text-muted)]">검증 상태</th>
+                <th className="text-left py-2.5 text-[var(--color-text-muted)] w-48">전파 진행도</th>
+              </tr>
+            </thead>
+            <tbody>
+              {SAMPLE_KEYWORDS.map((kw) => (
+                <tr key={kw.keyword} className="border-b border-[var(--color-border)]/50 hover:bg-gray-50">
+                  <td className="py-2.5 font-medium text-[var(--color-text)]">{kw.keyword}</td>
+                  <td className="py-2.5 text-center text-[var(--color-text-secondary)]">{kw.runway}</td>
+                  <td className="py-2.5 text-center">
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${
+                      kw.status.includes("확인") ? "bg-emerald-100 text-emerald-700" :
+                      kw.status.includes("검증") ? "bg-blue-100 text-blue-700" :
+                      "bg-gray-100 text-gray-500"
+                    }`}>
+                      {kw.status}
+                    </span>
+                  </td>
+                  <td className="py-2.5">
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                        <div
+                          className="h-full rounded-full"
+                          style={{
+                            width: `${kw.propagation}%`,
+                            backgroundColor: kw.propagation > 70 ? "#059669" : kw.propagation > 50 ? "#3266ad" : "#9CA3AF",
+                          }}
+                        />
+                      </div>
+                      <span className="text-[10px] text-[var(--color-text-muted)] w-8 text-right">{kw.propagation}%</span>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="text-center text-[11px] text-[var(--color-text-muted)] mt-6 py-4">
+          기타 Origin 타입 (Capital-driven, Viral/Meme, Market-organic)은{" "}
+          <a href="/archive/flow" className="underline hover:text-[var(--color-primary)]">Archive</a>에서 확인
+        </div>
       </div>
     </main>
   );
