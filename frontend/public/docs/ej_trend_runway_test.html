@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FTIB — 26 S/S Runway Intelligence</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#111111;--s1:#1a1a1a;--s2:#212121;--s3:#2a2a2a;
+  --bd:#2c2c2c;--bd2:#3a3a3a;
+  --tx:#e8e0d4;--tm:#666;--ts:#444;
+  --ac:#c17a5a;--ac2:#d4957a;--ac3:rgba(193,122,90,.1);
+  --blue:#4a9eff;--green:#4caf7d;--red:#e05555;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--tx);line-height:1.7;overflow-x:hidden}
+a{color:var(--ac);text-decoration:none}
+
+#topbar{
+  position:sticky;top:0;z-index:200;
+  background:rgba(17,17,17,.96);backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--bd);
+  padding:0 24px;height:48px;
+  display:flex;align-items:center;justify-content:space-between;gap:16px
+}
+.tb-left{display:flex;align-items:center;gap:16px}
+.tb-brand{font-size:11px;letter-spacing:4px;text-transform:uppercase;color:var(--ac2);font-weight:500}
+.tb-season{font-size:11px;color:var(--tm);border-left:1px solid var(--bd2);padding-left:16px}
+.tb-stats{display:flex;gap:16px}
+.tb-stat{font-size:11px;color:var(--tm)}
+.tb-stat span{color:var(--ac);font-weight:500}
+.tb-flow{display:flex;align-items:center;gap:6px}
+.flow-step{
+  font-size:10px;padding:3px 10px;border-radius:12px;
+  border:1px solid var(--bd2);color:var(--ts);white-space:nowrap;letter-spacing:.5px
+}
+.flow-step.done{border-color:rgba(193,122,90,.4);color:var(--ac);background:var(--ac3)}
+.flow-step.next{border-color:rgba(74,158,255,.4);color:var(--blue);background:rgba(74,158,255,.08);animation:pulse 2s infinite}
+.flow-arrow{font-size:10px;color:var(--ts)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+
+/* ── NAV ── */
+nav{
+  background:var(--s1);border-bottom:1px solid var(--bd);
+  padding:0 24px;position:sticky;top:48px;z-index:100
+}
+nav ul{display:flex;list-style:none;gap:0;max-width:1400px;margin:0 auto;overflow-x:auto}
+nav a{
+  display:block;padding:12px 16px;font-size:11px;letter-spacing:1px;
+  text-transform:uppercase;color:var(--tm);border-bottom:2px solid transparent;
+  transition:all .2s;white-space:nowrap
+}
+nav a:hover,nav a.active{color:var(--ac);border-bottom-color:var(--ac)}
+
+/* ── LAYOUT ── */
+.page{max-width:1400px;margin:0 auto;padding:0 24px}
+section{padding:60px 0}
+h2.sec-title{
+  font-family:'Playfair Display',serif;font-size:28px;font-weight:400;
+  color:var(--tx);margin-bottom:8px
+}
+h2.sec-title em{font-style:italic;color:var(--ac)}
+.sec-sub{font-size:12px;color:var(--tm);margin-bottom:32px}
+
+/* ── CARDS ── */
+.card{background:var(--s1);border:1px solid var(--bd);border-radius:10px;padding:24px}
+.card-label{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--ac);margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--bd)}
+
+/* ── METRIC CARDS ── */
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:40px}
+@media(max-width:768px){.metrics{grid-template-columns:repeat(2,1fr)}}
+.metric{background:var(--s1);border:1px solid var(--bd);border-radius:10px;padding:20px 24px}
+.metric-n{font-family:'Playfair Display',serif;font-size:38px;color:var(--ac);line-height:1}
+.metric-l{font-size:11px;color:var(--tm);letter-spacing:1px;margin-top:6px;text-transform:uppercase}
+.metric-sub{font-size:11px;color:var(--ts);margin-top:4px}
+
+/* ── MATRIX ── */
+#matrix-wrap{overflow-x:auto;border:1px solid var(--bd);border-radius:10px;margin-top:24px}
+#matrix-table{width:100%;border-collapse:collapse;font-size:11px}
+#matrix-table th,#matrix-table td{padding:8px 10px;border:1px solid var(--bd);text-align:center}
+#matrix-table thead th{background:var(--s2);color:var(--tm);font-weight:500;position:sticky;top:0;z-index:2;white-space:nowrap;cursor:pointer;user-select:none}
+#matrix-table thead th:hover{color:var(--ac)}
+#matrix-table thead th.sorted{color:var(--ac);background:var(--s3)}
+#matrix-table td.brand-cell{
+  text-align:left;position:sticky;left:0;z-index:1;
+  background:var(--s1);font-weight:500;white-space:nowrap;
+  color:var(--tx);cursor:pointer;transition:color .2s
+}
+#matrix-table td.brand-cell:hover{color:var(--ac)}
+#matrix-table tr:hover td{background:var(--s3)}
+#matrix-table tr:hover td.brand-cell{background:var(--s3)}
+.dot-on{color:var(--ac);font-weight:700;font-size:14px}
+.dot-off{color:var(--ts);font-size:10px}
+.total-row td{background:var(--s2)!important;color:var(--ac);font-weight:600}
+
+/* filter chips */
+.filter-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center}
+.chip{
+  padding:5px 14px;border-radius:20px;font-size:11px;border:1px solid var(--bd2);
+  color:var(--tm);cursor:pointer;transition:all .15s;background:none
+}
+.chip:hover{border-color:var(--ac);color:var(--ac)}
+.chip.active{border-color:var(--ac);color:var(--ac);background:var(--ac3)}
+.chip.all-chip{border-color:var(--bd2)}
+
+/* ── SEASON OVERVIEW GRID ── */
+.overview-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px}
+@media(max-width:900px){.overview-grid{grid-template-columns:1fr}}
+
+/* mood text */
+.mood-text{font-size:13px;color:#ccc;line-height:2;max-height:120px;overflow:hidden;transition:max-height .4s}
+.mood-text.expanded{max-height:1000px}
+.expand-btn{
+  font-size:11px;color:var(--tm);background:none;border:none;cursor:pointer;
+  padding:6px 0;display:flex;align-items:center;gap:4px;margin-top:8px
+}
+
+/* tbar */
+.tbar{margin-bottom:10px}
+.tbar-head{display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;color:var(--tx)}
+.tbar-head span:last-child{color:var(--ac);font-weight:500}
+.tbar-track{height:5px;background:var(--s2);border-radius:3px}
+.tbar-fill{height:100%;background:var(--ac);border-radius:3px;transition:width .6s}
+
+/* color swatches */
+.color-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.swatch{text-align:center}
+.swatch-box{width:40px;height:40px;border-radius:8px;margin-bottom:4px;border:1px solid rgba(255,255,255,.08)}
+.swatch-name{font-size:9px;font-weight:600;color:var(--tm)}
+.swatch-pct{font-size:9px;color:var(--ac)}
+
+/* silhouette cards */
+.sil-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+@media(max-width:600px){.sil-grid{grid-template-columns:1fr}}
+.sil-card{background:var(--s2);border-radius:8px;padding:16px}
+.sil-name{font-size:13px;font-weight:600;color:var(--tx);margin-bottom:6px}
+.sil-count{font-size:11px;color:var(--ac);margin-bottom:8px}
+.sil-desc{font-size:11px;color:var(--tm);line-height:1.7}
+
+/* key items */
+.keyitem{background:var(--s2);border-radius:8px;padding:20px;border-left:2px solid var(--ac);margin-bottom:12px}
+.keyitem-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
+.keyitem-title{font-size:14px;font-weight:600;color:var(--tx)}
+.keyitem-count{font-size:12px;color:var(--ac)}
+.keyitem-desc{font-size:12px;color:var(--tm);line-height:1.7}
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:4px;margin-top:10px}
+.gallery img{width:100%;aspect-ratio:2/3;object-fit:cover;border-radius:4px;border:1px solid var(--bd);background:var(--s3)}
+
+/* ── KEYWORD CARDS ── */
+.kw-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:700px){.kw-grid{grid-template-columns:1fr}}
+.kw-card{background:var(--s1);border:1px solid var(--bd);border-radius:10px;padding:20px}
+.kw-rank{font-family:'Playfair Display',serif;font-size:24px;color:var(--ac);line-height:1;margin-bottom:4px}
+.kw-name{font-size:15px;font-weight:600;color:var(--tx);margin-bottom:4px}
+.kw-count{font-size:11px;color:var(--ac);margin-bottom:12px}
+.kw-text{font-size:12px;color:var(--tm);line-height:1.8}
+
+/* ── BRAND GRID ── */
+.brand-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.brand-btn{
+  background:var(--s2);border:1px solid var(--bd);border-radius:8px;
+  padding:12px 14px;cursor:pointer;transition:all .2s
+}
+.brand-btn:hover,.brand-btn.selected{border-color:var(--ac);background:var(--s3)}
+.brand-btn .bn{font-size:13px;font-weight:500;color:var(--tx)}
+.brand-btn .bl{font-size:11px;color:var(--ts);margin-top:2px}
+.brand-btn .bm{display:flex;gap:3px;margin-top:8px;flex-wrap:wrap}
+.brand-btn .bm span{width:6px;height:6px;border-radius:2px;display:inline-block}
+
+/* ── SIDE PANEL ── */
+#panel-overlay{
+  display:none;position:fixed;inset:0;z-index:300;
+  background:rgba(0,0,0,.6);backdrop-filter:blur(4px)
+}
+#panel-overlay.open{display:block}
+#side-panel{
+  position:fixed;right:0;top:0;bottom:0;width:520px;max-width:95vw;
+  z-index:301;background:var(--s1);border-left:1px solid var(--bd);
+  overflow-y:auto;transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1)
+}
+#side-panel.open{transform:translateX(0)}
+.panel-header{
+  position:sticky;top:0;background:var(--s1);border-bottom:1px solid var(--bd);
+  padding:20px 24px;display:flex;justify-content:space-between;align-items:center;z-index:1
+}
+.panel-close{
+  background:none;border:1px solid var(--bd2);border-radius:6px;
+  color:var(--tm);padding:6px 12px;font-size:12px;cursor:pointer;transition:all .2s
+}
+.panel-close:hover{border-color:var(--ac);color:var(--ac)}
+.panel-body{padding:24px}
+.panel-section{margin-bottom:24px}
+.panel-section-label{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--ac);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--bd)}
+.panel-review{font-size:13px;color:var(--tm);line-height:2}
+.chip-row{display:flex;flex-wrap:wrap;gap:6px}
+.kw-chip{
+  padding:3px 10px;border-radius:4px;font-size:10px;
+  background:var(--ac3);border:1px solid rgba(193,122,90,.25);color:var(--ac)
+}
+.kw-chip.inactive{background:none;border-color:var(--bd);color:var(--ts)}
+
+/* ── STEP 3 BRIDGE ── */
+#bridge{background:var(--s1);border:1px solid var(--bd);border-radius:12px;padding:32px;margin:40px 0}
+.bridge-flow{display:flex;align-items:center;gap:10px;margin-bottom:24px;flex-wrap:wrap}
+.bridge-node{padding:8px 16px;border-radius:20px;font-size:12px;font-weight:500}
+.bnode-done{background:var(--ac3);border:1px solid rgba(193,122,90,.3);color:var(--ac)}
+.bnode-next{background:rgba(74,158,255,.1);border:1px solid rgba(74,158,255,.3);color:var(--blue)}
+.bnode-far{border:1px solid var(--bd);color:var(--ts)}
+.bridge-arrow{color:var(--ts);font-size:14px}
+.kw-tags{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px}
+.kw-tag{
+  padding:6px 14px;border-radius:20px;font-size:12px;font-weight:500;
+  background:var(--s2);border:1px solid var(--bd2);color:var(--tx);cursor:pointer;transition:all .2s
+}
+.kw-tag:hover{border-color:var(--ac);color:var(--ac);background:var(--ac3)}
+.search-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:600px){.search-grid{grid-template-columns:1fr}}
+.search-box{background:var(--s2);border-radius:8px;padding:16px}
+.search-box .sb-label{font-size:10px;color:var(--tm);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px}
+.search-kw{
+  display:inline-block;padding:4px 10px;border-radius:4px;font-size:11px;
+  background:var(--s3);color:var(--tx);margin:3px;cursor:pointer;
+  border:1px solid var(--bd2);text-decoration:none;transition:border-color .2s
+}
+.search-kw:hover{border-color:var(--ac)}
+
+footer{text-align:center;padding:40px 20px;border-top:1px solid var(--bd);color:var(--ts);font-size:11px;letter-spacing:1px}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div id="topbar">
+  <div class="tb-left">
+    <div class="tb-brand">FTIB</div>
+    <div class="tb-season">Fashion Trend Intelligence Board · 26 S/S</div>
+    <div class="tb-stats">
+      <div class="tb-stat"><span>33</span> Brands</div>
+      <div class="tb-stat"><span>~1,800</span> Looks</div>
+      <div class="tb-stat"><span>27</span> Show Notes</div>
+    </div>
+  </div>
+  <div class="tb-flow">
+    <div class="flow-step done">1 런웨이</div>
+    <div class="flow-arrow">›</div>
+    <div class="flow-step done">2 AI 분석</div>
+    <div class="flow-arrow">›</div>
+    <div class="flow-step next">3 셀럽 매칭</div>
+    <div class="flow-arrow">›</div>
+    <div class="flow-step">4 검색량</div>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav>
+  <ul>
+    <li><a href="#overview">시즌 오버뷰</a></li>
+    <li><a href="#matrix">트렌드 매트릭스</a></li>
+    <li><a href="#keywords">키워드 분석</a></li>
+    <li><a href="#brands">브랜드</a></li>
+    <li><a href="#bridge">→ 셀럽 매칭</a></li>
+  </ul>
+</nav>
+
+<!-- SIDE PANEL -->
+<div id="panel-overlay" onclick="closePanel()"></div>
+<div id="side-panel">
+  <div class="panel-header">
+    <div>
+      <div id="panel-brand-name" style="font-size:18px;font-weight:500;color:var(--ac2)"></div>
+      <div id="panel-brand-sub" style="font-size:11px;color:var(--tm);margin-top:2px"></div>
+    </div>
+    <button class="panel-close" onclick="closePanel()">닫기 ✕</button>
+  </div>
+  <div class="panel-body" id="panel-body"></div>
+</div>
+
+<div class="page">
+
+<!-- ── 1. SEASON OVERVIEW ── -->
+<section id="overview">
+  <h2 class="sec-title">26 S/S <em>Season Overview</em></h2>
+  <p class="sec-sub">33개 브랜드 · ~1,800룩 · 27개 공식 쇼 노트 통합 심층 분석</p>
+
+  <!-- Metrics -->
+  <div class="metrics">
+    <div class="metric">
+      <div class="metric-n">33</div>
+      <div class="metric-l">Brands Analyzed</div>
+      <div class="metric-sub">Paris · Milan · London · NY</div>
+    </div>
+    <div class="metric">
+      <div class="metric-n">레더</div>
+      <div class="metric-l">Top Signal</div>
+      <div class="metric-sub">22/33 브랜드 채택 (67%)</div>
+    </div>
+    <div class="metric">
+      <div class="metric-n">시어</div>
+      <div class="metric-l">2nd Signal</div>
+      <div class="metric-sub">20/33 브랜드 채택 (61%)</div>
+    </div>
+    <div class="metric">
+      <div class="metric-n">10</div>
+      <div class="metric-l">Trend Keywords</div>
+      <div class="metric-sub">이미지+쇼노트 교차 추출</div>
+    </div>
+  </div>
+
+  <!-- Overview Grid -->
+  <div class="overview-grid">
+    <!-- Mood -->
+    <div class="card" style="grid-column:1/-1">
+      <div class="card-label">시즌 종합 무드</div>
+      <div class="mood-text" id="moodText">
+        26 S/S 시즌은 패션이 단순한 의복을 넘어 하나의 언어이자 저항의 도구로 기능하던 시대로의 회귀를 선언했다. 33개 컬렉션을 관통하는 가장 지배적인 정서는 '가시성과 비가시성의 경계에 대한 질문'이었다. 프라다는 이번 시즌을 "문화적 과부하에 대한 응답"이라 명명하며, 유니폼의 형식을 빌려 과잉 정보 시대에서 옷이 수행해야 할 본질적 기능을 재정의했다. 미우미우는 에이프런과 작업복의 문법을 차용해 "보이지 않는 노동"에 헌사를 바쳤고, 이는 15개 하우스가 채택한 워크웨어/유틸리티 트렌드의 이념적 기반이 되었다. 발렌티노의 알레산드로 미켈레는 "반딧불이"를 은유로 삼아 어둠 속에서만 드러나는 빛의 아름다움을 설파했는데, 이 철학은 20개 하우스가 시어와 트랜스루선트 소재를 핵심으로 배치한 이 시즌의 거시적 흐름과 정확히 공명한다. 물성의 측면에서 레더는 22개 하우스가 채택하며 시즌 최다 소재로 군림했으나, 로에베는 봉제선을 제거해 두 번째 피부처럼 밀착시켰고, 릭 오웬스는 GRS 재활용 나일론과 결합해 지속가능성에 응답했다. 전체적으로 이 시즌은 과잉과 절제, 노출과 은폐, 장인정신과 기술혁신이라는 이항대립을 하나의 옷 위에서 공존시키려는 시도로 요약된다.
+      </div>
+      <button class="expand-btn" id="moodBtn" onclick="toggleMood()">더 보기 ▾</button>
+    </div>
+
+    <!-- Colors -->
+    <div class="card">
+      <div class="card-label">컬러 팔레트</div>
+      <div style="display:flex;height:24px;border-radius:6px;overflow:hidden;margin-bottom:16px">
+        <div style="flex:1;background:#1A1A1A" title="Black 100%"></div>
+        <div style="flex:.85;background:#F5F0E8" title="Cream 85%"></div>
+        <div style="flex:.67;background:#808080" title="Grey 67%"></div>
+        <div style="flex:.61;background:#CC2222" title="Red 61%"></div>
+        <div style="flex:.61;background:#C8A882" title="Camel 61%"></div>
+        <div style="flex:.55;background:#1B1F3B" title="Navy 55%"></div>
+        <div style="flex:.48;background:#F5A5A0" title="Pink 48%"></div>
+        <div style="flex:.45;background:#556B2F" title="Olive 45%"></div>
+      </div>
+      <div class="color-row">
+        <div class="swatch"><div class="swatch-box" style="background:#1A1A1A"></div><div class="swatch-name">Black</div><div class="swatch-pct">33/33</div></div>
+        <div class="swatch"><div class="swatch-box" style="background:#F5F0E8;border-color:rgba(255,255,255,.15)"></div><div class="swatch-name">Cream</div><div class="swatch-pct">28/33</div></div>
+        <div class="swatch"><div class="swatch-box" style="background:#808080"></div><div class="swatch-name">Grey</div><div class="swatch-pct">22/33</div></div>
+        <div class="swatch"><div class="swatch-box" style="background:#CC2222"></div><div class="swatch-name">Red</div><div class="swatch-pct">20/33</div></div>
+        <div class="swatch"><div class="swatch-box" style="background:#C8A882"></div><div class="swatch-name">Camel</div><div class="swatch-pct">20/33</div></div>
+        <div class="swatch"><div class="swatch-box" style="background:#1B1F3B"></div><div class="swatch-name">Navy</div><div class="swatch-pct">18/33</div></div>
+        <div class="swatch"><div class="swatch-box" style="background:#F5A5A0"></div><div class="swatch-name">Pink</div><div class="swatch-pct">16/33</div></div>
+        <div class="swatch"><div class="swatch-box" style="background:#B8860B"></div><div class="swatch-name">Gold</div><div class="swatch-pct">14/33</div></div>
+      </div>
+    </div>
+
+    <!-- Materials -->
+    <div class="card">
+      <div class="card-label">소재 분포</div>
+      <div id="materialBars"></div>
+    </div>
+
+    <!-- Silhouette -->
+    <div class="card">
+      <div class="card-label">실루엣 3대 공식</div>
+      <div class="sil-grid" style="grid-template-columns:1fr;gap:10px">
+        <div class="sil-card">
+          <div class="sil-name">크롭 + 와이드</div>
+          <div class="sil-count">19/33 브랜드</div>
+          <div class="sil-desc">프라다가 "조각적 부과에서의 자유"라 명명. 에르메스 크롭 브라렛, 맥스 마라 블랙 밴드 시스템.</div>
+        </div>
+        <div class="sil-card">
+          <div class="sil-name">파워숄더 + 내로우 힙</div>
+          <div class="sil-count">12/33 브랜드</div>
+          <div class="sil-desc">베르사체 80년대 참조, 맥스 마라 퐁파두르의 정치적 권력. 신체 권위의 자각적 참조.</div>
+        </div>
+        <div class="sil-card">
+          <div class="sil-name">레이어드 시어</div>
+          <div class="sil-count">20/33 브랜드</div>
+          <div class="sil-desc">릭 오웬스 전 룩 메시 베이스, 발렌티노 반딧불이 미학. 신체 윤곽의 점진적 현현.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Key Items -->
+  <div style="margin-top:8px">
+    <div class="card-label" style="margin-bottom:16px;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--tm)">키 아이템 TOP 5</div>
+    <div id="keyItems"></div>
+  </div>
+</section>
+
+<!-- ── 2. MATRIX ── -->
+<section id="matrix">
+  <h2 class="sec-title">Brand × Keyword <em>Matrix</em></h2>
+  <p class="sec-sub">키워드 헤더 클릭 → 채택 브랜드 수 정렬 · 브랜드명 클릭 → 상세 패널</p>
+  <div class="filter-row">
+    <span style="font-size:11px;color:var(--tm);margin-right:4px">필터:</span>
+    <button class="chip all-chip active" onclick="filterMatrix('all',this)">전체</button>
+    <button class="chip" onclick="filterMatrix('레더',this)">레더</button>
+    <button class="chip" onclick="filterMatrix('시어',this)">시어</button>
+    <button class="chip" onclick="filterMatrix('크롭',this)">크롭</button>
+    <button class="chip" onclick="filterMatrix('러플',this)">러플</button>
+    <button class="chip" onclick="filterMatrix('워크웨어',this)">워크웨어</button>
+    <button class="chip" onclick="filterMatrix('젠더리스',this)">젠더리스</button>
+    <button class="chip" onclick="filterMatrix('선글라스',this)">선글라스</button>
+  </div>
+  <div id="matrix-wrap">
+    <table id="matrix-table">
+      <thead><tr id="matrix-head"><th style="text-align:left;position:sticky;left:0;z-index:3;background:var(--s2)">Brand</th></tr></thead>
+      <tbody id="matrix-body"></tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ── 3. KEYWORDS ── -->
+<section id="keywords">
+  <h2 class="sec-title">Trend Keywords <em>TOP 10</em></h2>
+  <p class="sec-sub">이미지 분석 + 쇼 노트 교차 검증으로 추출한 시즌 핵심 코드</p>
+  <div class="kw-grid" id="kwGrid"></div>
+</section>
+
+<!-- ── 4. BRANDS ── -->
+<section id="brands">
+  <h2 class="sec-title">Brand <em>Analysis</em></h2>
+  <p class="sec-sub">브랜드 카드 클릭 → 통합 리뷰 패널 오픈</p>
+  <div class="brand-grid" id="brandGrid"></div>
+</section>
+
+<!-- ── 5. BRIDGE ── -->
+<section id="bridge-section">
+  <div id="bridge">
+    <div class="card-label" style="margin-bottom:20px;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--blue)">→ Step 3 · 셀럽 / 인플루언서 매칭</div>
+    <div class="bridge-flow">
+      <div class="bridge-node bnode-done">1 런웨이 수집 ✓</div>
+      <div class="bridge-arrow">→</div>
+      <div class="bridge-node bnode-done">2 AI 분석 완료 ✓</div>
+      <div class="bridge-arrow">→</div>
+      <div class="bridge-node bnode-next">3 셀럽 이미지 수집 ← 지금 여기</div>
+      <div class="bridge-arrow">→</div>
+      <div class="bridge-node bnode-far">4 검색량 · 마켓</div>
+    </div>
+    <p style="font-size:13px;color:#bbb;line-height:1.9;margin-bottom:20px">
+      위 분석에서 추출된 <strong style="color:var(--ac)">상위 시그널 키워드</strong>를 기반으로, 이 트렌드를 실제로 착용하고 있는 셀럽 · 인플루언서를 찾아야 합니다.<br>
+      아래 키워드를 클릭하면 인스타그램 / 핀터레스트 검색 링크로 바로 연결됩니다.
+    </p>
+    <div class="search-grid">
+      <div class="search-box">
+        <div class="sb-label">Instagram 검색 키워드 (한국어)</div>
+        <a class="search-kw" href="https://www.instagram.com/explore/search/keyword/?q=%EB%A0%88%EB%8D%94%EC%9E%AC%ED%82%B7%EC%85%80%EB%9F%BD" target="_blank">#레더재킷셀럽</a>
+        <a class="search-kw" href="https://www.instagram.com/explore/search/keyword/?q=%EC%8B%9C%EC%8A%A4%EB%A3%A8%EB%A3%A9" target="_blank">#시스루룩</a>
+        <a class="search-kw" href="https://www.instagram.com/explore/search/keyword/?q=%EC%9B%8C%ED%81%AC%EC%9B%A8%EC%96%B4%ED%8C%A8%EC%85%98" target="_blank">#워크웨어패션</a>
+        <a class="search-kw" href="https://www.instagram.com/explore/search/keyword/?q=%ED%81%AC%EB%A1%AD%EC%8A%A4%ED%83%80%EC%9D%BC%EB%A7%81" target="_blank">#크롭스타일링</a>
+        <a class="search-kw" href="https://www.instagram.com/explore/search/keyword/?q=%EB%9F%AC%ED%94%8C%EB%93%9C%EB%A0%88%EC%8A%A4" target="_blank">#러플드레스</a>
+      </div>
+      <div class="search-box">
+        <div class="sb-label">Instagram Search (English)</div>
+        <a class="search-kw" href="https://www.instagram.com/explore/search/keyword/?q=leatherjacketootd" target="_blank">#leatherjacketootd</a>
+        <a class="search-kw" href="https://www.instagram.com/explore/search/keyword/?q=sheerlook" target="_blank">#sheerlook</a>
+        <a class="search-kw" href="https://www.instagram.com/explore/search/keyword/?q=workwearstyle" target="_blank">#workwearstyle</a>
+        <a class="search-kw" href="https://www.instagram.com/explore/search/keyword/?q=croptopoutfit" target="_blank">#croptopoutfit</a>
+        <a class="search-kw" href="https://www.instagram.com/explore/search/keyword/?q=ruffledress" target="_blank">#ruffledress</a>
+      </div>
+      <div class="search-box">
+        <div class="sb-label">Pinterest 검색</div>
+        <a class="search-kw" href="https://www.pinterest.com/search/pins/?q=leather+jacket+celebrity+2025" target="_blank">leather jacket celebrity 2025</a>
+        <a class="search-kw" href="https://www.pinterest.com/search/pins/?q=sheer+fashion+influencer" target="_blank">sheer fashion influencer</a>
+        <a class="search-kw" href="https://www.pinterest.com/search/pins/?q=workwear+chic+2025" target="_blank">workwear chic 2025</a>
+        <a class="search-kw" href="https://www.pinterest.com/search/pins/?q=power+shoulder+outfit" target="_blank">power shoulder outfit</a>
+      </div>
+      <div class="search-box">
+        <div class="sb-label">셀럽 페르소나 힌트</div>
+        <p style="font-size:11px;color:var(--tm);line-height:1.8">
+          타깃 페르소나: 레더+시어의 이중성을 즐기는 도시적 여성. 워크웨어를 럭셔리하게 소화. 쉴드 선글라스로 익명성 확보. 한국 기준 — 배우/뮤지션 중 스트릿+하이패션 믹스를 즐기는 타입.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+</div><!-- /page -->
+
+<footer>
+  <p>FTIB · Fashion Trend Intelligence Board · 26 S/S Deep Analysis V6</p>
+  <p style="margin-top:4px">33 Brands · ~1,800 Looks · 27 Show Notes · Image Analysis + Show Notes Combined</p>
+</footer>
+
+<script>
+const trendNames=['레더','시어','크롭','러플','워크웨어','크래프트','젠더리스','선글라스','파워숄더','서사구조'];
+const matrixData={
+prada:[1,1,1,1,1,0,0,1,1,0],miumiu:[1,1,0,1,1,1,1,0,0,1],loewe:[1,0,1,0,1,1,0,1,0,0],saintlaurent:[1,0,0,1,0,0,0,1,0,1],chanel:[0,1,0,1,0,1,0,0,0,1],fendi:[1,1,1,1,1,1,1,1,0,0],valentino:[0,1,0,1,0,1,1,0,1,0],bottegaveneta:[1,0,0,1,0,1,1,1,1,0],versace:[1,0,0,0,0,0,1,1,1,0],dolcegabbana:[1,1,0,0,1,0,0,0,0,0],isabelmarant:[1,0,1,1,1,1,1,0,0,1],maisonmargiela:[1,1,0,0,0,0,1,0,0,1],jilsander:[1,1,1,0,0,0,1,0,1,0],hermes:[1,0,1,0,1,0,0,0,0,0],chloe:[1,0,1,1,1,0,0,1,0,0],burberry:[1,0,0,0,1,1,0,1,0,0],thombrowne:[0,1,0,0,0,0,1,0,1,1],balenciaga:[1,0,1,1,1,0,0,1,1,0],isseymiyake:[0,1,0,1,0,1,0,1,0,0],givenchy:[1,1,1,1,0,0,0,0,1,0],stellamccartney:[0,1,0,1,0,0,0,1,1,0],mcqueen:[1,1,1,0,1,1,0,1,0,1],offwhite:[1,1,1,0,1,0,1,1,1,0],balmain:[1,0,1,1,1,1,0,1,0,0],yohjiyamamoto:[0,0,0,0,0,0,0,0,0,1],maxmara:[1,1,1,1,1,0,0,1,1,1],acnestudios:[1,1,0,0,0,0,1,1,0,0],rickowens:[1,1,0,0,0,0,0,0,1,0],schiaparelli:[1,1,1,0,0,0,0,0,0,0],louisvuitton:[0,1,1,1,0,1,0,0,0,0],sacai:[1,1,0,1,1,0,1,0,1,0],coperni:[1,0,1,1,1,1,0,1,0,1],gucci:[1,1,0,1,0,0,1,1,1,1],mamekurogouchi:[0,1,0,0,0,1,0,0,0,0]
+};
+const brands=[
+{id:'prada',name:'Prada',looks:53},{id:'miumiu',name:'Miu Miu',looks:65},{id:'loewe',name:'Loewe',looks:54},{id:'saintlaurent',name:'Saint Laurent',looks:50},{id:'chanel',name:'Chanel',looks:77},{id:'fendi',name:'Fendi',looks:83},{id:'valentino',name:'Valentino',looks:80},{id:'bottegaveneta',name:'Bottega Veneta',looks:76},{id:'versace',name:'Versace',looks:75},{id:'dolcegabbana',name:'Dolce & Gabbana',looks:66},{id:'isabelmarant',name:'Isabel Marant',looks:63},{id:'maisonmargiela',name:'Maison Margiela',looks:61},{id:'jilsander',name:'Jil Sander',looks:61},{id:'hermes',name:'Hermès',looks:57},{id:'chloe',name:'Chloé',looks:57},{id:'burberry',name:'Burberry',looks:57},{id:'thombrowne',name:'Thom Browne',looks:54},{id:'balenciaga',name:'Balenciaga',looks:53},{id:'isseymiyake',name:'Issey Miyake',looks:52},{id:'givenchy',name:'Givenchy',looks:51},{id:'stellamccartney',name:'Stella McCartney',looks:50},{id:'mcqueen',name:'McQueen',looks:50},{id:'offwhite',name:'Off-White',looks:49},{id:'balmain',name:'Balmain',looks:48},{id:'yohjiyamamoto',name:'Yohji Yamamoto',looks:47},{id:'maxmara',name:'Max Mara',looks:47},{id:'acnestudios',name:'Acne Studios',looks:47},{id:'rickowens',name:'Rick Owens',looks:46},{id:'schiaparelli',name:'Schiaparelli',looks:45},{id:'louisvuitton',name:'Louis Vuitton',looks:45},{id:'sacai',name:'Sacai',looks:40},{id:'coperni',name:'Coperni',looks:40},{id:'gucci',name:'Gucci',looks:38},{id:'mamekurogouchi',name:'Mame Kurogouchi',looks:35}
+];
+const brandColors={
+prada:[{n:'Dark Navy',h:'#1C1C2E'},{n:'Yellow',h:'#F5D623'},{n:'Olive',h:'#556B2F'},{n:'Peach',h:'#F5A5A0'},{n:'Lavender',h:'#7B4DAA'}],miumiu:[{n:'Navy',h:'#1B1F3B'},{n:'Tan',h:'#A0724A'},{n:'Black',h:'#1A1A1A'},{n:'Orange',h:'#E85D26'},{n:'Purple',h:'#5B4BB5'}],loewe:[{n:'Red',h:'#E03020'},{n:'Yellow',h:'#F5D623'},{n:'Black',h:'#1A1A1A'},{n:'Cobalt',h:'#3B4BCC'},{n:'Emerald',h:'#00A86B'}],saintlaurent:[{n:'Black',h:'#0A0A0A'},{n:'Gold',h:'#B8860B'},{n:'Orange',h:'#CC5500'},{n:'White',h:'#FFFFFF'},{n:'Oxblood',h:'#4A0000'}],chanel:[{n:'Black',h:'#1A1A1A'},{n:'Creme',h:'#F5F0E8'},{n:'Red',h:'#CC2222'},{n:'Gold',h:'#C8A84E'},{n:'Mint',h:'#8FBFAA'}],fendi:[{n:'Royal Blue',h:'#2B3990'},{n:'Scarlet',h:'#E02020'},{n:'Hot Pink',h:'#F472B6'},{n:'Sky Blue',h:'#4FC3F7'},{n:'Cognac',h:'#A0522D'}],valentino:[{n:'Black',h:'#1A1A1A'},{n:'Pink',h:'#F4A7B9'},{n:'Yellow',h:'#D4A832'},{n:'Blue',h:'#4040C0'},{n:'Grey',h:'#808080'}],bottegaveneta:[{n:'Navy',h:'#1B1B3A'},{n:'White',h:'#F5F0E8'},{n:'Beige',h:'#C8B89A'},{n:'Burgundy',h:'#4A1528'},{n:'Grey',h:'#8E8D94'}],versace:[{n:'Lavender',h:'#B07CC6'},{n:'Cobalt',h:'#2E5DA8'},{n:'Gold',h:'#C5A83B'},{n:'Emerald',h:'#3EB07A'},{n:'Coral',h:'#D94030'}],dolcegabbana:[{n:'Baby Blue',h:'#B4C7E0'},{n:'Black',h:'#1A1A1A'},{n:'Pink',h:'#F2C4C4'},{n:'Sand',h:'#C8B490'},{n:'Burgundy',h:'#6B1C2A'}],isabelmarant:[{n:'Sand',h:'#C8B590'},{n:'Khaki',h:'#6B6340'},{n:'Off-White',h:'#F0E8DC'},{n:'Navy',h:'#1E1B2E'},{n:'Terracotta',h:'#B85C3A'}],maisonmargiela:[{n:'Black',h:'#1A1A1A'},{n:'Off-White',h:'#F5F0E8'},{n:'Denim',h:'#B0C4D4'},{n:'Camel',h:'#C8A882'},{n:'Grey',h:'#8E8E8E'}],jilsander:[{n:'Navy',h:'#1B1B4B'},{n:'Grey',h:'#808085'},{n:'Black',h:'#1A1A1A'},{n:'White',h:'#F5F0E8'},{n:'Cobalt',h:'#3333CC'}],hermes:[{n:'Olive',h:'#6B6340'},{n:'Sand',h:'#D4C28E'},{n:'Cognac',h:'#A0612B'},{n:'Navy',h:'#1E2244'},{n:'Red',h:'#D42A1A'}],chloe:[{n:'Cream',h:'#F5F0E1'},{n:'Mauve',h:'#9B59A6'},{n:'Tan',h:'#C9A96E'},{n:'Hot Pink',h:'#E84B8A'},{n:'Blue',h:'#2E7DA8'}],burberry:[{n:'Brown',h:'#6B4226'},{n:'Honey',h:'#C8A96E'},{n:'Green',h:'#2E8B57'},{n:'Plum',h:'#6B3A6B'},{n:'Pink',h:'#F2607A'}],thombrowne:[{n:'Grey',h:'#808A8E'},{n:'Red',h:'#C0392B'},{n:'White',h:'#F5F0E8'},{n:'Green',h:'#1A8A5C'},{n:'Mustard',h:'#D4A017'}],balenciaga:[{n:'Black',h:'#1A1A1A'},{n:'Off-White',h:'#F5F0E8'},{n:'Magenta',h:'#C4007A'},{n:'Red',h:'#E83015'},{n:'Chartreuse',h:'#D4CE00'}],isseymiyake:[{n:'Black',h:'#1A1A1A'},{n:'White',h:'#F5F0E8'},{n:'Lime',h:'#C4D63C'},{n:'Brown',h:'#4A3728'},{n:'Red',h:'#E52B2B'}],givenchy:[{n:'Black',h:'#1A1A1A'},{n:'White',h:'#F5F0E8'},{n:'Red',h:'#E52020'},{n:'Pale Pink',h:'#F2D4C8'},{n:'Yellow',h:'#F0ECA0'}],stellamccartney:[{n:'Black',h:'#1A1A1A'},{n:'Blush',h:'#F5D5D0'},{n:'Grey',h:'#A0A0A8'},{n:'Ivory',h:'#F5F0E8'},{n:'Lavender',h:'#B8A0C8'}],mcqueen:[{n:'Navy',h:'#1E1A3A'},{n:'Cream',h:'#F5F0E8'},{n:'Red',h:'#C41E2A'},{n:'Lavender',h:'#8E8CC8'},{n:'Olive',h:'#6B6B2A'}],offwhite:[{n:'Black',h:'#1A1A1A'},{n:'Off-White',h:'#F5F0E8'},{n:'Red',h:'#CC2222'},{n:'Olive',h:'#6B6B3A'},{n:'Yellow',h:'#E8D44D'}],balmain:[{n:'Olive',h:'#6B7C5E'},{n:'Sand',h:'#C8B99A'},{n:'Terracotta',h:'#B5441B'},{n:'Espresso',h:'#3E2723'},{n:'Ivory',h:'#E8DCC8'}],yohjiyamamoto:[{n:'Black',h:'#0A0A0A'},{n:'White',h:'#F5F5F0'},{n:'Red',h:'#D62B2B'},{n:'Grey',h:'#7A7A82'},{n:'Navy',h:'#1A1A3D'}],maxmara:[{n:'Camel',h:'#C8A882'},{n:'Black',h:'#1A1A1A'},{n:'Stone Grey',h:'#8E8A82'},{n:'Off-White',h:'#E8E0D4'},{n:'Lavender',h:'#A0A4B0'}],acnestudios:[{n:'Tan',h:'#C4A46C'},{n:'Black',h:'#1A1A1A'},{n:'Grey',h:'#9B9EA3'},{n:'Chocolate',h:'#4A3228'},{n:'Off-White',h:'#F5F0E8'}],rickowens:[{n:'Mud Grey',h:'#8A8279'},{n:'Dust Nude',h:'#C4AA8E'},{n:'Black',h:'#1A1A1A'},{n:'Bone',h:'#E8E0D4'},{n:'Gold',h:'#C5A94E'}],schiaparelli:[{n:'Black',h:'#1A1A1A'},{n:'Ivory',h:'#F5F0E8'},{n:'Gold',h:'#C5943A'},{n:'Red',h:'#CC1C1C'},{n:'Silver',h:'#C0C0C0'}],louisvuitton:[{n:'Off-White',h:'#F5F0E8'},{n:'Pink',h:'#E8B4B8'},{n:'Sand',h:'#C4A882'},{n:'Black',h:'#1A1A1A'},{n:'Grey',h:'#A8A0B0'}],sacai:[{n:'Black',h:'#1A1A1A'},{n:'White',h:'#F5F0EB'},{n:'Olive',h:'#3B3F2E'},{n:'Denim',h:'#2B4E72'},{n:'Tan',h:'#C8AD8F'}],coperni:[{n:'Black',h:'#1A1A1A'},{n:'Ivory',h:'#F5F0E8'},{n:'Lime',h:'#CCEF23'},{n:'Coral',h:'#E5373E'},{n:'Blue',h:'#5BA3DC'}],gucci:[{n:'Black',h:'#1A1A1A'},{n:'GG Beige',h:'#C8A882'},{n:'Burgundy',h:'#6E1A2A'},{n:'Blue',h:'#6BA4D4'},{n:'Pink',h:'#F4A6C0'}],mamekurogouchi:[{n:'Ink Black',h:'#1A1A1E'},{n:'Dusty Slate',h:'#8B95A3'},{n:'Warm Sand',h:'#C8B8A8'},{n:'Petal Pink',h:'#E8B4C0'},{n:'Ivory',h:'#EDE8E0'}]
+};
+const reviews={
+prada:'미우치아 프라다와 라프 시몬스가 "Body of Composition"이라 명명한 이번 컬렉션은 현대 문화의 과부하 속에서 \'증류\'와 \'여과\'라는 행위를 옷으로 번역한 시도다. 53룩 전체를 관통하는 밀리터리 셔츠가 그 증류의 결과물인데, 유니폼이라는 가장 기능적인 형식을 이브닝의 문법으로 전환시키며 용도의 위계를 해체한다. 15룩 이상에서 반복된 브라렛은 라프가 말한 "조각적 부과에서 벗어난 자유"를 가시화한다.',
+miumiu:'핑크 런웨이 위에 펼쳐진 65룩의 "AT WORK" 컬렉션. 도로시아 랭과 헬가 파리스의 다큐멘터리 사진이 환기하는 노동의 존엄을 패션으로 재구성. 30룩 이상의 에이프런이 핵심 기표. "보이지 않는 노동의 인정"이라는 선언문.',
+loewe:'"크래프트는 어떻게 재정의되는가" — 엘스워스 켈리 회화에서 출발한 54룩. 봉제선을 완전히 감춘 몰디드 레더 재킷이 기술적 성취의 정점. 20룩 이상의 쉴드 선글라스와 컬러 슈즈.',
+saintlaurent:'"미학은 언어다" — 50룩 3막 구조. Act 1 레더 / Act 2 광택 나일론 / Act 3 러플 가운 15룩. 28룩 이상의 쉴드 선글라스가 블랙의 밀도를 응축.',
+chanel:'마티유 블라지 첫 컬렉션 "가브리엘 샤넬과의 대화." 77룩 3막. 해체 트위드 16룩+, 3D 까멜리아의 의도적 훼손, 후반부 에스닉 직조로 보편성 확장.',
+fendi:'"미래의 여름" — 83룩 코에드. 먹을 수 있는 색감(터쿼이즈·버밀리온·버블검). 퍼포레이티드 레더와 크로셰의 "구멍" 문법. 후반 시어 플로럴로 관능 점층.',
+valentino:'"Fireflies" — 파졸리니 편지에서 출발한 80룩. 25룩+ 시어에서 "보이지 않는 빛" 실현. 나비 브로치가 반딧불이의 시각적 대리물.',
+bottegaveneta:'Louise Trotter 데뷔 · 60주년. "보테가는 워크숍이다." 인트레치아토 9mm 복원, 프린지로 위빙 해체. Steve McQueen 사운드트랙.',
+versace:'Pinacoteca Ambrosiana에서 아카이브 재발굴. 75룩. 레더의 복수 질감(스무스·핀스트라이프·크로커다일·퀼팅). "성은 삶의 방식."',
+dolcegabbana:'"파자마 드레싱" 66룩. 레이스 브라렛·시스루·코르셋이 겉옷 지위 획득. 후반 올블랙 시퀀스로 점진적 암전.',
+isabelmarant:'63룩 여행자 서사. 모래→카키→테라코타→네이비→바이올렛→천체 카무플라주. "사막에서 밤하늘로." 시퀸 이브닝이 클라이맥스.',
+maisonmargiela:'"실생활을 위한 제안." 턱시도 커팅, 슬립드레스+재킷, 16세기 벽지 니트, 플라스틱화 실크. Four Stitch 마우스피스의 익명성.',
+jilsander:'Simone Bellotti 데뷔. "순수함을 모드로." 3버튼 재킷 19룩, 크롭 니트 25+. 하이글로스 레더+더블페이스 울의 무중력 건축.',
+hermes:'"사막의 유목민이 된 에르메스 장인." 57룩. 크롭 브라렛+니하이 부츠. 퀼팅 레더 + 실크 스카프 의복화.',
+chloe:'57룩. 장미 정원→사파리→로맨틱 레이스의 여정. 볼륨숄더+스키니 팬츠. 핫핑크 립.',
+burberry:'Black Sabbath 사운드트랙 + 57룩. 1927 아카이브 트렌치 15종+. 마크라메 스플라이싱, 타로카드 프린트.',
+thombrowne:'Karl Lagerfeld 저택 · "1706년~미래." 외계인 마스크+광선총. 전 룩 플리츠, 그리스 조각 보디, 동물 미니백.',
+balenciaga:'Pierpaolo Piccioli 데뷔. "발렌시아가의 의미는 방법론이다." 네오 가자르 코쿤/벌룬. "모든 심장은 다르게 뛴다."',
+isseymiyake:'Centre Pompidou · 텍스타일 사운드스케이프. "의복이 의식을 가진다면?" GENERIC WEAR / ARMS / PALINDROME / URBAN JUNGLE.',
+givenchy:'Sarah Burton "강인한 여성성." dress와 undress의 변증법. 브라탑→크롭 블레이저→튤 시스루. 3D 플로럴 슈즈.',
+stellamccartney:'FIVVRS — 세계 최초 식물 기반 페더. PUMI TECH 탄소흡수 데님. Helen Mirren + Beatles. 지속가능성을 기술 우위로.',
+mcqueen:'《The Wicker Man》 이교도 세계관. 밀리터리 크롭 재킷의 해제, Bumster 카고 스커트. 곤충 프린트 + 화염 자수.',
+offwhite:'49룩 모터스포츠 × 쿠튀르. 레이싱 대각선 패널, 컷아웃 바디수트. "속도에서 정화로."',
+balmain:'"노마딕 보헤미안 럭셔리." 48룩. 드레이핑+크로셰+프린지. 올리브→샌드→테라코타→에스프레소.',
+yohjiyamamoto:'"입는 수묵화." 47룩, 블랙 80%. 프린지·드레이핑·레이어. Giorgio Armani 친필 편지 드레스. 웻 헤어.',
+maxmara:'"Rococo Modern." 47룩. 퐁파두르 뮤즈. 43/47룩 블랙 밴드. 오간자 스커트. "우아함과 쾌락을 도덕보다 소중히."',
+acnestudios:'"타임캡슐." 47룩. 아르케타입 퀴어 재조립. 오버사이즈 블레이저 17룩. 카우보이 부츠. Robyn+Yung Lean.',
+rickowens:'"Temple." 46룩. 시어 메시 전 룩 베이스. GRS 나일론+LIVY 란제리. "tough clothes for tough times."',
+schiaparelli:'"Dancer in the Dark." 45룩. 바 재킷+서큘러 컷아웃. 블랙·아이보리·골드 삼원 구조. "어둠 속에서 부끄러움 없이."',
+louisvuitton:'"소프트 맥시멀리즘." 45룩. 코르셋 가운·드레이프 맥시·오버사이즈 니트. 컬러 양말 시그니처.',
+sacai:'"Coming home." 40룩. 카고→스커트, 탱크→블라우스. 해체 더블브레스트 + 버블스커트 16룩.',
+coperni:'"두 번째 피부." 40룩. PUMI 1000 CO₂흡수 소재. 세컨드스킨→크로스 홀터→오프숄더→플리츠 서사.',
+gucci:'"La Famiglia." 38룩. Catherine Opie 초상+아르케타입. GG 모노그램·크로커다일·페더. 스프레차투라.',
+mamekurogouchi:'"Reflection." 35룩. 와가라스 유리 투명성 → 직물. 랩 재킷=기모노 여밈. 3D 프린팅 크로셰 백.'
+};
+const keywords=[
+{rank:1,kw:'레더',count:'22/33',text:'이번 시즌 레더는 22개 하우스가 채택하며 시즌 물질적 토대를 형성했으나, 그 질감과 의미는 극적으로 분기했다. 로에베는 봉제선을 완전히 제거한 유기적 막으로, 발렌시아가는 네오 가자르 경화 가공으로 건축적 실루엣을, 릭 오웬스는 GRS 재활용 소재와 혼합해 지속가능성에 개입했다.',imgs:['loewe/look_01','saintlaurent/look_03','hermes/look_05','burberry/look_13']},
+{rank:2,kw:'시어/트랜스루선트',count:'20/33',text:'투명성이 두 번째 지배 코드. 발렌티노의 반딧불이 시어, 릭 오웬스의 전 룩 메시 베이스, 마메의 와가라스 유리 투명성 이식. 비치는 것과 감추어지는 것 사이의 긴장—가시성의 정치학이 공통 탐구 주제.',imgs:['valentino/look_15','rickowens/look_06','dolcegabbana/look_44','mamekurogouchi/look_17']},
+{rank:3,kw:'크롭탑/미드리프',count:'19/33',text:'미드리프 노출이 가장 보편적 신체 언어. 프라다 "조각적 부과에서의 자유," 에르메스 크롭 브라렛 전 룩 기저 레이어, 맥스 마라 47룩 중 43룩 블랙 밴드 삽입.',imgs:['hermes/look_02','prada/look_21','balenciaga/look_25','maxmara/look_06']},
+{rank:4,kw:'러플/볼륨/페더',count:'17/33',text:'생 로랑 Act 3 러플 가운 15룩, 스텔라 매카트니 FIVVRS 세계 최초 식물 기반 페더. 정적 미니멀리즘에 대한 반동으로 촉각적·극적 표면이 귀환.',imgs:['saintlaurent/look_42','stellamccartney/look_47','prada/look_17','balenciaga/look_50']},
+{rank:5,kw:'워크웨어/유틸리티',count:'15/33',text:'프라다 "유니폼으로서의 문화적 응답," 미우미우 에이프런 "보이지 않는 노동 오마주." 카고 포켓·스트랩·헤비 스티칭이 미학 자체로.',imgs:['miumiu/look_01','prada/look_01','mcqueen/look_02','isabelmarant/look_01']},
+{rank:6,kw:'크래프트/에스닉',count:'14/33',text:'로에베 "크래프트 재정의," 샤넬 글로벌 공예 전통 확장, 버버리 마크라메+트렌치 스플라이싱. 대량생산 시대에 손의 흔적을 되새기는 의식적 저항.',imgs:['chanel/look_64','bottegaveneta/look_36','burberry/look_07','balmain/look_41']},
+{rank:7,kw:'젠더리스/코에드',count:'13/33',text:'펜디 83룩 코에드로 성별 구분 물리적 폐기, 톰 브라운 플리츠 성별 무관 적용, 아크네 "아르케타입 해체." 더 이상 부록이 아닌 기본값.',imgs:['fendi/look_01','thombrowne/look_01','acnestudios/look_01','offwhite/look_01']},
+{rank:8,kw:'쉴드/선글라스',count:'13/33',text:'로에베 20룩+, 생 로랑 28룩+. 시어가 신체 투명성을 탐구했다면, 쉴드 선글라스는 반대로 익명성 구축. 선택적 가시성의 전략.',imgs:['loewe/look_13','saintlaurent/look_06','balenciaga/look_01','mcqueen/look_18']},
+{rank:9,kw:'파워숄더',count:'12/33',text:'맥스 마라 "퐁파두르의 정치적 권력" 명시적 레퍼런스. 크롭으로 허리 절단 + 숄더 확장 = 시즌 지배 프로포션.',imgs:['maxmara/look_01','versace/look_01','givenchy/look_01','balenciaga/look_10']},
+{rank:10,kw:'서사적 3막 구조',count:'10/33',text:'생 로랑 3막, 미우미우 7막, 이자벨 마랑 환경 전이, 맥퀸 《The Wicker Man》. SNS 시대에 컬렉션 전체의 경험적 완결성을 우선시하는 의지.',imgs:['saintlaurent/look_50','miumiu/look_65','isabelmarant/look_63','mcqueen/look_50']}
+];
+const keyItems=[
+{title:'01. 오버사이즈 테일러드 블레이저',count:'21/33',desc:'크롭/오프숄더/오버사이즈 변형 다양. Prada(밀리터리), Acne(레더), Fendi(젠더리스), Sacai(해체 더블브레스트), Max Mara(크롭), Versace(파워숄더).',imgs:['prada/look_06','acnestudios/look_01','fendi/look_01','versace/look_10','maxmara/look_02']},
+{title:'02. 레더 재킷/코트',count:'18/33',desc:'SL(바이커), Loewe(몰디드), Hermès(퀼팅), Acne(빈티지워싱), Burberry(컬러레더), Rick Owens(GRS). S/S에도 시즌리스 핵심.',imgs:['saintlaurent/look_03','loewe/look_05','hermes/look_05','burberry/look_17','rickowens/look_36']},
+{title:'03. 시어/오간자 드레스',count:'15/33',desc:'Valentino(반딧불이 빛), Rick Owens(메시 전 룩), D&G(시스루 시폰), Givenchy(튤), Fendi(오간자 플로럴).',imgs:['valentino/look_15','rickowens/look_06','fendi/look_50','givenchy/look_31','mamekurogouchi/look_17']},
+{title:'04. 크롭탑 / 브라렛',count:'14/33',desc:'Prada("자유"로서의 브라렛), Hermès(크롭 브라 전 룩), Balenciaga(미드리프), Jil Sander(크롭 니트 25+룩).',imgs:['hermes/look_02','prada/look_21','jilsander/look_22','balenciaga/look_25','mcqueen/look_10']},
+{title:'05. 러플/볼륨 가운',count:'12/33',desc:'SL(러플 가운 Act3 전체), Chanel(페더 풀스커트), Prada(버블스커트), Stella(FIVVRS 식물 페더). 미니멀 사이클 종료 시그널.',imgs:['saintlaurent/look_42','chanel/look_20','prada/look_31','stellamccartney/look_47','balenciaga/look_50']}
+];
+const materials=[
+{n:'Leather',v:22},{n:'Sheer/Organza',v:20},{n:'Wool Suiting',v:18},{n:'Satin/Silk',v:15},{n:'Lace',v:14},{n:'Fringe',v:14},{n:'Denim',v:12},{n:'Feather',v:11},{n:'Crochet',v:10}
+];
+
+// --- RENDER MATERIALS ---
+const matBars=document.getElementById('materialBars');
+materials.forEach(m=>{
+  matBars.innerHTML+=`<div class="tbar"><div class="tbar-head"><span>${m.n}</span><span>${m.v}/33</span></div><div class="tbar-track"><div class="tbar-fill" style="width:${Math.round(m.v/33*100)}%"></div></div></div>`;
+});
+
+// --- RENDER KEY ITEMS ---
+const kiEl=document.getElementById('keyItems');
+keyItems.forEach(ki=>{
+  const imgs=ki.imgs.map(p=>`<img src="runway_images/26ss/${p}.jpg" loading="lazy" onerror="this.style.opacity='.2'">`).join('');
+  kiEl.innerHTML+=`<div class="keyitem"><div class="keyitem-head"><div class="keyitem-title">${ki.title}</div><div class="keyitem-count">${ki.count}</div></div><div class="keyitem-desc">${ki.desc}</div><div class="gallery" style="grid-template-columns:repeat(5,1fr);margin-top:12px">${imgs}</div></div>`;
+});
+
+// --- RENDER MATRIX ---
+let sortCol=-1,sortDir=1,filterKw='all';
+function buildMatrix(){
+  const head=document.getElementById('matrix-head');
+  head.innerHTML='<th style="text-align:left;position:sticky;left:0;z-index:3;background:var(--s2);padding:8px 12px">Brand</th>';
+  trendNames.forEach((t,i)=>{
+    const sorted=(sortCol===i)?` sorted`:'';
+    const arrow=sortCol===i?(sortDir>0?' ↑':' ↓'):'';
+    head.innerHTML+=`<th class="${sorted}" onclick="sortMatrix(${i})" style="min-width:64px">${t}${arrow}</th>`;
+  });
+  let rows=[...brands];
+  if(sortCol>=0){rows.sort((a,b)=>{const va=(matrixData[a.id]||[])[sortCol]||0,vb=(matrixData[b.id]||[])[sortCol]||0;return (vb-va)*sortDir||(a.name.localeCompare(b.name));});}
+  if(filterKw!=='all'){const ki=trendNames.indexOf(filterKw);rows=rows.filter(b=>(matrixData[b.id]||[])[ki]===1);}
+  const tbody=document.getElementById('matrix-body');
+  tbody.innerHTML='';
+  rows.forEach(b=>{
+    const m=matrixData[b.id]||[];
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td class="brand-cell" onclick="openPanel('${b.id}')">${b.name}<span style="color:var(--ts);font-size:10px;margin-left:6px">${b.looks}L</span></td>`+
+      trendNames.map((_,i)=>m[i]?`<td class="dot-on">●</td>`:`<td class="dot-off">·</td>`).join('');
+    tbody.appendChild(tr);
+  });
+  // totals
+  if(filterKw==='all'){
+    const totals=trendNames.map((_,i)=>brands.reduce((s,b)=>s+((matrixData[b.id]||[])[i]||0),0));
+    const tr=document.createElement('tr');
+    tr.className='total-row';
+    tr.innerHTML=`<td class="brand-cell" style="cursor:default;color:var(--tx)">TOTAL</td>`+totals.map(t=>`<td>${t}</td>`).join('');
+    tbody.appendChild(tr);
+  }
+}
+function sortMatrix(i){if(sortCol===i){sortDir*=-1;}else{sortCol=i;sortDir=-1;}buildMatrix();}
+function filterMatrix(kw,el){
+  filterKw=kw;
+  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  buildMatrix();
+}
+buildMatrix();
+
+// --- RENDER KEYWORDS ---
+const kwGrid=document.getElementById('kwGrid');
+keywords.forEach(k=>{
+  const imgs=(k.imgs||[]).map(p=>`<img src="runway_images/26ss/${p}.jpg" loading="lazy" onerror="this.style.opacity='.2'">`).join('');
+  const gallery=imgs?`<div class="gallery" style="grid-template-columns:repeat(4,1fr);margin-top:14px">${imgs}</div>`:'';
+  kwGrid.innerHTML+=`<div class="kw-card"><div class="kw-rank">${String(k.rank).padStart(2,'0')}</div><div class="kw-name">${k.kw}</div><div class="kw-count">${k.count} 브랜드</div><div class="kw-text">${k.text}</div>${gallery}</div>`;
+});
+
+// --- RENDER BRAND GRID ---
+const bgEl=document.getElementById('brandGrid');
+brands.forEach(b=>{
+  const colors=(brandColors[b.id]||[]).slice(0,5);
+  const dots=colors.map(c=>`<span style="background:${c.h}" title="${c.n}"></span>`).join('');
+  const div=document.createElement('div');
+  div.className='brand-btn';
+  div.innerHTML=`<div class="bn">${b.name}</div><div class="bl">${b.looks} Looks</div><div class="bm">${dots}</div>`;
+  div.onclick=()=>openPanel(b.id);
+  bgEl.appendChild(div);
+});
+
+// --- SIDE PANEL ---
+function openPanel(id){
+  const b=brands.find(x=>x.id===id);
+  if(!b)return;
+  document.getElementById('panel-brand-name').textContent=b.name;
+  document.getElementById('panel-brand-sub').textContent=`${b.looks} Looks · 26 S/S`;
+  const m=matrixData[b.id]||[];
+  const colors=(brandColors[b.id]||[]);
+  const review=reviews[b.id]||'쇼 노트 미수록 브랜드 — AI 이미지 분석 데이터만 제공됩니다.';
+  const chips=trendNames.map((t,i)=>`<span class="kw-chip${m[i]?'':' inactive'}">${t}</span>`).join('');
+  const swatches=colors.map(c=>`<div class="swatch"><div class="swatch-box" style="background:${c.h};${c.h==='#FFFFFF'?'border-color:rgba(255,255,255,.3)':''}"></div><div class="swatch-name">${c.n}</div></div>`).join('');
+  document.getElementById('panel-body').innerHTML=`
+    <div class="panel-section"><div class="panel-section-label">통합 리뷰 · 이미지 + 쇼 노트</div><div class="panel-review">${review}</div></div>
+    <div class="panel-section"><div class="panel-section-label">트렌드 키워드 매칭</div><div class="chip-row">${chips}</div></div>
+    <div class="panel-section"><div class="panel-section-label">키 컬러</div><div class="color-row">${swatches}</div></div>
+    <div class="panel-section"><div class="panel-section-label">컬렉션 갤러리</div>
+      <div class="gallery">${Array.from({length:Math.min(b.looks,12)},(_,i)=>{const n=String(i*3+1).padStart(2,'0');return`<img src="runway_images/26ss/${id}/look_${n}.jpg" loading="lazy" onerror="this.style.background='var(--s3)';this.removeAttribute('src')">`;}).join('')}</div>
+    </div>`;
+  document.getElementById('panel-overlay').classList.add('open');
+  document.getElementById('side-panel').classList.add('open');
+  document.querySelectorAll('.brand-btn').forEach(el=>el.classList.remove('selected'));
+  document.querySelectorAll('.brand-btn').forEach(el=>{if(el.querySelector('.bn').textContent===b.name)el.classList.add('selected');});
+}
+function closePanel(){
+  document.getElementById('panel-overlay').classList.remove('open');
+  document.getElementById('side-panel').classList.remove('open');
+  document.querySelectorAll('.brand-btn').forEach(el=>el.classList.remove('selected'));
+}
+
+// --- MOOD TOGGLE ---
+function toggleMood(){
+  const t=document.getElementById('moodText'),b=document.getElementById('moodBtn');
+  const exp=t.classList.toggle('expanded');
+  b.textContent=exp?'접기 ▴':'더 보기 ▾';
+}
+
+// --- NAV ACTIVE ---
+const secs=document.querySelectorAll('section[id]');
+const navAs=document.querySelectorAll('nav a');
+window.addEventListener('scroll',()=>{
+  let cur='';
+  secs.forEach(s=>{if(scrollY>=s.offsetTop-120)cur=s.id;});
+  navAs.forEach(a=>{a.classList.remove('active');if(a.getAttribute('href')==='#'+cur||a.getAttribute('href')==='#bridge-section'&&cur==='bridge-section')a.classList.add('active');});
+});
+</script>
+</body>
+</html>

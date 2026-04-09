@@ -13,6 +13,7 @@ import ProjectBriefing from "./pages/ProjectBriefing";
 import ExpertReview from "./pages/ExpertReview";
 import VogueRunway from "./pages/VogueRunway";
 import RunwayUnified from "./pages/RunwayUnified";
+import KeyTrend from "./pages/KeyTrend";
 
 export default function App() {
   const [selectedBrand, setSelectedBrand] = useState(null);
@@ -25,6 +26,7 @@ export default function App() {
           {/* Main */}
           <Route path="/" element={<ProjectBriefing />} />
           <Route path="/flow" element={<TrendFlow />} />
+          <Route path="/key-trend" element={<KeyTrend />} />
           <Route path="/expert" element={<ExpertReview />} />
           <Route path="/runway" element={<RunwayUnified />} />
           <Route path="/market" element={<ProductBoard selectedBrand={selectedBrand} />} />

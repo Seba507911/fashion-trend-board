@@ -67,6 +67,7 @@ export default function Sidebar({ selectedBrand, onBrandSelect }) {
   const mainItems = [
     { id: "briefing", label: "Project Briefing", path: "/" },
     { id: "trend-flow", label: "Trend Flow", path: "/flow", bold: true },
+    { id: "key-trend", label: "Key Trend", path: "/key-trend", bold: true },
     { id: "expert-review", label: "Expert Review", path: "/expert" },
     { id: "runway", label: "Runway", path: "/runway", bold: true },
     { id: "market-brand-board", label: "Market Brand Board", path: "/market", bold: true },
