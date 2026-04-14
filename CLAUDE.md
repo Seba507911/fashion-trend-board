@@ -4,8 +4,49 @@
 
 ## 프로젝트 개요
 
-Fashion Trend Intelligence Board — 패션 트렌드 전파를 데이터 기반으로 추적하는 대시보드.
-트렌드가 어디에서 시작(Origin)되어 어떤 경로로 전파되는지를 정량적으로 추적.
+Fashion Trend Intelligence Board — 패션 트렌드 전파를 데이터 기반으로 추적·검증하는 대시보드.
+**핵심 가치: 런웨이+전문가 시그널이 실제 마켓에 언제, 얼마나 반영되는지 검증하는 것.**
+
+### 핵심 가설 (2026-04-14 재정립)
+
+```
+Runway-led 전파: 런웨이 → 셀럽/인플루언서 → 디자이너 브랜드 → 일반 SNS
+```
+
+- **검증 최우선**: Runway-led 전파의 타이밍과 매칭률을 정량 추적
+- **디자이너 브랜드 중심 검증**: 매스 브랜드(리드타임 6~12개월)는 전파 검증에 부적합 → 소규모 디자이너 브랜드(리드타임 1~3개월)로 전환
+- **조닝별 디자이너 프리셋**: 38개 전수분석 대신, 조닝별 영향력 디자이너 10~20개 프리셋 구성 (예: 럭셔리 프리셋 = Prada, Miu Miu, Chanel, Saint Laurent, Loewe)
+- **UX: 브리핑 퍼스트**: 탐색 도구보다 큐레이션된 브리핑(핵심 시그널 5~10개)을 먼저 제공, 드릴다운은 관심 키워드 클릭 시 진입
+
+### 보류 항목
+
+- 5-signal Confidence 점수 체계 → 데이터 검증 완료 후 활성화
+- Origin 자동 분류 프레임워크 → 데이터 검증 완료 후 활성화
+- Market-organic Origin → 마켓 브랜드 수집 + SNS 수집 강화 후 향후 과제
+- Capital-driven / Viral/Meme → 상품개발 시점 대비 의미 낮음, 참고용으로만 유지
+
+### Snowflake 검증 작업
+
+회사 Snowflake MKT 스키마 데이터를 활용하여 런웨이 키워드 → 마켓 반영 검증 진행.
+
+**핵심 검증 테이블 (3개)**:
+
+| 테이블 | 용도 | 주기 |
+|--------|------|------|
+| `DW_MUSINSA_PRDT_RNK_W` | 무신사 주간 상품 랭킹 — 상품명에서 트렌드 키워드 매칭 | 주간 |
+| `MST_KWD_NAVER_SRCH_W` | 네이버 키워드 주간 검색량 — 키워드별 검색 추이 | 주간 |
+| `MW_NAVER_SHOPPING_TREND_KWD` | 네이버 쇼핑 트렌드 키워드 — 카테고리별 인기 키워드 | 주간 |
+
+**보조 테이블**: `MW_NAVER_SHOPPING_POPULAR_BRAND` (인기 브랜드), `MW_NAVER_SEARCH_RLTD_KWD` (연관 검색어), `MW_NAVER_SEARCH_AUTO_KWD` (자동완성), `KWD_SCL_POST_CNT_W` (SNS 버즈량), `CTGR_SALES_W` (자사 판매량)
+
+**제외**: 인플루언서 테이블 (`DW_INFLUENCER_*`, `DW_CAMPAIGN_*`) — 자사 소규모 크루 활동 데이터로 트렌드 시그널 부적합
+
+**테스트 키워드**: 레더자켓 (아이템 단위, 동의어: 레더/leather/가죽/레더자켓/가죽자켓) vs 시어 (속성 단위, 동의어: 시어/시스루/sheer/see-through/투명) → 아이템 vs 속성 매칭률 차이 비교
+
+**검증 시나리오**:
+1. 런웨이 키워드 → 무신사 랭킹 침투율 (상품명 텍스트 매칭)
+2. 런웨이 키워드 → 네이버 검색 스파이크 타이밍 (쇼 이후 반응 시점)
+3. 쇼핑 트렌드 키워드 등장 여부 (네이버 쇼핑 인기 키워드 진입 시점)
 
 ## 기술 스택
 
@@ -20,7 +61,9 @@ Fashion Trend Intelligence Board — 패션 트렌드 전파를 데이터 기반
 
 ## 핵심 개념
 
-### Origin 4타입 — 각각 다른 전파 경로
+> **참고**: Origin 4타입, Confidence 지표, 풀 A/B는 현재 보류 상태. Runway-led 검증이 최우선. 아래 내용은 향후 활성화를 위한 아카이브.
+
+### Origin 4타입 — 각각 다른 전파 경로 (보류 — Runway-led만 활성)
 
 ```
 Runway-led:     런웨이 → 전문가 → 셀럽 → 검색 → 마켓   (순차, 6~12M)
@@ -66,12 +109,12 @@ Event-triggered:    예측 불가 외부 충격 → 소비 패턴 급변 → 마
 | SPA/매스 | Zara(2,768), H&M(7) | 전체 팔로우 |
 | 일본 컨템포러리 | nanamica(170) | runway_led |
 
-### 키워드 풀 A/B
+### 키워드 풀 A/B (보류)
 
 - **풀 A**: 런웨이 Top 30 ∩ 전문가 리포트 (합의된 시그널)
 - **풀 B**: 전문가 리포트 − 런웨이 (독립 예측)
 
-### Confidence 지표
+### Confidence 지표 (보류 — 데이터 검증 완료 후 활성화)
 
 키워드별 5개 시그널(전문가, 런웨이, 셀럽, 검색, 마켓) 종합 점수 (0~100%)
 
@@ -555,14 +598,32 @@ python scripts/validate_runway_data.py --check-remote  # TagWalk 실제 접속 �
 python scripts/recrawl_look_search.py                  # look/search 패턴으로 재수집
 ```
 
-## 페이지 구조 (7 pages)
+## 페이지 구조 (2026-04-14 재편)
+
+### DASHBOARD (메인)
 
 | 페이지 | 경로 | 설명 |
 |--------|------|------|
-| Trend Flow | /flow | 트렌드 전파 프레임워크 (Origin Flow, Zone, Timeline) |
-| Trend Flow check(Test) | /flow-check | VLM+마켓 실데이터 4단계 drill-down |
-| Runway | /runway | 런웨이 룩 (?tag=&season= 필터) |
-| Runway(VLM Test) | /vlm | VLM 라벨 뷰어 |
-| Market Brand Board | / | 마켓 상품 + Runway Trend Keywords 칩 필터 |
+| Project Briefing | / | 프로젝트 개요 + Runway-led 핵심 가설 + 검증 진행 상황 |
+| Trend Flow | /flow | Runway-led 전파 모니터링 (런웨이→셀럽→디자이너브랜드→SNS) |
+| Key Trend | /key-trend | 팀 동료 26SS 런웨이 분석 (33 브랜드 매트릭스) — TEST |
+| Expert Review | /expert | WGSN 101 키워드 상세 (토픽별 원문 맥락 + VLM/셀럽 연계) |
+| Runway | /runway | TagWalk + Vogue + VLM 3탭 통합 |
+| Market Brand Board | /market | 마켓 상품 + 조닝별 브랜드 |
+
+### ETC
+
+| 페이지 | 경로 | 설명 |
+|--------|------|------|
 | Trend Analysis | /trend | 컬러/소재/실루엣 분석 |
 | Graph View | /graph | 브랜드-소재-컬러 관계 그래프 |
+
+### ARCHIVE (기존 페이지)
+
+| 페이지 | 경로 | 설명 |
+|--------|------|------|
+| Trend Flow (Origin 4-type) | /archive/flow | 기존 Origin 4타입 순서도 |
+| Trend Flow Check | /archive/flow-check | VLM+마켓 4단계 drill-down |
+| Runway (TagWalk only) | /archive/runway-tagwalk | TagWalk 단독 뷰 |
+| Vogue Runway (standalone) | /archive/vogue | Vogue 단독 뷰 |
+| VLM Viewer (standalone) | /archive/vlm | VLM 라벨 뷰어 |
