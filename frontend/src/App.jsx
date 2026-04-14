@@ -13,6 +13,7 @@ import ProjectBriefing from "./pages/ProjectBriefing";
 import ExpertReview from "./pages/ExpertReview";
 import VogueRunway from "./pages/VogueRunway";
 import RunwayUnified from "./pages/RunwayUnified";
+import MusinsaBoard from "./pages/MusinsaBoard";
 import KeyTrend from "./pages/KeyTrend";
 
 export default function App() {
@@ -32,6 +33,7 @@ export default function App() {
           <Route path="/market" element={<ProductBoard selectedBrand={selectedBrand} />} />
 
           {/* ETC */}
+          <Route path="/musinsa" element={<MusinsaBoard />} />
           <Route path="/trend" element={<TrendAnalysis />} />
           <Route path="/graph" element={<GraphView />} />
 

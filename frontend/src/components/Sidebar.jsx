@@ -74,6 +74,7 @@ export default function Sidebar({ selectedBrand, onBrandSelect }) {
   ];
 
   const etcItems = [
+    { id: "musinsa", label: "Musinsa", path: "/musinsa", bold: true },
     { id: "trend-analysis", label: "Trend Analysis", path: "/trend" },
     { id: "graph-view", label: "Graph View", path: "/graph" },
   ];
