@@ -11,11 +11,21 @@ from backend.db.database import get_db
 router = APIRouter(prefix="/vogue-runway", tags=["vogue-runway"])
 
 
+@router.get("/tiers")
+async def get_tiers(db: aiosqlite.Connection = Depends(get_db)):
+    """Tier 목록 조회."""
+    rows = await db.execute(
+        "SELECT tier, COUNT(DISTINCT designer_slug) as designers, COUNT(*) as shows FROM vogue_shows WHERE tier IS NOT NULL GROUP BY tier ORDER BY tier"
+    )
+    return [dict(r) for r in await rows.fetchall()]
+
+
 @router.get("/shows")
 async def get_shows(
     designer_slug: Optional[str] = None,
     season: Optional[str] = None,
     collection_type: Optional[str] = None,
+    tier: Optional[str] = None,
     db: aiosqlite.Connection = Depends(get_db),
 ):
     """쇼 목록 조회."""
@@ -30,6 +40,9 @@ async def get_shows(
     if collection_type:
         q += " AND collection_type = ?"
         params.append(collection_type)
+    if tier:
+        q += " AND tier = ?"
+        params.append(tier)
     q += " ORDER BY designer, season_slug"
     rows = await db.execute(q, params)
     results = await rows.fetchall()

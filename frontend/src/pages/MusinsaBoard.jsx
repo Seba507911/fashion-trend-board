@@ -15,7 +15,7 @@ function useMusinsaProducts(params) {
   return useQuery({
     queryKey: ["musinsa", "products", params],
     queryFn: () => api.get("/musinsa/products", { params }).then(r => r.data),
-    enabled: !!params.brand_slug || !!params.search,
+    enabled: !!params.brand_slug || !!params.search || !!params.zoning,
   });
 }
 
@@ -23,6 +23,13 @@ function useMusinsaStats() {
   return useQuery({
     queryKey: ["musinsa", "stats"],
     queryFn: () => api.get("/musinsa/stats").then(r => r.data),
+  });
+}
+
+function useMusinsaZonings() {
+  return useQuery({
+    queryKey: ["musinsa", "zonings"],
+    queryFn: () => api.get("/musinsa/zonings").then(r => r.data),
   });
 }
 
@@ -242,13 +249,16 @@ function StyleDetailModal({ style, onClose }) {
 
 export default function MusinsaBoard() {
   const [selectedBrand, setSelectedBrand] = useState(null);
+  const [selectedZoning, setSelectedZoning] = useState(null);
   const [search, setSearch] = useState("");
   const [selectedStyle, setSelectedStyle] = useState(null);
 
   const { data: brands = [] } = useMusinsaBrands();
   const { data: stats } = useMusinsaStats();
+  const { data: zonings = [] } = useMusinsaZonings();
   const { data: products = [], isLoading } = useMusinsaProducts({
     brand_slug: selectedBrand,
+    zoning: selectedZoning,
     search: search.length >= 2 ? search : undefined,
   });
 
@@ -279,15 +289,27 @@ export default function MusinsaBoard() {
           </p>
 
           <div className="flex gap-2 mt-3 items-center flex-wrap">
+            {/* Zoning Filter */}
+            <select
+              value={selectedZoning || ""}
+              onChange={(e) => { setSelectedZoning(e.target.value || null); setSelectedBrand(null); setSearch(""); }}
+              className="text-xs px-3 py-2 border border-[var(--color-border)] rounded-md bg-white text-[var(--color-text)]"
+            >
+              <option value="">전체 조닝</option>
+              {zonings.map(z => (
+                <option key={z.zoning} value={z.zoning}>{z.zoning} ({z.brands})</option>
+              ))}
+            </select>
+
             <button
-              onClick={() => { setSelectedBrand(null); setSearch(""); }}
+              onClick={() => { setSelectedBrand(null); setSelectedZoning(null); setSearch(""); }}
               className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                !selectedBrand && !search ? "bg-gray-800 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                !selectedBrand && !selectedZoning && !search ? "bg-gray-800 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
               }`}
             >
               All ({stats?.total_products || 0})
             </button>
-            {brands.map(b => (
+            {brands.filter(b => !selectedZoning || products.some(p => p.brand_slug === b.brand_slug)).slice(0, 20).map(b => (
               <button
                 key={b.brand_slug}
                 onClick={() => { setSelectedBrand(b.brand_slug); setSearch(""); }}
@@ -300,6 +322,9 @@ export default function MusinsaBoard() {
                 {b.brand_name} ({b.cnt})
               </button>
             ))}
+            {brands.length > 20 && !selectedZoning && (
+              <span className="text-[10px] text-[var(--color-text-muted)]">+{brands.length - 20} more</span>
+            )}
             <input
               type="text"
               placeholder="상품명 검색..."

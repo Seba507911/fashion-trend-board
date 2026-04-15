@@ -99,10 +99,11 @@ export default function VogueRunway() {
   const [selectedDesigner, setSelectedDesigner] = useState(null);
   const [selectedSeason, setSelectedSeason] = useState(null);
   const [selectedType, setSelectedType] = useState(null);
+  const [selectedTier, setSelectedTier] = useState(null);
   const [imageTypeFilter, setImageTypeFilter] = useState("all");
   const [modalImage, setModalImage] = useState(null);
 
-  const { data: allShows = [], isLoading: showsLoading } = useVogueShows();
+  const { data: allShows = [], isLoading: showsLoading } = useVogueShows(selectedTier ? { tier: selectedTier } : {});
   const { data: stats } = useVogueStats();
 
   // Derive unique designers, seasons, collection types from shows
@@ -180,6 +181,26 @@ export default function VogueRunway() {
 
           {/* Filters Row */}
           <div className="flex gap-3 flex-wrap items-center">
+            {/* Tier Dropdown */}
+            <select
+              value={selectedTier || ""}
+              onChange={(e) => {
+                setSelectedTier(e.target.value || null);
+                setSelectedDesigner(null);
+                setSelectedSeason(null);
+                setSelectedType(null);
+                setImageTypeFilter("all");
+              }}
+              className="text-xs px-3 py-2 border border-[var(--color-border)] rounded-md bg-white text-[var(--color-text)]"
+            >
+              <option value="">All Tiers</option>
+              <option value="T1-Mega Luxury">T1 Mega Luxury</option>
+              <option value="T2-Luxury/Independent">T2 Luxury/Independent</option>
+              <option value="T3-Contemporary">T3 Contemporary</option>
+              <option value="T4-Japanese">T4 Japanese</option>
+              <option value="T5-Korean/Asian">T5 Korean/Asian</option>
+            </select>
+
             {/* Designer Dropdown */}
             <select
               value={selectedDesigner || ""}

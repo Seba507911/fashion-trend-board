@@ -4,13 +4,13 @@ import VogueRunway from "./VogueRunway";
 import VlmViewer from "./VlmViewer";
 
 const TABS = [
-  { id: "tagwalk", label: "TagWalk", desc: "13,882 looks · 40 designers" },
-  { id: "vogue", label: "Vogue Runway", desc: "47,519 images · 317 shows" },
+  { id: "vogue", label: "Vogue Runway", desc: "98,883 images · 131 designers" },
+  { id: "tagwalk", label: "TagWalk", desc: "13,882 looks · 41 designers" },
   { id: "vlm", label: "VLM Analysis", desc: "10,094 labels · AI vision" },
 ];
 
 export default function RunwayUnified() {
-  const [activeTab, setActiveTab] = useState("tagwalk");
+  const [activeTab, setActiveTab] = useState("vogue");
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden bg-[var(--color-bg)]">

@@ -19,11 +19,20 @@ async def get_brands(db: aiosqlite.Connection = Depends(get_db)):
     return [dict(r) for r in await rows.fetchall()]
 
 
+@router.get("/zonings")
+async def get_zonings(db: aiosqlite.Connection = Depends(get_db)):
+    rows = await db.execute(
+        "SELECT zoning, COUNT(DISTINCT brand_slug) as brands, COUNT(*) as products FROM musinsa_products WHERE zoning IS NOT NULL GROUP BY zoning ORDER BY products DESC"
+    )
+    return [dict(r) for r in await rows.fetchall()]
+
+
 @router.get("/products")
 async def get_products(
     brand_slug: Optional[str] = None,
+    zoning: Optional[str] = None,
     search: Optional[str] = None,
-    limit: int = Query(default=100, le=500),
+    limit: int = Query(default=200, le=1000),
     db: aiosqlite.Connection = Depends(get_db),
 ):
     q = "SELECT * FROM musinsa_products WHERE 1=1"
@@ -31,6 +40,9 @@ async def get_products(
     if brand_slug:
         q += " AND brand_slug = ?"
         params.append(brand_slug)
+    if zoning:
+        q += " AND zoning = ?"
+        params.append(zoning)
     if search:
         q += " AND UPPER(product_name) LIKE ?"
         params.append(f"%{search.upper()}%")
