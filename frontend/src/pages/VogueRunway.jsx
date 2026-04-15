@@ -103,7 +103,9 @@ export default function VogueRunway() {
   const [imageTypeFilter, setImageTypeFilter] = useState("all");
   const [modalImage, setModalImage] = useState(null);
 
-  const { data: allShows = [], isLoading: showsLoading } = useVogueShows(selectedTier ? { tier: selectedTier } : {});
+  const { data: allShowsRaw = [] } = useVogueShows();
+  const allShows = selectedTier ? allShowsRaw.filter(s => s.tier === selectedTier) : allShowsRaw;
+  const showsLoading = false;
   const { data: stats } = useVogueStats();
 
   // Derive unique designers, seasons, collection types from shows
@@ -174,7 +176,7 @@ export default function VogueRunway() {
             Collection + Detail imagery from Vogue Runway
             {stats && (
               <span className="ml-2 text-[var(--color-text-muted)]">
-                &middot; {stats.total_shows} shows &middot; {stats.total_images?.toLocaleString()} images
+                &middot; {designers.length} designers &middot; {stats.total_shows} shows &middot; {stats.total_images?.toLocaleString()} images
               </span>
             )}
           </p>
@@ -193,12 +195,19 @@ export default function VogueRunway() {
               }}
               className="text-xs px-3 py-2 border border-[var(--color-border)] rounded-md bg-white text-[var(--color-text)]"
             >
-              <option value="">All Tiers</option>
-              <option value="T1-Mega Luxury">T1 Mega Luxury</option>
-              <option value="T2-Luxury/Independent">T2 Luxury/Independent</option>
-              <option value="T3-Contemporary">T3 Contemporary</option>
-              <option value="T4-Japanese">T4 Japanese</option>
-              <option value="T5-Korean/Asian">T5 Korean/Asian</option>
+              <option value="">All Tiers ({designers.length})</option>
+              {[
+                ["T1-Mega Luxury", "T1 Mega Luxury"],
+                ["T2-Luxury/Independent", "T2 Luxury/Independent"],
+                ["T3-Contemporary", "T3 Contemporary"],
+                ["T4-Japanese", "T4 Japanese"],
+                ["T5-Korean/Asian", "T5 Korean/Asian"],
+              ].map(([val, label]) => {
+                const cnt = allShows.filter(s => s.tier === val).length > 0
+                  ? new Set(allShows.filter(s => s.tier === val).map(s => s.designer_slug)).size
+                  : designers.filter(d => allShows.some(s => s.designer_slug === d.slug && s.tier === val)).length;
+                return <option key={val} value={val}>{label} ({cnt})</option>;
+              })}
             </select>
 
             {/* Designer Dropdown */}
