@@ -433,8 +433,8 @@ def main():
 
     for slug in designer_slugs:
         if slug not in DESIGNERS:
-            print(f"Unknown designer: {slug}")
-            continue
+            # Auto-register unknown designers with slug as name
+            DESIGNERS[slug] = {"name": slug.replace("-", " ").title(), "city": ""}
 
         print(f"\n{'='*60}")
         print(f"=== {DESIGNERS[slug]['name']} ===")

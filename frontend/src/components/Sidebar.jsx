@@ -71,10 +71,10 @@ export default function Sidebar({ selectedBrand, onBrandSelect }) {
     { id: "expert-review", label: "Expert Review", path: "/expert" },
     { id: "runway", label: "Runway", path: "/runway", bold: true },
     { id: "market-brand-board", label: "Market Brand Board", path: "/market", bold: true },
+    { id: "musinsa", label: "Musinsa (Data check)", path: "/musinsa", bold: true },
   ];
 
   const etcItems = [
-    { id: "musinsa", label: "Musinsa", path: "/musinsa", bold: true },
     { id: "trend-analysis", label: "Trend Analysis", path: "/trend" },
     { id: "graph-view", label: "Graph View", path: "/graph" },
   ];
