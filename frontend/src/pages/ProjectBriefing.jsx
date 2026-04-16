@@ -104,12 +104,45 @@ const TIMELINE = [
 ];
 
 const VERIFICATION = [
-  { step: "1", title: "런웨이 데이터 수집", status: "done", detail: "TagWalk 13,882 + Vogue 47,519 이미지 (디테일 샷 포함)" },
-  { step: "2", title: "AI + 전문가 키워드 추출", status: "done", detail: "VLM 10,094 라벨 + WGSN 101 키워드" },
-  { step: "3", title: "셀럽/인플루언서 전파 확인", status: "active", detail: "팀 동료 정성 분석 진행 중 → 셀럽 풀 설정 예정" },
-  { step: "4", title: "일반 SNS 확산 모니터링", status: "upcoming", detail: "인스타/틱톡/샤오홍수 — 타 팀 수집 데이터 연계 예정" },
-  { step: "5", title: "디자이너 브랜드 마켓 검증", status: "upcoming", detail: "소규모 디자이너 브랜드에서 트렌드 상품화 확인" },
+  { step: "1", title: "런웨이 데이터 수집", status: "done", detail: "TagWalk 13,882 + Vogue 98,883 이미지 (131 디자이너, 디테일 샷 포함)" },
+  { step: "2", title: "AI + 전문가 키워드 추출", status: "done", detail: "VLM 10,094 라벨 + WGSN 101 키워드 + 디자이너 쇼 노트" },
+  { step: "3", title: "셀럽/인플루언서 전파 확인", status: "active", detail: "AI 추출 트렌드를 셀럽 착장에서 수기 검증 예정" },
+  { step: "4", title: "디자이너 브랜드 마켓 검증", status: "active", detail: "무신사 240 브랜드 수집 완료, 키워드 매칭 분석 중" },
+  { step: "5", title: "일반 SNS 확산 모니터링", status: "upcoming", detail: "인스타/틱톡/샤오홍수 — 타 팀 수집 데이터 연계 예정" },
 ];
+
+const AI_INSIGHTS = {
+  title: "AI 이미지 분석 vs 전문가 리포트 — 테스트 결과",
+  sections: [
+    {
+      label: "1. WGSN 전문가 리포트 분석",
+      status: "done",
+      color: "#D97706",
+      finding: "300여개 리포트 중 77개를 NotebookLM으로 분석. 컬러 28개, 소재 20개, 실루엣 18개 등 101개 키워드 도출.",
+      limitation: "너무 광범위한 주제를 다루어 일반적 결론 위주로 수렴. 실무에서 바로 활용하기엔 추상적.",
+    },
+    {
+      label: "2. AI 런웨이 이미지 직접 분석",
+      status: "done",
+      color: "#3266ad",
+      finding: "쇼의 분위기/의도/사회적 맥락은 파악 불가. 하지만 이미지로 확인 가능한 정량적 부분(아이템, 컬러, 소재, 실루엣)은 정확하게 감지.",
+      limitation: "디자이너가 '왜' 그 선택을 했는지는 이미지만으로는 알 수 없음.",
+    },
+    {
+      label: "3. 디자이너 쇼 노트로 맥락 보완",
+      status: "done",
+      color: "#059669",
+      finding: "디자이너가 직접 발표한 쇼의 의도/맥락 데이터 확보. 별도 AI 분석 없이 원문 그대로 사용 가능한 수준.",
+      limitation: "모든 쇼에 노트가 있지는 않음. 주요 하우스 위주.",
+    },
+  ],
+  conclusion: "추상적 전문가 리포트보다 이미지 기반 팩트 + 쇼 노트 맥락의 조합이 실무자에게 더 효율적인 인사이트를 제공.",
+  nextSteps: [
+    { step: "셀럽/인플루언서 착장 검증", detail: "AI가 추출한 아이템/트렌드가 실제 셀럽 착용에서 보이는지 수기 확인 예정", status: "active" },
+    { step: "디자이너 브랜드 마켓 검증", detail: "무신사 240개 브랜드에서 키워드 매칭 + 신규 상품 진입 추이 분석 중", status: "active" },
+    { step: "전파 타임라인 구축", detail: "런웨이 → 셀럽 → 디자이너 브랜드 시간축 정량화", status: "upcoming" },
+  ],
+};
 
 /* ── 컴포넌트 ── */
 const STATUS_STYLE = {
@@ -243,30 +276,54 @@ export default function ProjectBriefing() {
           </div>
         </section>
 
-        {/* Keyword Standardization — 강조 섹션 */}
+        {/* AI Insights Report */}
         <section className="mb-10">
-          <h2 className="font-['Lora'] text-lg font-semibold mb-1">{KEYWORD_STANDARD.title}</h2>
-          <p className="text-xs text-[var(--color-text-secondary)] mb-4">{KEYWORD_STANDARD.description}</p>
+          <h2 className="font-['Lora'] text-lg font-semibold mb-4">{AI_INSIGHTS.title}</h2>
 
-          <div className="grid grid-cols-3 gap-3 mb-4">
-            {KEYWORD_STANDARD.streams.map((s) => (
-              <div key={s.label} className="border border-[var(--color-border)] rounded-lg p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: s.color }} />
-                  <span className="text-[13px] font-semibold text-[var(--color-text)]">{s.label}</span>
+          {/* Test Results — 3 Column Cards */}
+          <div className="grid grid-cols-3 gap-4 mb-4">
+            {AI_INSIGHTS.sections.map((s) => (
+              <div key={s.label} className="border border-[var(--color-border)] rounded-lg overflow-hidden bg-white flex flex-col">
+                <div className="px-4 py-3 flex items-center gap-2" style={{ backgroundColor: s.color + "10", borderBottom: `2px solid ${s.color}` }}>
+                  <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: s.color }} />
+                  <span className="text-sm font-bold" style={{ color: s.color }}>{s.label}</span>
+                  <span className="ml-auto"><Badge status={s.status} /></span>
                 </div>
-                <div className="space-y-1.5 text-[11px]">
-                  <div><span className="text-[var(--color-text-muted)]">소스:</span> <span className="text-[var(--color-text-secondary)]">{s.source}</span></div>
-                  <div><span className="text-[var(--color-text-muted)]">언어:</span> <span className="text-[var(--color-text-secondary)]">{s.lang}</span></div>
-                  <div><span className="text-[var(--color-text-muted)]">예시:</span> <span className="font-mono text-[10px] text-[var(--color-text-secondary)]">{s.example}</span></div>
-                  <Badge status={s.status.includes("완료") ? "done" : s.status.includes("진행") ? "active" : "upcoming"} />
+                <div className="px-4 py-4 flex-1 flex flex-col gap-3">
+                  <div>
+                    <div className="text-[11px] font-semibold text-[var(--color-text-muted)] uppercase tracking-wide mb-1">발견</div>
+                    <p className="text-xs text-[var(--color-text-secondary)] leading-relaxed">{s.finding}</p>
+                  </div>
+                  <div className="mt-auto pt-3 border-t border-[var(--color-border)]/50">
+                    <div className="text-[11px] font-semibold text-[var(--color-text-muted)] uppercase tracking-wide mb-1">한계</div>
+                    <p className="text-[11px] text-[var(--color-text-muted)] italic leading-relaxed">{s.limitation}</p>
+                  </div>
                 </div>
               </div>
             ))}
           </div>
 
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-xs text-blue-800">
-            <strong>목표:</strong> {KEYWORD_STANDARD.goal}
+          {/* Conclusion */}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-xs text-blue-800 mb-4">
+            <strong>결론:</strong> {AI_INSIGHTS.conclusion}
+          </div>
+
+          {/* Next Steps */}
+          <div className="bg-white border border-[var(--color-border)] rounded-lg p-4">
+            <h3 className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide mb-3">다음 검증 단계</h3>
+            <div className="space-y-2">
+              {AI_INSIGHTS.nextSteps.map((ns, i) => (
+                <div key={i} className="flex items-start gap-3">
+                  <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5 ${
+                    ns.status === "active" ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-500"
+                  }`}>{i + 1}</div>
+                  <div>
+                    <div className="text-xs font-semibold text-[var(--color-text)]">{ns.step}</div>
+                    <div className="text-[11px] text-[var(--color-text-secondary)]">{ns.detail}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </section>
 
