@@ -15,6 +15,7 @@ import VogueRunway from "./pages/VogueRunway";
 import RunwayUnified from "./pages/RunwayUnified";
 import MusinsaBoard from "./pages/MusinsaBoard";
 import KeyTrend from "./pages/KeyTrend";
+import VectorExplorer from "./pages/VectorExplorer";
 
 export default function App() {
   const [selectedBrand, setSelectedBrand] = useState(null);
@@ -34,6 +35,7 @@ export default function App() {
 
           {/* ETC */}
           <Route path="/musinsa" element={<MusinsaBoard />} />
+          <Route path="/vectors" element={<VectorExplorer />} />
           <Route path="/trend" element={<TrendAnalysis />} />
           <Route path="/graph" element={<GraphView />} />
 

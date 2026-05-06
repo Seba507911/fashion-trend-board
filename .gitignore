@@ -35,3 +35,17 @@ scripts/inspect_*.py
 # Claude
 *.jsonl
 .vercel
+.claude/
+
+# OMC (local agent state)
+.omc/
+**/.omc/
+
+# Backups
+*.backup
+*.backup-*
+
+# SQLite WAL/SHM (runtime files, never commit)
+*.db-shm
+*.db-wal
+*.db-journal

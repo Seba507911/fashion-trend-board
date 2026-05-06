@@ -58,6 +58,15 @@ class Cafe24Crawler(BaseCrawler):
     def get_card_selector(self) -> str:
         return self._card_selector
 
+    def _absolutize(self, url: str) -> str:
+        if not url:
+            return ""
+        if url.startswith("//"):
+            return "https:" + url
+        if url.startswith("/"):
+            return self.base_url + url
+        return url
+
     def _url_to_category(self, page_url: str) -> Optional[str]:
         m = re.search(r"cate_no=(\d+)", page_url)
         if m:
@@ -163,8 +172,11 @@ class Cafe24Crawler(BaseCrawler):
                     if second < first:
                         sale_price = second
 
-            img_url = card_data.get("imgSrc", "")
-            image_urls = card_data.get("imageUrls", [])
+            img_url = self._absolutize(card_data.get("imgSrc", ""))
+            image_urls = [
+                u for u in (self._absolutize(x) for x in card_data.get("imageUrls", []))
+                if u and "/web/upload/icon_" not in u
+            ]
 
             href = card_data.get("href", "")
             product_url = href if href.startswith("http") else self.base_url + href

@@ -72,6 +72,7 @@ export default function Sidebar({ selectedBrand, onBrandSelect }) {
     { id: "runway", label: "Runway", path: "/runway", bold: true },
     { id: "market-brand-board", label: "Market Brand Board", path: "/market", bold: true },
     { id: "musinsa", label: "Musinsa (Data check)", path: "/musinsa", bold: true },
+    { id: "vectors", label: "Vector Explorer", path: "/vectors", bold: true },
   ];
 
   const etcItems = [
